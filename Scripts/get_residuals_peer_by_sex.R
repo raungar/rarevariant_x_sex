@@ -57,20 +57,42 @@ get_individuals<-function(tissue_path,subset_do,residuals_do,md_dic,used_inds){
 	used_inds[[tissue_name]]<-list(male=names(inds_m),female=names(inds_f),both=names(inds_b))
 	###used_inds_new<-unique(used_inds,inds_b)
 
+	#substted factors
+	factors_m<-factors[,c("ID",names(inds_m))]
+	factors_f<-factors[,c("ID",names(inds_f))]
+	factors_b<-factors[,c("ID",names(inds_b))]
+
+
 	###WRITE THESE SUBSETTED FILES
 	subset_dir_path<-paste0(tissue_path,"/Subset")#if does not exist, create new path for subsetted files
 	if(!dir.exists(subset_dir_path)){dir.create(subset_dir_path)}
 	if(subset_do == "y" || subset_do == "yes"){
-		print("doin that subsetting")
-		factors_m<-factors[,c("ID",names(inds_m))]
 		write.table(factors_m,file=paste0(subset_dir_path,"/factors_m.tsv"),sep="\t",quote=F)
-		factors_f<-factors[,c("ID",names(inds_f))]
 		write.table(factors_f,file=paste0(subset_dir_path,"/factors_f.tsv"),sep="\t",quote=F)
-		factors_b<-factors[,c("ID",names(inds_b))]
 		write.table(factors_b,file=paste0(subset_dir_path,"/factors_b.tsv"),sep="\t",quote=F)
 	}
+
+	###CALCULATE RESIDUALS
+	resid_dir_path<-paste0(tissue_path,"/ResidualsSex")#if does not exist, create new path for subsetted files
+        if(!dir.exists(resid_dir_path)){dir.create(resid_dir_path)}
 	if(residuals_do == "y" || residuals_do == "yes"){
-		return(used_inds)
+		#independent variable sex
+		ind_sex<-as.matrix(as.factor(md_dic_red[colnames(factors_b)[-1]]))
+		#set dependent variable
+		factors_b_forlm<-as.matrix(factors_b[,-1])
+		rownames(factors_b_forlm)<-factors_b[,1]
+
+		#combine these variables into one dataframe for lm()
+		lm_matrix<-cbind.data.frame(t(factors_b_forlm),ind_sex)
+		#formula where it is essentially factors ~ sex, specifically cbind(Factor1, Factor2, ..., FactorN) ~ Sex
+		lm_form<-as.formula(paste0("cbind(",paste0(rownames(factors_b_forlm),collapse=","),") ~ ind_sex"))
+		#calculate the lm fit and residuals
+		lm_fit<-lm(lm_form,data=as.data.frame(lm_matrix))
+		lm_resid<-residuals(lm_fit)
+
+		#write this to the new folder
+                write.table(lm_resid,file=paste0(resid_dir_path,"/residuals_sex.tsv"),sep="\t",quote=F)
+
 	}
 
 
