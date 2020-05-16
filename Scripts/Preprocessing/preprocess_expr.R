@@ -3,7 +3,7 @@
 ## R script to split the entire GTEx matrices into files for each tissue
 ## then process RPKM and read count matrices so that columns match covariate files.
 ## Prepare matrices for input to PEER.
-seed(1234) #IMPORTANT: RANDOM SUBSETTING OF INDIVIDUALS 
+set.seed(1234) #IMPORTANT: RANDOM SUBSETTING OF INDIVIDUALS 
 ## Load required packages
 require(data.table)
 require(ggplot2)
@@ -84,14 +84,14 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
    # print("^subjid, below colnames tpm")
 
     ### MALES AND FEMALES SEPARATELY NOW: RAU
-    covs = covs$SUBJID[covs$SUBJID %in% colnames(tpm)]
+    covs.subset = covs$SUBJID[covs$SUBJID %in% colnames(tpm)]
     
     #check to see if single sex tissue
     sex_table<-table(covs$SEX)
     if(length(sex_table)==1){
       print(paste0(tissue_name,": no subsetting, this is a sex-specific tissue"))
-      tpm.single = tpm[, c(covs), with = F]
-      reads.single = reads[, c(covs), with = F]
+      tpm.single = tpm[, c(covs.subset), with = F]
+      reads.single = reads[, c(covs.subset), with = F]
       ind.filt.single = round(0.2*ncol(tpm.single)) #20% of people
       #how many people pass 20% of tpm filtering and min reads numbering
       indices.keep.single = (rowSums(tpm.single > tpm.filt & reads.single > read.filt) >= ind.filt.single )
@@ -121,7 +121,7 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
         mix_sex_fm="male"
         covs.m.all<-covs$SUBJID[covs$SEX==min_sex]
         covs.m<-covs.mf.all[covs.m.all %in% colnames(tpm)]
-        covs.fm.all<-covs$SUBJID[covs$SEX==max_sex]
+        covs.m.all<-covs$SUBJID[covs$SEX==max_sex]
         covs.f.sub<-covs.m.all[covs.f.all %in% colnames(tpm)]
         #sample to individuals that are in the most tissues
         covs.f<-names(rev(sort(inds[covs.f.sub]))[1:length(covs.m)]) 
@@ -147,7 +147,7 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
       ind.filt.m = round(0.2*ncol(tpm.m)) #20% of people
       #how many people pass 20% of tpm filtering and min reads numbering
       indices.keep.m = (rowSums(tpm.m > tpm.filt & reads.m > read.filt) >= ind.filt.m )
-      tpm.cut.m= tpm[indices.keep.m, -1]
+      tpm.cut.m= tpm.m[indices.keep.m, -1]
       tpm.out.m = scale(t(log2(tpm.cut.m + 2))) #log and z transform
       colnames(tpm.out.m) = genes[indices.keep.m]
       write.table(tpm.out.m, paste0(dir, tissue, '.log2.ztrans.m.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
@@ -158,7 +158,7 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
       ind.filt.f = round(0.2*ncol(tpm.f)) #20% of people
       #how many people pass 20% of tpm filtering and min reads numbering
       indices.keep.f = (rowSums(tpm.f > tpm.filt & reads.f > read.filt) >= ind.filt.f )
-      tpm.cut.f = tpm[indices.keep.f, -1]
+      tpm.cut.f = tpm.f[indices.keep.f, -1]
       tpm.out.f = scale(t(log2(tpm.cut.f + 2))) #log and z transform
       colnames(tpm.out.f) = genes[indices.keep.f]
       write.table(tpm.out.f, paste0(dir, tissue, '.log2.ztrans.f.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
@@ -170,7 +170,7 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
       #how many people pass 20% of tpm filtering and min reads numbering
       #this passes female or male
       indices.keep.both = (rowSums(tpm.m > tpm.filt & reads.m > read.filt) >= ind.filt.m ) | (rowSums(tpm.f > tpm.filt & reads.f > read.filt) >= ind.filt.f)
-      tpm.cut.both = tpm[indices.keep.both, -1]
+      tpm.cut.both = tpm.both[indices.keep.both, -1]
       tpm.out.both = scale(t(log2(tpm.cut.both + 2))) #log and z transform
       colnames(tpm.out.both) = genes[indices.keep.both]
       write.table(tpm.out.both, paste0(dir, tissue, '.log2.ztrans.both.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
@@ -181,8 +181,8 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
         m_specific<-as.numeric(table(!(genes[indices.keep.m] %in% genes[indices.keep.f]))["TRUE"])
         f_specific<-as.numeric(table(!(genes[indices.keep.f] %in% genes[indices.keep.m]))["TRUE"])
         
-        this_line<-c(tissue,m_specific,f_specific)
-        write(this_line,file=tpm_dif_file,append=TRUE,sep="\t")
+        this_line<-data.frame(tissue,m_specific,f_specific)
+        write.table(this_line, file=tpm_dif_file,sep="\t",quote = F,row.names = F,col.names = F,append = T)
       }
       ###RAU Commented out: code to compare different filtering
   
@@ -221,6 +221,7 @@ GTEX_RNAv8=as.character(args$GTEX_RNAv8)
 do_tissues=as.logical(args$do_tissues)
 tpm_dif_file=as.character(args$TPM_DIF_FILE)
 # 
+
 # dir = "/oak/stanford/groups/smontgom/raungar/Sex/Output"
 # peer.dir = paste0(dir, '/preprocessing_v8/PEER_v8/')
 # pc.file = "/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/genotypes/WGS/variant_calls/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_support_files/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze_20genotPCs.txt"
@@ -231,7 +232,7 @@ tpm_dif_file=as.character(args$TPM_DIF_FILE)
 # do_tissues<-as.logical("T")
 # tpm_dif_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/tpm_dif_file.txt"
 
- 
+
 
 
 ## Make output directory if it doesn't exist
@@ -267,10 +268,10 @@ covariates = merge(pcs, sex, by = 'SUBJID')
 
 if(do_tissues){
   if(tpm_dif_file != "F"){
-    header<-c("tissue","m_only","f_only")
-    write.csv(header, file=tpm_dif_file,sep="\t")
+    header<-data.frame("tissue","m_only","f_only")
+    write.table(header, file=tpm_dif_file,sep="\t",quote = F,row.names = F,col.names = F)
   }
-  ind_table<-get_ind(tissues, peer_dir)
+  ind_table<-get_ind(tissues, peer.dir)
 	sapply(tissues, ztrans.tissue, dir = peer.dir, covs = covariates,
 	       tpm_dif_file=tpm_dif_file,inds=ind_table)
 } else{
