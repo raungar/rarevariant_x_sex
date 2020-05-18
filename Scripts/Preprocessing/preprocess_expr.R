@@ -79,17 +79,18 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
 	print(head(tpm$Gene))
     }
     stopifnot(sum(tpm$Gene != reads$Gene) == 0)
-
+    genes = tpm$Gene
+    
   #  print(head(covs$SUBJID))
    # print("^subjid, below colnames tpm")
 
     ### MALES AND FEMALES SEPARATELY NOW: RAU
     covs.subset = covs$SUBJID[covs$SUBJID %in% colnames(tpm)]
-    
+    covs.subset_full=covs %>% dplyr::filter(SUBJID %in% colnames(tpm)) 
     #check to see if single sex tissue
-    sex_table<-table(covs$SEX)
+    sex_table<-table(covs.subset_full$SEX)
     if(length(sex_table)==1){
-      print(paste0(tissue_name,": no subsetting, this is a sex-specific tissue"))
+      print(paste0(tissue,": no subsetting, this is a sex-specific tissue"))
       tpm.single = tpm[, c(covs.subset), with = F]
       reads.single = reads[, c(covs.subset), with = F]
       ind.filt.single = round(0.2*ncol(tpm.single)) #20% of people
@@ -138,7 +139,6 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
       }
       
       covs.both<-c(covs.m,covs.f)
-      genes = tpm$Gene
       
       ####SUBSET, LOG TRANSFORM, AND Z TRANSFORM
       #M
@@ -220,7 +220,7 @@ map_file_prefix = as.character(args$map_file_prefix) #Sys.getenv('GTEX_SUBJECTSv
 GTEX_RNAv8=as.character(args$GTEX_RNAv8)
 do_tissues=as.logical(args$do_tissues)
 tpm_dif_file=as.character(args$TPM_DIF_FILE)
-# 
+
 
 # dir = "/oak/stanford/groups/smontgom/raungar/Sex/Output"
 # peer.dir = paste0(dir, '/preprocessing_v8/PEER_v8/')
