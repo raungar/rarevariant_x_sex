@@ -15,6 +15,7 @@ echo $2
 echo $3
 echo $4
 echo $5
+echo $6 #md
 #####FOR SCG
 #module load R peer
 
@@ -29,7 +30,6 @@ srun="srun -n1 -N1 --exclusive"
 
 
 
-#runPeer() {
     traitsFileName=$5
 
 
@@ -37,7 +37,7 @@ srun="srun -n1 -N1 --exclusive"
     scriptdir=$2 #`dirname \$(readlink -f "\$0")`
     gtex_v8_eqtl_dir=$3 #${GTEXv8}/eqtl/GTEx_Analysis_v8_eQTL
     RAREDIR=$4
-
+    md=$6
 
 
 
@@ -73,29 +73,19 @@ srun="srun -n1 -N1 --exclusive"
 
     which R
     ## actual calculation of peer factors
-    echo "Rscript calculate_PEER_factors.R $traitsFileName $maxFactorsN $maxIterations $boundTol $varTol $e_pa $e_pb $a_pa $a_pb $outdir $tissue" > ${outdir}/log.txt
+    ###echo "Rscript calculate_PEER_factors.R $traitsFileName $maxFactorsN $maxIterations $boundTol $varTol $e_pa $e_pb $a_pa $a_pb $outdir $tissue" > ${outdir}/log.txt
     Rscript ${scriptdir}/calculate_PEER_factors.R $traitsFileName $maxFactorsN $maxIterations \
             $boundTol $varTol $e_pa $e_pb $a_pa $a_pb $outdir $tissue >> ${outdir}/log.txt 2>&1
     
     # computing residuals
-    Rscript ${scriptdir}/calculate_PEER_residuals.R $traitsFileName ${peerdir}/covariates.txt \
+    echo "${scriptdir}/calculate_PEER_residuals.R $traitsFileName ${md} \
             ${indir}/factors.tsv ${gtex_v8_eqtl_dir}/${tissue}.v8.egenes.txt.gz \
         $RAREDIR/preprocessing_v8/gtex_2017-06-05_v8_genotypes_cis_eQTLs_012_processed.txt \
-        ${prefix}.peer.v8ciseQTLs.ztrans.txt &> ${outdir}/log.residuals.txt  
-#}
+        ${prefix}.${sex}.peer.v8ciseQTLs.ztrans.txt &> ${outdir}/log.residuals.txt  "
+
+    Rscript ${scriptdir}/calculate_PEER_residuals.R $traitsFileName ${md} \
+            ${indir}/factors.tsv ${gtex_v8_eqtl_dir}/${tissue}.v8.egenes.txt.gz \
+        $RAREDIR/preprocessing_v8/gtex_2017-06-05_v8_genotypes_cis_eQTLs_012_processed.txt \
+        ${prefix}.${sex}.peer.v8ciseQTLs.ztrans.txt &> ${outdir}/log.residuals.txt  
 
 
-if [ 1 -eq 0 ]
-then
-export scriptdir
-export peerdir
-export gtex_v8_eqtl_dir
-export -f runPeer
-
-#parallel="parallel -N 1 --delay .2 -j 10 --joblog parallel_joblog --resume"
-#parallel --jobs 10 runPeer ::: ${peerdir}/*.log2.ztrans*.txt
-$srun --export=ALL --bcast=runPeer runPeer ::: ${peerdir}/Adipose_Subcutaneous.log2.ztrans*.txt
-
-
-echo "DONE!"
-fi 
