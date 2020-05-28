@@ -1,0 +1,18 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+rule call_outliers_both:
+	input:
+		ZSCORES=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_both.txt.gz"
+	params:
+		ZTHRESH=2,
+		NPHEN=5,
+		outdir=config["RAREDIR"]+"/outliers_v8/"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal.medz.txt"
+	shell:
+		"""
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers.R \
+			--Z.SCORES {input.ZSCORES}  --outfile {output.outfile} \
+			--ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} --outdir {params.outdir}
+		"""
+	
