@@ -128,3 +128,124 @@ rule peer_correct_sex:
 		done
 		""")
 
+rule get_tissue_by_individual:
+	input:
+		RAREDIR=config["RAREDIR"]
+	shell:
+		"sh /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/get_tissue_by_individual.sh {input.RAREDIR}"
+
+rule generate_gtf:
+	input:
+		gtf=config["GTEX_GENES"]
+	output:
+		out_a=config["RAREDIR"]+"/preprocessing_v8/autosomal_proteincoding_lncrna.gtf",
+		out_x=config["RAREDIR"]+"/preprocessing_v8/x_proteincoding_lncrna.gtf"
+	shell:
+		"sh /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/subset_gtf.sh {input.gtf} {output.out_a} {output.out_x}"
+	#run:
+	#	shell("""
+	#		echo "{input.gtf}"
+	#		less -S {input.gtf} | awk -F"[\t;]" '{if($1~/chr[0-9]{1,2}/){print $10"\t"$11}}' | sed 's/\"//g' | awk -F" " '{if($4=="protein_coding" || $4=="lincRNA"){print $2"\t"$4}}' > {output.out_a};
+	#		less -S {input.gtf} | awk -F"[\t;]" '{if($1=="chrX"){print $10"\t"$11}}' | sed 's/\"//g' | awk -F" " '{if($4=="protein_coding" || $4=="lincRNA"){print $2"\t"$4}}' > {output.out_x}
+	#	""")
+
+rule gather_filter_norm_expr_both:
+	input:
+		RAREDIR=config["RAREDIR"],
+		ind_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_individuals_all_normalized_samples_both.sex.txt",
+		tissue_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_tissue_by_ind_both.sex.txt"
+	params:
+		outpath=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_both.txt.gz",
+		group="both.sex"
+	shell:
+		""" echo " /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/gather_filter_normalized_expression.py \
+			--RAREDIR {input.RAREDIR} --outpath {params.outpath} --ind_file {input.ind_file} \
+			--tissue_file {input.tissue_file} --group {params.group}"
+		python /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/gather_filter_normalized_expression.py \
+			--RAREDIR {input.RAREDIR} --outpath {params.outpath} --ind_file {input.ind_file} \
+			--tissue_file {input.tissue_file} --group {params.group} """
+
+rule gather_filter_norm_expr_m:
+	input:
+		RAREDIR=config["RAREDIR"],
+		ind_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_individuals_all_normalized_samples_m.txt",
+		tissue_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_tissue_by_ind_m.txt"
+	params:
+		group="m",
+		outpath=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_m.txt.gz"
+	shell:
+		"""python /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/gather_filter_normalized_expression.py \
+			--RAREDIR {input.RAREDIR} --outpath {params.outpath} --ind_file {input.ind_file} \
+			--tissue_file {input.tissue_file} --group {params.group}"""
+rule gather_filter_norm_expr_f:
+	input:
+		RAREDIR=config["RAREDIR"],
+		ind_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_individuals_all_normalized_samples_f.txt",
+		tissue_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_tissue_by_ind_f.txt"
+	params:
+		group="f",
+		outpath=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_f.txt.gz"
+	shell:
+		"""python /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/gather_filter_normalized_expression.py \
+			--RAREDIR {input.RAREDIR} --outpath {params.outpath} --ind_file {input.ind_file} \
+			--tissue_file {input.tissue_file} --group {params.group}"""
+
+rule filter_tissues_individuals_both:
+	input:
+		RAREDIR=config["RAREDIR"],
+		sample_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_samples_tissues.txt",
+		norm_expr_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_both.txt.gz",
+		x_gtf_file=config["RAREDIR"]+"/preprocessing_v8/x_proteincoding_lncrna.gtf",
+		a_gtf_file=config["RAREDIR"]+"/preprocessing_v8/autosomal_proteincoding_lncrna.gtf"
+	output:
+		outfile_x=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.x.both.txt.gz",
+		outfile_a=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.aut.both.txt.gz"
+	params:
+		my_group="both"
+	shell:
+		""" 
+			Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/filter_tissues_individuals.R \
+			--RAREDIR {input.RAREDIR} --sample_file {input.sample_file} --norm_expr_file {input.norm_expr_file} \
+			--x_gtf_file {input.x_gtf_file} --a_gtf_file {input.a_gtf_file} \
+			--outfile_x {output.outfile_x} --outfile_a {output.outfile_a} --group {params.my_group}
+		"""
+
+rule filter_tissues_individuals_m:
+	input:
+		RAREDIR=config["RAREDIR"],
+		sample_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_samples_tissues.txt",
+		norm_expr_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_m.txt.gz",
+		x_gtf_file=config["RAREDIR"]+"/preprocessing_v8/x_proteincoding_lncrna.gtf",
+		a_gtf_file=config["RAREDIR"]+"/preprocessing_v8/autosomal_proteincoding_lncrna.gtf"
+	output:
+		outfile_x=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.x.m.txt.gz",
+		outfile_a=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.aut.m.txt.gz"
+	params:
+		my_group="m"
+	shell:
+		""" 
+			Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/filter_tissues_individuals.R \
+			--RAREDIR {input.RAREDIR} --sample_file {input.sample_file} --norm_expr_file {input.norm_expr_file} \
+			--x_gtf_file {input.x_gtf_file} --a_gtf_file {input.a_gtf_file} \
+			--outfile_x {output.outfile_x} --outfile_a {output.outfile_a} --group {params.my_group}
+		"""
+
+rule filter_tissues_individuals_f:
+	input:
+		RAREDIR=config["RAREDIR"],
+		sample_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_samples_tissues.txt",
+		norm_expr_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_f.txt.gz",
+		x_gtf_file=config["RAREDIR"]+"/preprocessing_v8/x_proteincoding_lncrna.gtf",
+		a_gtf_file=config["RAREDIR"]+"/preprocessing_v8/autosomal_proteincoding_lncrna.gtf"
+	output:
+		outfile_x=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.x.f.txt.gz",
+		outfile_a=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.aut.f.txt.gz"
+	params:
+		my_group="f"
+	shell:
+		""" 
+			Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/filter_tissues_individuals.R \
+			--RAREDIR {input.RAREDIR} --sample_file {input.sample_file} --norm_expr_file {input.norm_expr_file} \
+			--x_gtf_file {input.x_gtf_file} --a_gtf_file {input.a_gtf_file} \
+			--outfile_x {output.outfile_x} --outfile_a {output.outfile_a} --group {params.my_group}
+		"""
