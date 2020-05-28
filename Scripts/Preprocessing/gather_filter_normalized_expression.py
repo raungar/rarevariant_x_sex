@@ -20,7 +20,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-d","--RAREDIR",help="RARE DIR PATH, no trailing /")
 parser.add_argument("-t","--tissue_file",help="path for tissue file (gtex_2017-06-05_tissues_all_normalized...)")
 parser.add_argument("-i","--ind_file",help="path for individual file (gtex_2017-06-05_individuals_all_normalized...)")
-parser.add_argument("-o","--outpath",help="path for gathered expression")
+parser.add_argument("-o","--outpath",help="path for gathered expression, include gz ending")
+#parser.add_argument("-x","--x_gtf_file",help="path for x gtf file")
+#parser.add_argument("-x","--a_gtf_file",help="path for autosomal gtf file")
 parser.add_argument("-g","--group",help="group: sex.both, m, f")
 args = parser.parse_args()
 
@@ -35,6 +37,8 @@ tissueNamesFile = args.tissue_file
 individualsFile=args.ind_file
 outfile=args.outpath
 my_group=args.group
+#a_gtf_file=args.a_gtf_file
+#x_gtf_file=args.x_gtf_file
 
 exprdir = dir + 'PEER_v8/'
 
@@ -76,7 +80,6 @@ for tissue in tissues:
 
 	# read in header and figure out which columns to keep
 	#try:
-	#changed to this because try/catch wouldnt print errors
 	if(1==1):
 		expr = open(filename, 'r')
 		headerList = expr.readline().strip().split()
@@ -89,6 +92,8 @@ for tissue in tissues:
 		ngenes = sum(1 for _ in expr)
 		expr.close()
 
+		print("NGENES: " , ngenes)
+
 		# make sure that individual IDs line up
 		orig = [(['Id'] + individuals)[i-1] for i in index2add ]
 		new = [headerList[i] for i in cols2keep]
@@ -97,7 +102,8 @@ for tissue in tissues:
 		# initialize numpy array to contain final data
 		# fill with NAs
 		#padded = np.full((ngenes,len(individuals)+2), 'NA', dtype='|S40')
-		padded = np.full((ngenes,len(individuals)+2), 'NA', dtype='<U13')
+		#padded = np.full((ngenes,len(individuals)+2), 'NA', dtype='<U13')
+		padded = np.full((ngenes,len(individuals)+2), 'NA', dtype='<U100')
 		# add column with tissue
 		padded[:,0] = tissue
 
@@ -108,6 +114,7 @@ for tissue in tissues:
 		values = values[:, cols2keep]
 		# put the values into the right slots in the preallocated array
 		padded[:,index2add] = values
+		print("padded shape",padded.shape)
 		#print(1)
 		#padded2=np.array([x.decode() for x in padded])
 		#print(2)
