@@ -6,9 +6,8 @@ set.seed(1234) #important: randomly subsetting individuals
 get_opt_parser<-function(){
 	option_list = list(
 		 make_option(c("-d", "--dir_peer"), type="character", default=NULL, help="PEER directory"),
+		 make_option(c("-o", "--outfile"), type="character", default=NULL, help="output file"),
 		 make_option(c("-f", "--file_to_correct"), type="character", default=NULL, help="current file to process"),
-		 #make_option(c("-s", "--subset_do"), type="character", default="y", help="subset files: y/yes, don't do subsetting: n/no"),
-		 #make_option(c("-r", "--residuals_do"), type="character", default="y", help="compute residuals: y/yes, do not compute residuals: n/no"),
 		 make_option(c("-m", "--metadata_file"), type="character", default=NULL, help="metadata file that contains sex")
 		 ) 
 	
@@ -16,8 +15,11 @@ get_opt_parser<-function(){
 	return(opt_parser)
 }
 
-#adjust residuals for sex
-get_individuals<-function(tissue_path,md_dic,used_inds){
+#get which individuals to subset via sex for particular tissue
+#get_individuals<-function(tissue_path,subset_do,residuals_do,md_dic,used_inds){
+get_individuals<-function(tissue_path,md_dic,used_inds, fileout){
+	#this is ugly, but just messing with the string to get the actual tissue name
+	##tissue_name<-gsub('.{1}$', '',sapply(strsplit(sapply(strsplit(tissue_path,"/"), tail,1),"Factor"),head,1))
 	tissue_name<-sapply(strsplit(sapply(strsplit(tissue_path,"/"), tail,1),"\\."),"[[",1)
 	#read in factors
 	print(tissue_name)
@@ -27,9 +29,11 @@ get_individuals<-function(tissue_path,md_dic,used_inds){
 	inds_all<-colnames(factors_b)[-1] #colnames are the individuals
 	md_dic_red<-md_dic[names(md_dic) %in% inds_all] #make sure the dictionary only contains individuals that this tissue has
 
-
 	###CALCULATE RESIDUALS
+	#resid_dir_path<-paste0(tissue_path,"/ResidualsSex")#if does not exist, create new path for subsetted files
 	resid_dir_path<-tissue_path
+        #if(!dir.exists(resid_dir_path)){dir.create(resid_dir_path)}
+	#$if(residuals_do == "y" || residuals_do == "yes"){
 		#independent variable sex
 		ind_sex<-as.matrix(as.factor(md_dic_red[colnames(factors_b)[-1]]))
 		#set dependent variable
@@ -47,10 +51,11 @@ get_individuals<-function(tissue_path,md_dic,used_inds){
 		lm_resid<-residuals(lm_fit)
 		lm_resid_t<-(t(lm_resid))
 		lm_resid_t<-cbind("Id"=rownames(lm_resid_t),lm_resid_t)
-
 		#write this to the new folder
-		fileout=paste0(path,"/",tissue_name,".both.sex.peer.v8ciseQTLs.ztrans.txt")
+                #write.table(lm_resid,file=paste0(resid_dir_path,"/residuals_sex.tsv"),sep="\t",quote=F)
 		write.table(lm_resid_t,file=fileout,sep="\t",quote=F,row.names=F)
+	#}
+
 
 	return(used_inds)	
 	
@@ -73,7 +78,7 @@ peer_dir<-as.character(args$dir_peer)
 #residuals_do<-tolower(as.character(args$residuals_do))
 metadata_file<-as.character(args$metadata_file)
 file_to_correct<-as.character(args$file_to_correct)
-
+fileout<-as.character(args$outfile)
 
 print(peer_dir)
 print(metadata_file)
@@ -88,12 +93,14 @@ ind_dict<-metadata$SEX
 names(ind_dict)<-metadata$SUBJID
 
 used_inds<-list() #individuals who have been included in other tissues
-
+#for(file_path in peer_dirs_bothonly){
 for(file_path in file_to_correct){
 	print(file_path)
 	if(file_path == peer_dir){next} #for some reason list.dirs prints current dir, so skip that
+	#used_inds are individuals that have been subsetted, this loops so at the end it is a master list
+	#used_inds is called by used_inds$tissue_name$female where female is male/female/both
 	print(file_path)
-	used_inds<-get_individuals(file_path,ind_dict,used_inds)
+	used_inds<-get_individuals(file_path,ind_dict,used_inds,fileout)
 	#break
 }
 
