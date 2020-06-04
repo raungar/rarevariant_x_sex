@@ -3,6 +3,8 @@
 ## R script to split the entire GTEx matrices into files for each tissue
 ## then process RPKM and read count matrices so that columns match covariate files.
 ## Prepare matrices for input to PEER.
+## output is peer_dir/tissue_[m/f/both].ztrans.txt
+
 set.seed(1234) #IMPORTANT: RANDOM SUBSETTING OF INDIVIDUALS 
 ## Load required packages
 require(data.table)
@@ -62,6 +64,7 @@ get_ind<-function(tissues, dir){
 ## Log2(tpm + 2) transform the data, then z-transform.
 ## Finally, output the transformed matrix to a new file.
 ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_dif_file=F,inds) {
+    print("in ztrans")
     tpm = fread(paste0(dir, tissue, '.tpm.txt'))
     reads = fread(paste0(dir, tissue, '.reads.txt'))
     
@@ -122,23 +125,30 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
         mix_sex_fm="male"
         covs.m.all<-covs$SUBJID[covs$SEX==min_sex]
         covs.m<-covs.mf.all[covs.m.all %in% colnames(tpm)]
+	half_m<-floor(length(covs.m)/2)
+	covs.m.half<-names(rev(sort(inds[covs.m]))[1:half_m])
         covs.m.all<-covs$SUBJID[covs$SEX==max_sex]
         covs.f.sub<-covs.m.all[covs.f.all %in% colnames(tpm)]
         #sample to individuals that are in the most tissues
         covs.f<-names(rev(sort(inds[covs.f.sub]))[1:length(covs.m)]) 
+        covs.f.half<-names(rev(sort(inds[covs.f.sub]))[1:half_F]) 
       }else if(min_sex==2){
         min_sex_fm="female"
         covs.f.all<-covs$SUBJID[covs$SEX==min_sex]
         covs.f<-covs.f.all[covs.f.all %in% colnames(tpm)]
+	half_f<-floor(length(covs.f)/2)
+	covs.f.half<-names(rev(sort(inds[covs.f]))[1:half_f])
         covs.m.all<-covs$SUBJID[covs$SEX==max_sex]
         covs.m.sub<-covs.m.all[covs.m.all %in% colnames(tpm)]
         #sample to individuals that are in the most tissues
         covs.m<-names(rev(sort(inds[covs.m.sub]))[1:length(covs.f)]) 
+        covs.m.half<-names(rev(sort(inds[covs.m.sub]))[1:half_f]) 
       }else {
         min_sex_fm=stop("ERROR")
       }
       
       covs.both<-c(covs.m,covs.f)
+      covs.both.half<-c(covs.m.half,covs.f.half)
       
       ####SUBSET, LOG TRANSFORM, AND Z TRANSFORM
       #M
@@ -164,6 +174,7 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
       write.table(tpm.out.f, paste0(dir, tissue, '.log2.ztrans.f.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
       
       #Both
+      print(paste0("WRITING BOTH:",dir, tissue, '.log2.ztrans.both.txt'))
       tpm.both = tpm[, c(covs.both), with = F]
       reads.covs = reads[, c(covs.both), with = F]
       ind.filt.both = round(0.2*ncol(tpm.both)) #20% of people
@@ -174,6 +185,26 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
       tpm.out.both = scale(t(log2(tpm.cut.both + 2))) #log and z transform
       colnames(tpm.out.both) = genes[indices.keep.both]
       write.table(tpm.out.both, paste0(dir, tissue, '.log2.ztrans.both.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
+
+
+      #Both half
+      print(paste0("WRITING BOTH HALF:",dir, tissue, '.log2.ztrans.both_half.txt'))
+      tpm.both.half = tpm[, c(covs.both.half), with = F]
+      reads.covs = reads[, c(covs.both.half), with = F]
+      ind.filt.both.half = round(0.2*ncol(tpm.both.half)) #20% of people
+
+      tpm.m.half = tpm[, c(covs.m.half), with = F]
+      reads.m.half = reads[, c(covs.m.half), with = F]
+      ind.filt.m.half = round(0.2*ncol(tpm.m.half)) #20% of people
+      tpm.f.half = tpm[, c(covs.f.half), with = F]
+      reads.f.half = reads[, c(covs.f.half), with = F]
+      ind.filt.f.half = round(0.2*ncol(tpm.f.half)) #20% of people
+
+      indices.keep.both.half = (rowSums(tpm.m.half > tpm.filt & reads.m.half > read.filt) >= ind.filt.m.half ) | (rowSums(tpm.f.half > tpm.filt & reads.f.half > read.filt) >= ind.filt.f.half)
+      tpm.cut.both.half = tpm.both.half[indices.keep.both.half, -1]
+      tpm.out.both.half = scale(t(log2(tpm.cut.both.half + 2))) #log and z transform
+      colnames(tpm.out.both.half) = genes[indices.keep.both.half]
+      write.table(tpm.out.both.half, paste0(dir, tissue, '.log2.ztrans.both_half.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
       
       ##OPTIONAL DEPENDING ON INPUT
       #write to a file if indicated how the tpm subsetting changed number of genes
@@ -267,6 +298,7 @@ covariates = merge(pcs, sex, by = 'SUBJID')
 
 
 if(do_tissues){
+  print("Do tissues")
   if(tpm_dif_file != "F"){
     header<-data.frame("tissue","m_only","f_only")
     write.table(header, file=tpm_dif_file,sep="\t",quote = F,row.names = F,col.names = F)
@@ -275,6 +307,7 @@ if(do_tissues){
 	sapply(tissues, ztrans.tissue, dir = peer.dir, covs = covariates,
 	       tpm_dif_file=tpm_dif_file,inds=ind_table)
 } else{
+	print("don't do tisues")
 	#DONE SEPARATELY (RAU: ????)
 	###system(make.split.command('tpm', map.file, peer.dir, GTEX_RNAv8))
 	###system(make.split.command('reads', map.file, peer.dir, GTEX_RNAv8))
