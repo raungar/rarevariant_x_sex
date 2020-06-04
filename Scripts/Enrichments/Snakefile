@@ -1,0 +1,55 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+GROUPS=["both","m","f","both.regress","both.sex"]
+TYPES=["x","aut"]
+
+rule all:
+	input: 
+		#expand(config["RAREDIR"]+"/enrichments_v8/outliers_zthresh2_nphen5_noglobal_medz_varAnnot_{type}_{group}.txt", type=TYPES, group=GROUPS)
+		expand(config["RAREDIR"]+"/enrichments_v8/enrichments_10kb_z2_{type}_{group}.RData", type=TYPES, group=GROUPS),
+		#expand(config["RAREDIR"]+"/enrichments_v8/relative_risk_{type}_{group}.RData", type=TYPES, group=GROUPS)
+
+rule compute_enrichments_medz:
+	input:
+		scriptdir="/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/",
+		RAREDIR=config["RAREDIR"],
+		outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_zthresh2_nphen5_globalOutliersRemoved_{type}_{group}.txt"
+	params:
+		dirsuffix="v8",
+		window="10kb_genebody",
+		z_thresh="2",
+		outsuffix="enrich_{type}_{group}"
+	output:
+		outfile=config["RAREDIR"]+"/enrichments_v8/enrichments_10kb_z2_{type}_{group}.RData"
+	shell:
+		"""Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/compute_enrichments_MEDZ.R \
+			--dir.suffix {params.dirsuffix} --window {params.window} --scriptdir {input.scriptdir} \
+			--output.suffix={params.outsuffix} --RAREDIR {input.RAREDIR} \
+			--z_thresh {params.z_thresh} --outliers.file {input.outlier_file} --output {output.outfile}
+		"""
+
+rule join_variant_annotations:
+	input:
+		outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_zthresh2_nphen5_globalOutliersRemoved_{type}_{group}.txt",
+		variant_file="/oak/stanford/groups/smontgom/raungar/Sex/Files/gtex_v8_rare_GxI_collapsed_feature.tsv.gz"
+	params:
+		method="medz" #medz or splicing or ase
+	output:
+		outfile=config["RAREDIR"]+"/enrichments_v8/outliers_zthresh2_nphen5_noglobal_medz_varAnnot_{type}_{group}.txt"
+	shell:
+		"""Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/join_variant_annotations.R \
+			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+			--outfile {output.outfile} """
+
+rule calculate_risks:
+	input:
+		infile=config["RAREDIR"]+"/enrichments_v8/outliers_zthresh2_nphen5_noglobal_medz_varAnnot_{type}_{group}.txt"
+	params:
+		zscore=2
+	output:
+		relative=config["RAREDIR"]+"/enrichments_v8/relative_risk_{type}_{group}.RData",
+		continuous=config["RAREDIR"]+"/enrichments_v8/continuous_risk_{type}_{group}.RData"
+	shell:
+		"""Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_across_types.R \
+			--infile {input.infile} --zscore {params.zscore} \
+			--out_rdata_relative {output.relative} --out_rdata_continuous {output.continuous} """
