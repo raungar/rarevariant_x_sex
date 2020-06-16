@@ -18,14 +18,14 @@ srun="srun -n1 -N1 --exclusive"
 peerdir=$1 #${RAREDIR}/preprocessing_v8/PEER_v8
 scriptdir=$2 #`dirname \$(readlink -f "\$0")`
 RAREDIR=$3
-
+traitsFileName=$4
 ## Calculate PEER factors for each tissue.
 ## The nubmer of PEER factors is determined by the number of samples in the tissue.
 ## 15 factors for < 150 samples; 30 factors for between 150 and 250 samples; 35 factors for > 250 samples
 
 
-for traitsFileName in `ls ${peerdir}/*log2.ztrans*.txt`
-do
+#for traitsFileName in `ls ${peerdir}/*log2.ztrans*.txt`
+#do
 
     prefix=${traitsFileName%.log2.ztrans*txt}
     sex=`echo $traitsFileName | awk -F"\\." '{print $(NF-1)}'`
@@ -58,5 +58,5 @@ do
     echo "Rscript calculate_PEER_factors.R $traitsFileName $maxFactorsN $maxIterations $boundTol $varTol $e_pa $e_pb $a_pa $a_pb $outdir $tissue" > ${outdir}/log.txt
      Rscript ${scriptdir}/calculate_PEER_factors.R $traitsFileName $maxFactorsN $maxIterations \
             $boundTol $varTol $e_pa $e_pb $a_pa $a_pb $outdir $tissue >> ${outdir}/log.txt 2>&1
-   break
-done
+#  break
+#done
