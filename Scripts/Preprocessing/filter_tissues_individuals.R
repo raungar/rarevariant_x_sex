@@ -1,7 +1,7 @@
-#!/usr/bin/env Rscript
-
 ## R script to pick tissues and individuals for imputation and outlier calling
 ## Run from upper level directory of the repo (or adjust path to tissue colors)
+print("RUN FILTER TISSUES")
+
 
 require(ggplot2)
 require(gplots)
@@ -37,6 +37,8 @@ norm_expr_file<-as.character(args$norm_expr_file)
 x_gtf_file<-as.character(args$x_gtf_file)
 a_gtf_file<-as.character(args$a_gtf_file)
 
+
+print(norm_expr_file)
 
 # RAREDIR="/oak/stanford/groups/smontgom/raungar/Sex/Output"
 # sample_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_v8_samples_tissues.txt"
@@ -105,7 +107,7 @@ meta$Id = apply(str_split_fixed(meta$Sample, '-', 6)[, c(1:2)], 1, paste, collap
 #expr = read.table(gzfile(norm_expr_file), header=T)
 expr = fread(paste0("zcat -f ",norm_expr_file), header=T)
 expr2 = fread(norm_expr_file, header=T)
-#print("EXPR") #Adipose_Subcu
+print("EXPR") #Adipose_Subcu
 #print(head(expr))
 tissue_dic<-sort(unique(meta$Tissue))
 names(tissue_dic)<-sort(unique(expr$Tissue))
@@ -143,13 +145,13 @@ for (t in tissues) {
 #tiss.miss$tissue = factor(tiss.miss$tissue, levels = tiss.miss$tissue)
 #tissues.final=as.character(tiss.miss$tissue)
 tissues.final=rownames(exp.design)
-#print("TISSUES FINAL")
+print("TISSUES FINAL")
 #print(tissues.final)
 
 #tissues.final = as.character(missingness.tiss$keep)
 exp.design = exp.design[tissues.final, ]
 
-print("begin ind.miss")
+#print("begin ind.miss")
 ## Filter for individuals with at most 75% missingness (based on subset set of tissues)
 #inds.final = as.character(plot.ind.miss(exp.design, thresh = NULL)$keep)
 ind.miss = data.frame(ind = colnames(exp.design), perc = 1 - colMeans(exp.design))
@@ -157,7 +159,7 @@ ind.miss = ind.miss[order(ind.miss$perc), ]
 inds.final = as.character(ind.miss$ind)
 exp.design = exp.design[, inds.final]
 print("INDS.FINAL")
-print(head(inds.final))
+#print(head(inds.final))
 
 ### Make heatmap and barplots with filtered tissues and individuals
 cat('Average missingness', mean(exp.design), '\n')
@@ -171,7 +173,7 @@ write.table(exp.design, paste0(dir, '/gtex_2017-06-05_v8_design_passed_',my_grou
             sep = '\t', quote = F, col.names = T, row.names = T)
 
 ## Subset the normalized expression file to the individuals and tissues selected
-print("EXPR TISSUE IN FINAL")
+#print("EXPR TISSUE IN FINAL")
 #print(expr$Tissue)
 #print(head(expr))
 #print(unique(expr$Tissue))
@@ -181,11 +183,12 @@ expr.subset = expr[which(expr$Tissue %in% tissues.final),]
 #head(expr.subset)
 rm(expr)
 #expr.subset = expr.subset[, c('Tissue', 'Gene', sort(get(inds.final)))]
-print("EXPR>SUBSET")
-print(head(expr.subset))
+#print("EXPR>SUBSET")
+#print(head(expr.subset))
 ## Then subset to the genes expressed in each tissue that are either protein coding or lincRNA
 ## first reading in the list of autosomal protein-coding  & lincRNA genes
 
+print("Read gtf")
 
 autosomal.df = fread(a_gtf_file,
                           header = F, stringsAsFactors = F)
@@ -197,13 +200,15 @@ colnames(autosomal.df)<-c("gene","type")
 #print(head(autosomal.selected))
 autosomal.selected<-autosomal.df
 ##autosomal.selected$gene<-sapply(strsplit(autosomal.selected$gene,"\\."),"[[",1)
-print(head(autosomal.selected))
+#print(head(autosomal.selected))
+
+print("read x")
 
 x.df = fread(x_gtf_file,
                           header = F, stringsAsFactors = F)
 colnames(x.df)<-c("gene","type")
-print("x.df")
-print(head(x.df))
+#print("x.df")
+#print(head(x.df))
 x.selected<-x.df
 ####x.selected$gene<-sapply(strsplit(x.selected$gene,"\\."),"[[",1)
 print(head(x.selected))
@@ -211,49 +216,57 @@ print(head(x.selected))
 #x.selected<-sapply(strsplit(x.selected,"\\."),"[[",1)
 
 
-print(length(unique(expr.subset$Gene)))
+#print(length(unique(expr.subset$Gene)))
 genes.counts = table(expr.subset$Gene)
 #print(genes.counts)
 #genes.keep = names(genes.counts)[which(genes.counts == length(tissues.final))]
 genes.keep=expr.subset$Gene
 
 print("GENES KEEP")
-print(length(genes.keep))
+#print(length(genes.keep))
 #print(length(genes.keep))
 #print("AUTOSOMAL SELEcTED")
 #print((unique(autosomal.selected)))
 #print("x selected")
 #print((unique(x.selected)))
-print("table autosome then x")
-print(table(genes.keep %in% autosomal.selected$gene))
+#print("table autosome then x")
+#print(table(genes.keep %in% autosomal.selected$gene))
 #print(table(autosomal.selected %in% genes.keep))
-print(table(genes.keep %in% x.selected$gene))
+#print(table(genes.keep %in% x.selected$gene))
 print(table(x.selected$gene %in% genes.keep))
-print(paste0(head(genes.keep), " IN a: ", head(autosomal.selected$gene)))
-print(paste0(head(genes.keep), " IN x: ", head(x.selected$gene)))
+#print(paste0(head(genes.keep), " IN a: ", head(autosomal.selected$gene)))
+#print(paste0(head(genes.keep), " IN x: ", head(x.selected$gene)))
 
 genes.keep.a = genes.keep[which(genes.keep %in% autosomal.selected$gene)]
-print(length(genes.keep.a))
+#print(length(genes.keep.a))
 expr.subset.a = expr.subset[which(expr.subset$Gene %in% genes.keep.a), ]
 ## finally restandardize and output subsetted expression matrix
 expr.subset.a = as.data.frame(expr.subset.a)
 expr.subset.a[, 3:ncol(expr.subset.a)] = t(scale(t(expr.subset.a[, 3:ncol(expr.subset.a)])))
 
+print("HERE")
+print(length(x.selected$gene))
 genes.keep.x = genes.keep[which(genes.keep %in% x.selected$gene)]
 print(length(genes.keep.x))
 expr.subset.x = expr.subset[which(expr.subset$Gene %in% genes.keep.x), ]
 ## finally restandardize and output subsetted expression matrix
+print("now subset")
 expr.subset.x = as.data.frame(expr.subset.x)
+print("3:ncol")
 expr.subset.x[, 3:ncol(expr.subset.x)] = t(scale(t(expr.subset.x[, 3:ncol(expr.subset.x)])))
 
 
+print("writing aut")
 #gzout = gzfile(paste0(dir, '/gtex_2017-06-05_normalized_expression_v8ciseQTLs_removed.subset.txt.gz'), 'w')
 gzout_a=gzfile(outfile_a,'w')
 write.table(expr.subset.a, gzout_a, sep = '\t', quote = F, col.names = T, row.names = F)
 close(gzout_a)
 
+print("writing x")
 gzout_x=gzfile(outfile_x,'w')
 write.table(expr.subset.x, gzout_x, sep = '\t', quote = F, col.names = T, row.names = F)
 close(gzout_x)
+
+print("complete")
 
 
