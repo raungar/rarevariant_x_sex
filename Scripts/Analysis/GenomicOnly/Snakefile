@@ -1,0 +1,28 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+GROUPS=["both_half.regress","both_half","m","f"]
+TYPES=["x","aut"]
+
+rule all:
+	input: 
+		expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_numrv.txt", type=TYPES),
+		expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_sigdif.txt", type=TYPES)
+
+rule get_chr_rvs:
+	input:
+		infile=config["RAREDIR"]+"/enrichments_v8/all_rvs_inds_types.txt.gz"
+		euro_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt"
+		sex_file=config["GTEX_SUBJECTSv8"]
+	params:
+		chrtype="{type}"
+	output:
+		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_numrv.txt"
+		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_sigdif.txt"
+		
+	shell:
+		"""
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Analysis/GenomicOnly/get_chr_rvs.R \
+		--infile {input.infile} --euro_file {input.euro_file} \
+		--sex_file {input.sex_file} --chrtype {params.chrtype} \
+		--out_numrvs {output.num_rvs} --out_sigdif {output.sig_dif}
+		"""
