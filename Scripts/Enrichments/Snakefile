@@ -41,6 +41,28 @@ rule combine_rvs_inds:
 		gzip {params.pregz}
 		"""
 
+rule get_shared_rvs:
+	input:
+		rvs_all=Output/enrichments_v8/all_rvs_inds_types.txt.gz
+	output:
+		temp_out=temp(config["RAREDIR"]+"/enrichments_v8/{type}_temp_out.txt")
+		out=config["RAREDIR"]+"/enrichments_v8/{type}_all_rvs_inds_types_repeated.txt"
+	shell:
+		"""
+		Scripts/Enrichments/get_dupl_rvs.sh {input.rvs_all} {output.temp_out} {output.out}
+		"""
+
+rule annotate_shared_rvs:
+	input:
+		rv_file=config["RAREDIR"]+"/enrichments_v8/{type}_all_rvs_inds_types_repeated.txt.gz"
+		gtf_file=config["hg38_gtf"]
+	output:
+		config["RAREDIR"]+"/enrichments_v8/{type}_all_rvs_inds_types_repeated_annot.txt"
+	shell:
+		"""
+		bedtools window -a {input.rv_file} -b {input.gtf} -w 10000 | awk -F"[\t\"]" '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$16}'  | sort | uniq > {output}
+		"""
+
 rule join_variant_annotations:
 	input:
 		outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_zthresh"+zmin+"_nphen"+nphen+"_globalOutliersRemoved_{type}_{group}.txt",
