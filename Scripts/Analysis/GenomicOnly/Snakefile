@@ -2,47 +2,51 @@ configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths
 
 GROUPS=["both_half.regress","both_half","m","f"]
 TYPES=["x","aut"]
+#TYPES=["x"]
 X_SUBTYPES=["PAR","PAR1","PAR2","NONPAR", "XCR1","XCR2","XTR","XAR"]
 
 rule all:
 	input: 
 		expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_numrv.txt.gz", type=TYPES),
 		expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_sigdif.txt.gz", type=TYPES),
-		expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{subtype}_all_numrv.txt.gz", subtype=X_SUBTYPES)
-		expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{subtype}_all_sigdif.txt.gz", subtype=X_SUBTYPES)
+		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv.txt.gz", subtype=X_SUBTYPES),
+		expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_sigdif.txt.gz", subtype=X_SUBTYPES)
 
 rule get_chr_rvs:
 	input:
-		infile=config["RAREDIR"]+"/enrichments_v8/{type}_all_rvs_inds_types.txt.gz"
-		euro_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt"
-		sex_file=config["GTEX_SUBJECTSv8"]
+		infile=config["RAREDIR"]+"/enrichments_v8/{type}_all_rvs_inds_types.txt.gz",
+		euro_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt",
+		sex_file=config["GTEX_SUBJECTSv8"], 
+		chrlen_file=config["chrlen_file"]
 	params:
 		chrtype="{type}"
 	output:
-		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_numrv.txt"
-		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_sigdif.txt"
+		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_numrv.txt.gz",
+		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_sigdif.txt.gz"
 		
 	shell:
 		"""
 		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Analysis/GenomicOnly/get_chr_rvs.R \
-		--infile {input.infile} --euro_file {input.euro_file} \
-		--sex_file {input.sex_file} --chrtype {params.chrtype} \
-		--out_numrvs {output.num_rvs} --out_sigdif {output.sig_dif}
+		--infile="{input.infile}" --euro_file="{input.euro_file}" \
+		--sex_file="{input.sex_file}" --chrtype="{params.chrtype}" \
+		--out_numrvs="{output.num_rvs}" --out_sigdif="{output.sig_dif}" \
+		 --chrlen_infile="{input.chrlen_file}"
 		"""
 
 rule get_x_subtypes:
 	input:
-		infile=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types.txt.gz"
-		euro_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt"
+		infile=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types.txt.gz",
+		euro_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt",
 		sex_file=config["GTEX_SUBJECTSv8"]
+	params:
+		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv.txt.gz"
 	output:
-		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv.txt"
-		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_sigdif.txt"
-		
+		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv.txt.gz",
+		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_sigdif.txt.gz"
 	shell:
 		"""
-		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Analysis/GenomicOnly/get_chr_rvs.R \
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Analysis/GenomicOnly/get_xsubtypes_rvs.R \
 		--infile {input.infile} --euro_file {input.euro_file} \
 		--sex_file {input.sex_file} \
-		--out_numrvs {output.num_rvs} --out_sigdif {output.sig_dif}
+		--out_numrvs {params.num_rvs} --out_sigdif {output.sig_dif}
 		"""
