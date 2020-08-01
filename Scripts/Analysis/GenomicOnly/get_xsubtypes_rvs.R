@@ -1,6 +1,7 @@
 library("dplyr")
 library("mltools") #ecdf
 library("data.table")
+library(optparse)
 
 
 
@@ -21,19 +22,94 @@ sex_file <- as.character(opt$sex_file)
 out_numrvs <- as.character(opt$out_numrvs)
 out_sigdif <- as.character(opt$out_sigdif)
 
+
+
+# infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/x_all_rvs_inds_types.txt.gz"
+# euro_file<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt"
+# sex_file<-"/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/sample_annotations/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS_v2_downloaded_april2020.txt"
+# out_numrvs<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_all_numrv.txt.gz"
+# out_sigdif<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_all_sigdif.txt"
+# chrtype="x"
+
+
+wrong_self_reported_ancestry<-c("GTEX-11TT1", "GTEX-12ZZX", "GTEX-131XF", "GTEX-147F3","GTEX-15SZO","GTEX-16XZY","GTEX-17EUY","GTEX-17HHE", 
+                                "GTEX-18D9U", "GTEX-1C4CL", "GTEX-1IDJC", "GTEX-1RMOY", "GTEX-R53T", "GTEX-R55D", "GTEX-WHPG", "GTEX-XMD3","GTEX-YB5E")
+
+
+exp_data = fread(infile,data.table=F)
+colnames(exp_data)<-c("chr","start","end","maf","gtex_sample","vartype")
+euro<-fread(euro_file)
+euro_vec_unchecked<-as.character(data.frame(euro)[,1])
+euro_vec<-euro_vec_unchecked[!(euro_vec_unchecked %in% wrong_self_reported_ancestry )]
+exp_data_euro<-exp_data[exp_data$gtex_sample %in% euro_vec,]
+sex_df<-fread(sex_file,data.table=F)
+sex_hash<-sex_df$SEX
+names(sex_hash)<-sex_df$SUBJID
+
+
 get_mww_test_m_f_par<-function(maf_m,maf_f,this_var,mult_test_type="BH",par_hash){
-  print(this_var)
-  mw_df<-data.frame(row.names = c("maf","pval","padj","vartype","par_region"))
-  for (this_par_region in names(par_hash)){
-    mw_test_p_reg<-unlist(lapply(sort(unique(maf_m$UpperBound)),
-                                  function(x)
-                                    wilcox.test(as.numeric(maf_m %>% dplyr::filter(vartype==this_var & par_region==this_par_region & UpperBound==x) %>% pull(N.cum)),
-                                                as.numeric(maf_f %>% dplyr::filter(vartype==this_var & par_region==this_par_region & UpperBound==x) %>% pull(N.cum)))$p.value
-    ))
-      mw_df_reg<- data.frame("maf"=sort(unique(maf_m$UpperBound)),"pval"=mw_test_p_reg,
-                         "padj"=p.adjust(mw_test_p_reg,method =mult_test_type), "vartype"=this_var, 
-                         "par_region"=this_par_region)
-      mw_df<-rbind(mw_df,mw_df_reg)
+  # maf_df<-rbind(c(0,0.001),c(0.001,0.01),c(0.01,0.05),c(0.05,0.1),c(0.1,0.25))
+  # rownames(maf_df)<-c("0-0.001","0.001-0.01","0.01-0.05","0.05-0.10","0.10-0.25")
+  # colnames(maf_df)<-c("min","max")
+  # print(this_var)
+  # 
+  # 
+  # for (this_par_region in names(par_hash)){
+  #   nrow_m<-maf_m %>% dplyr::filter(vartype==this_var & par_region==this_par_region) %>% nrow()
+  #   nrow_f<-maf_f %>% dplyr::filter(vartype==this_var & par_region==this_par_region) %>% nrow()
+  #   if(nrow_m == 0 | nrow_f ==0){
+  #     print(paste0("not enough obs ", this_par_region, " for ", this_var))
+  #     #next
+  #   }
+  #   
+  #   for(maf_max in rownames(maf_df)){
+  #     this_maf_min<-maf_df[maf_max,"min"]
+  #     this_maf_max<-maf_df[maf_max,"max"]
+  # 
+  #     maf_m_filt<-maf_m %>% dplyr::filter(vartype ==vartype & par_region==this_par_region & UpperBound <= this_maf_max & UpperBound > this_maf_min) %>% as.data.frame()
+  #     maf_f_filt<-maf_f %>% dplyr::filter(vartype ==vartype & par_region==this_par_region & UpperBound <= this_maf_max & UpperBound > this_maf_min) %>% as.data.frame()
+  #     if(nrow(maf_m_filt) == 0 | nrow(maf_f_filt) ==0){
+  #       print(paste0("not enough observations for  ", this_chr, " in ", this_par_region, " for MAF: ", maf_max))
+  #       this_mw_df<-data.frame(maf=maf_max,"pval"="NA","padj"="NA", "vartype"=this_var, "chr"=this_chr,par_region==this_par_region)
+  #       mw_df<-rbind(mw_df,this_mw_df)
+  #       next
+  #     }
+  #     mw_test_p<-wilcox.test(as.numeric(maf_m_filt[,"N.cum"]), as.numeric(maf_f_filt[,"N.cum"]))$p.value
+  # 
+  #     mw.adj.p<-p.adjust(mw_test_p,n = length(maf_max), method =mult_test_type)
+  #     this_mw_df<-data.frame(maf=maf_max,"pval"=mw_test_p,"padj"=mw.adj.p, "vartype"=this_var, "chr"=this_chr,par_region==this_par_region)
+  #     mw_df<-rbind(mw_df,this_mw_df)
+  #     # mw_test_p<-unlist(lapply(sort(unique(maf_m$UpperBound)),
+  #     #                          function(x)
+  #     #                            wilcox.test(as.numeric(as.data.frame(maf_m)[maf_m$vartype==vartype &  maf_m$chr==this_chr,"N.cum"]),
+  #     #                                        as.numeric(as.data.frame(maf_f)[ maf_f$vartype==vartype &  maf_f$chr==this_chr,"N.cum"]))$p.value)
+  #     # )
+  #   }
+     mw_df<-data.frame(row.names = c("maf","pval","padj","vartype","par_region"))
+     for (this_par_region in names(par_hash)){
+       nrow_m<-maf_m %>% dplyr::filter(vartype==this_var & par_region==this_par_region) %>% nrow()
+       nrow_f<-maf_f %>% dplyr::filter(vartype==this_var & par_region==this_par_region) %>% nrow()
+       if(nrow_m == 0 | nrow_f ==0){
+         print(paste0("not enough obs ", this_par_region, " for ", this_var))
+         #this_mw_df<-data.frame(maf=seq(0,.25, 0.001),"pval"="NA","padj"="NA", "vartype"=this_var, par_region=this_par_region)
+         #mw_df<-rbind(mw_df,this_mw_df)
+         next
+       }
+       mw_test_p_reg<-unlist(lapply(sort(unique(maf_m$UpperBound)),
+                                     function(x)
+                                       wilcox.test(as.numeric(maf_m %>% dplyr::filter(vartype==this_var & par_region==this_par_region & UpperBound==x) %>% pull(N.cum)),
+                                                   as.numeric(maf_f %>% dplyr::filter(vartype==this_var & par_region==this_par_region & UpperBound==x) %>% pull(N.cum)))$p.value
+       ))
+      # mw_test_p_reg<- wilcox.test(as.numeric(maf_m %>% dplyr::filter(vartype==this_var & par_region==this_par_region) %>% pull(N.cum)),
+      #                                          as.numeric(maf_f %>% dplyr::filter(vartype==this_var & par_region==this_par_region ) %>% pull(N.cum)))$p.value
+      # mw_df_reg<- data.frame("pval"=mw_test_p_reg,
+      #                      "padj"=p.adjust(mw_test_p_reg,n=nrow_f,method =mult_test_type), "vartype"=this_var,
+      #                      "par_region"=this_par_region)
+
+    mw_df_reg<- data.frame("maf"=sort(unique(maf_m$UpperBound)),"pval"=mw_test_p_reg,
+                       "padj"=p.adjust(mw_test_p_reg,method =mult_test_type), "vartype"=this_var,
+                       "par_region"=this_par_region)
+    mw_df<-rbind(mw_df,mw_df_reg)
   }
   
   return(mw_df)
@@ -42,13 +118,16 @@ get_mww_test_m_f_par<-function(maf_m,maf_f,this_var,mult_test_type="BH",par_hash
 
 
 get_summary_par<-function(this_cum_maf, this_sdcol){
-  
+  print(paste0("THIS SD COL: ",this_sdcol))
+  print(head(this_cum_maf))
+  print(tail(this_cum_maf))
   cum_maf_sd<-as.data.table(this_cum_maf)[,
                                           Reduce(c,lapply(.SD,stats::sd)), 
-                                          by=.(vartype,UpperBound,chr,par_region),.SDcols=this_sdcol]
+                                          by=.(vartype,UpperBound,chr,par_region),.SDcols=c(this_sdcol)]
+  print("then summary")
   cum_maf_summary<-as.data.table(this_cum_maf)[,
                                                Reduce(c,lapply(.SD,function(x) as.list(summary(x)))), 
-                                               by=.(vartype,UpperBound,chr,par_region),.SDcols=this_sdcol]
+                                               by=.(vartype,UpperBound,chr,par_region),.SDcols=c(this_sdcol)]
   
   cum_maf_df<-merge(x = cum_maf_summary, y = cum_maf_sd, by = c("vartype","UpperBound","chr","par_region"), all=T)
   colnames(cum_maf_df)<-c("vartype","maf","chr","par","this_min","IQR1","this_median","this_mean","IQR3","this_max","this_sd")
@@ -87,11 +166,11 @@ make_subregion_df<-function(){
 subregion_df<-make_subregion_df()[[1]]
 par_hash<-make_subregion_df()[[2]]
 
-cum_maf_parreg<-data.frame(row.names=c("gtex_sample","vartype","chr","par_region","UpperBound","N.cum","CDF"))
+cum_maf_parreg<-data.frame(row.names=c("gtex_sample","vartype","chr","par_region","UpperBound","N.cum","CDF", "N.cum.adj"))
 
 
-#for this_subregion in rownames(subregion_df){
-for (this_subregion in "XTR"){
+for (this_subregion in rownames(subregion_df)){
+#for (this_subregion in "XTR"){
   #first, get RVs in this subregion
   this_s<-subregion_df[this_subregion,"start"]
   this_e<-subregion_df[this_subregion,"end"]
@@ -108,41 +187,51 @@ for (this_subregion in "XTR"){
   cum_maf_parreg_this_subregion<-as.data.table(exp_data_this_subregion)[,
                                                    Reduce(c,lapply(.SD, function(x) as.list(empirical_cdf(x,ubounds=seq(0, .25, by=0.001))))),
                                                    by=.(gtex_sample,vartype,chr,par_region),.SDcols="maf"]
+  #adjust number per 10000 bp
+  cum_maf_parreg_this_subregion$N.cum.adj<-cum_maf_parreg_this_subregion$N.cum/par_hash[this_subregion]*10000
+  
   cum_maf_parreg<-rbind(cum_maf_parreg,cum_maf_parreg_this_subregion)
 
 }
 
-#adjust number per 1000 bp
 
-cum_maf_parreg$N.cum.adj<-cum_maf_parreg$N.cum/par_hash[cum_maf_parreg$par_region]*10000
+###NA FOR SOME REASON FOR XAR CHECK IT OUT!
 #subset to m/f/both
 this_cum_maf_parreg_m<-cum_maf_parreg[sex_hash[cum_maf_parreg$gtex_sample]==1,]
 this_cum_maf_parreg_f<-cum_maf_parreg[sex_hash[cum_maf_parreg$gtex_sample]==2,]
-this_cum_maf_parreg_m_double<-this_cum_maf_parreg_f
+this_cum_maf_parreg_m_double<-this_cum_maf_parreg_m
 this_cum_maf_parreg_m_double$N.cum<-this_cum_maf_parreg_m_double$N.cum*2
 this_cum_maf_parreg_m_double$N.cum.adj<-this_cum_maf_parreg_m_double$N.cum.adj*2
 
-
+print("cum_maf_parreg head and tail")
+print(head(cum_maf_parreg))
+print(tail(cum_maf_parreg))
 #get mean, median, and sd at a given MAF summary for indiviudals
 #at same vartype/maf/chr
+print("N.cum")
 cum_maf_summ_parreg_m<-get_summary_par(this_cum_maf_parreg_m, "N.cum")
+print("f")
 cum_maf_summ_parreg_f<-get_summary_par(this_cum_maf_parreg_f,"N.cum")
+print("m.double")
 cum_maf_summ_parreg_m_double<-get_summary_par(this_cum_maf_parreg_m_double,"N.cum")
 
 
 #get mean, median, and sd at a given MAF summary for indiviudals
 #at same vartype/maf/chr
+print("adj")
 cum_maf_summ_parreg_adj_m<-get_summary_par(this_cum_maf_parreg_m,"N.cum.adj")
+print("f")
 cum_maf_summ_parreg_adj_f<-get_summary_par(this_cum_maf_parreg_f,"N.cum.adj")
+print("m.double")
 cum_maf_summ_parreg_m_double_adj_par<-get_summary_par(this_cum_maf_parreg_m_double,"N.cum.adj")
 
 #combine m+f for plotting
-cum_maf_summ_plot_m_and_f_parreg<-rbind(cbind(cum_maf_summ_parreg_m_double, "sex"="male"),
-                                        cbind(cum_maf_summ_parreg_f, "sex"="female"))
+# cum_maf_summ_plot_m_and_f_parreg<-rbind(cbind(cum_maf_summ_parreg_m_double, "sex"="male"),
+#                                         cbind(cum_maf_summ_parreg_f, "sex"="female"))
 cum_maf_summ_plot_m_and_f_parreg_adj<-rbind(cbind(cum_maf_summ_parreg_m_double_adj_par, "sex"="male"),
-                                            cbind(cum_maf_summ_parreg_f_half_adj_par, "sex"="female"))
+                                            cbind(cum_maf_summ_parreg_adj_f, "sex"="female"))
 #and write!!!
-write.table(cum_maf_summ_plot_m_and_f_parreg_adj,gzfile(out_sigdif), quote = F,sep="\t",row.names = F) 
+write.table(cum_maf_summ_plot_m_and_f_parreg_adj,gzfile(out_numrvs), quote = F,sep="\t",row.names = F) 
 
 
 
@@ -154,7 +243,7 @@ mmw_all_par<-rbind(mmw_snps_par[-1,],
                    mmw_indels_par[-1,],
                    mmw_sv_par[-1,]) 
 
-write.table(mmw_all,gzfile(out_sigdif), quote = F,sep="\t",row.names = F) 
+write.table(mmw_all_par,gzfile(out_sigdif), quote = F,sep="\t",row.names = F) 
 
 
 
