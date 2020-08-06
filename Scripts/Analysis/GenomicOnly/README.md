@@ -16,6 +16,12 @@ input: x_all_rvs_inds_types.txt.gz, eurofile, file of sample's sex
 output: number of rvs for MAF x subregion x variant type x subtype x sex, then significance of difference of this combination for males and females     
 
 
+##### rule  get_maf_distribution
+purpose: get a chosen MAF where there is no summary, all individuals at that MAF w specified sex to plot distributions later
+input: enrichment_v8/[x/aut]_all_rvs_inds_types.txt.gz (chr/start/end/maf/vartype/ind), eurofile, chr len file, file of samples sex, maf
+output: for a maf, sex, all individuals, all vartypes in a txt.gz file
+
+
 ### Plotting Files    
 #### plots_x_summaries.R
 purpose: combines previous analysis, manually edit to plot #RVs/bp*10000 vs MAF and -log(p) vs MAF       
