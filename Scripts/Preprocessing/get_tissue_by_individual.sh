@@ -27,7 +27,7 @@ do
 	echo -e "Tissue\tId" > $out
 
 
-	for f in ${dir}/PEER_v8/*${group}.peer.v8ciseQTLs.ztrans.txt
+	for f in ${dir}/PEER_v8/*.${group}.peer.v8ciseQTLs.ztrans.txt
 	do
 	    fname=`basename $f`
 	    tissue=${fname%.${group}.peer.v8ciseQTLs.ztrans.txt}
