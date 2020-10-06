@@ -12,22 +12,42 @@
 import argparse
 import glob
 import re
+import gzip
 
 #parser = argparse.ArgumentParser(description='argparser')
 #parser.add_argument('dir_read', type=str, help='directory to read file from')
-#parser.add_argument('out_mafdiff', type=str, help='Output file for MAF Mvs.F diff')
 #parser.add_argument('cutoff_mafdiff', type=float, help='cutoff [0-1] for % difference')
+#parser.add_argument('out_mafdiff', type=str, help='Output file for MAF Mvs.F diff')
 #parser.add_argument('out_m', type=str, help='outfile collaped m')
 #parser.add_argument('out_f', type=str, help='outfile collaped f')
 #parser.add_argument('out_b', type=str, help='outfile collaped both')
 #args = parser.parse_args()
 
 dir_read="/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/bySiteAnnoX/GenesAnno"
-
+out_mafdiff="/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/maf_diff_x.tsv.gz"
+out_maf_both="/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/collapsed_maf_both_x.tsv.gz"
+out_maf_m="/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/collapsed_maf_m_x.tsv.gz"
+out_maf_f="/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/collapsed_maf_f_x.tsv.gz"
 #compile at the beginning for speed
 af_both=re.compile("AF_nfe=")
 af_m=re.compile("AF_nfe_male=")
 af_f=re.compile("AF_nfe_female=")
+
+
+outwrite_mafdiff=gzip.open(out_mafdiff,"wb")
+outwrite_maf_both=gzip.open(out_maf_both,"wb")
+outwrite_maf_m=gzip.open(out_maf_m,"wb")
+outwrite_maf_f=gzip.open(out_maf_f,"wb")
+
+colname_mafdiff=["chr","pos","ensg"," vartype","ind","ref","alt","varswitch","gtex_maf",
+			"gnomad_maf_both","gnomad_maf_m","gnomad_maf_f","genetype","gnomad_maf_diff"]
+colname_collapsed=["chr","pos","ensg","vartype","ind","ref","alt","varswitch","gtex_maf","gnomad_maf_both",
+			"gnomad_maf_m","gnomad_maf_f","genetype","gnomad_maf_diff","num_rvs"]
+outwrite_mafdiff.write(('\t'.join(map(str,colname_mafdiff))+"\n").encode())
+outwrite_maf_both.write(('\t'.join(map(str,colname_collapsed))+"\n").encode())
+outwrite_maf_m.write(('\t'.join(map(str,colname_collapsed))+"\n").encode())
+outwrite_maf_f.write(('\t'.join(map(str,colname_collapsed))+"\n").encode())
+
 
 ### loop through SNPS/INDELS/SV
 for vartype in ["SNP","indel","SV"]:
@@ -37,6 +57,15 @@ for vartype in ["SNP","indel","SV"]:
 		f_split=f.split("/")[-1]
 		f_split_again=f_split.split("_")
 		ind=f_split_again[1]
+
+		#new dictionary for individuals
+		#keys are genes
+		#value is minim MAF
+		dic_m=dict()
+		dic_f=dict()
+		dic_both=dict()
+
+
 		with open(f,"r") as f_read:
 			for line in f_read.readlines():
 				line_split=line.split("\t")
@@ -45,8 +74,8 @@ for vartype in ["SNP","indel","SV"]:
 				gtex_maf=line_split[3] #GTEx MAF
 				ref=line_split[5] #reference allele
 				alt=line_split[6] #alternate allele
-				ensg=(line_split[42]).split("\\"") # ENSG ID
-				genetype=line_split[46] #lincRNA, proteincoding, etc
+				ensg=(line_split[42]).split('\"')[1] # ENSG ID
+				genetype=((line_split[46]).split('\"'))[1] #lincRNA, proteincoding, etc
 				varswitch=line_split[53].strip() ## A->C as AC
 				gnomad_anno=line_split[34] # GNOMAD annotation to further split
 				gnomad_split=gnomad_anno.split(';')
@@ -54,16 +83,41 @@ for vartype in ["SNP","indel","SV"]:
 				gnomad_maf_m=float((([col for col in gnomad_split if af_m.match(col)])[0].split("="))[1])
 				gnomad_maf_f=float((([col for col in gnomad_split if af_f.match(col)])[0].split("="))[1])
 	
-				gnomad_maf_diff=(gnomad_maf_m-gnomad_maf_f)/((gnomad_maf_m+gnomad_maf_f)/2)
-
-				#if gnomad_maf_diff > .1:
-					#write to gnomad diff file this information
-				print("\t".join([chr,pos,ensg, vartype,ind,ref,alt,varswitch,
+				if (gnomad_maf_m+gnomad_maf_f)/2 == 0:
+					gnomad_maf_diff=0
+				else:
+					gnomad_maf_diff=(gnomad_maf_m-gnomad_maf_f)/((gnomad_maf_m+gnomad_maf_f)/2)
+				if gnomad_maf_diff > 0.1:
+					outwrite_mafdiff.write(("\t".join([chr,pos,ensg, vartype,ind,ref,alt,varswitch,
 						gtex_maf, str(gnomad_maf_both),str(gnomad_maf_m),str(gnomad_maf_f),
-						genetype,str(gnomad_maf_diff)]))
+						genetype,str(gnomad_maf_diff)])+"\n").encode())
+				#print("\t".join([chr,pos,ensg, vartype,ind,ref,alt,varswitch,
+				#		gtex_maf, str(gnomad_maf_both),str(gnomad_maf_m),str(gnomad_maf_f),
+				#		genetype,str(gnomad_maf_diff)]))
 
-				
+				if gnomad_maf_both < 0.01:
+					store_line=[chr,pos,ensg, vartype,ind,ref,alt,varswitch,
+						gtex_maf, gnomad_maf_both,gnomad_maf_m,gnomad_maf_f,
+						genetype,gnomad_maf_diff]
+					if ensg in dic_both:
+						dic_current_min_maf=(dic_both[ensg])[9]
+						if gnomad_maf_both < dic_current_min_maf:
+							this_count=dic_both[ensg][-1]+1
+							store_line.append(this_count)
+							dic_both[ensg]=store_line
+						else:
+							dic_both[ensg][-1]+=1
+					else:
+						store_line.append(1)
+						dic_both[ensg]=store_line
+			##writes the dictionary to a file
+			for key_both in dic_both:			
+				outwrite_maf_both.write((key_both+"\t"+'\t'.join(map(str,dic_both[key_both]))+'\n').encode())
+		break
+	break				
 
-
-
+outwrite_mafdiff.close()
+outwrite_maf_both.close()
+outwrite_maf_m.close()
+outwrite_maf_f.close()
 
