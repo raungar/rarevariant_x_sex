@@ -31,6 +31,7 @@ out_maf_m="/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/collapse
 out_maf_f="/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/collapsed_maf_f_x.tsv.gz"
 sex_file="/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/sample_annotations/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS_v2_downloaded_april2020.txt"
 
+min_maf=0.01 #### maf to filter on 
 #compile at the beginning for speed
 af_both=re.compile("AF_nfe=")
 af_m=re.compile("AF_nfe_male=")
@@ -46,20 +47,17 @@ outwrite_maf_f=gzip.open(out_maf_f,"wb")
 sex_convert_key={}
 sex_convert_key["1"]="male"
 sex_convert_key["2"]="female"
-print(sex_convert_key)
 sex_key={}
 with open(sex_file,"r") as sex_f_read:
 	next(sex_f_read)
 	for sex_line in sex_f_read.readlines():
 		sex_line_split=sex_line.split("\t")
 		sex_key[sex_line_split[0]]=sex_convert_key[sex_line_split[2]]
-print("key for sex")
-print(sex_key)
 
-
-colname_mafdiff=["chr","pos","ensg"," vartype","ind","ref","alt","varswitch","gtex_maf",
+#write headers to files
+colname_mafdiff=["chr","pos","ensg"," vartype","ind","sex","ref","alt","varswitch","gtex_maf",
 			"gnomad_maf_both","gnomad_maf_m","gnomad_maf_f","genetype","gnomad_maf_diff"]
-colname_collapsed=["chr","pos","ensg","vartype","ind","ref","alt","varswitch","gtex_maf","gnomad_maf_both",
+colname_collapsed=["chr","pos","ensg","vartype","ind","sex","ref","alt","varswitch","gtex_maf","gnomad_maf_both",
 			"gnomad_maf_m","gnomad_maf_f","genetype","gnomad_maf_diff","num_rvs"]
 outwrite_mafdiff.write(('\t'.join(map(str,colname_mafdiff))+"\n").encode())
 outwrite_maf_both.write(('\t'.join(map(str,colname_collapsed))+"\n").encode())
@@ -72,23 +70,31 @@ for vartype in ["SNP","indel","SV"]:
 	## loop through all inds in this vartype
 	for f in glob.glob(dir_read+"/*"+vartype+"*"):
 		#open file and read line by line
+		#get individual ID and sex of this individual
 		f_split=f.split("/")[-1]
 		f_split_again=f_split.split("_")
 		ind=f_split_again[1]
 		sex=sex_key[ind]
-		print(sex)
+		## choose proper file to write to for sex specific
+		if sex == "male":
+			outwrite_sex=outwrite_maf_m			
+		elif sex == "female":
+			outwrite_sex=outwrite_maf_f
+		else:
+			print("ERROR: INVALID SEX")
+
 
 		#new dictionary for individuals
 		#keys are genes
 		#value is minim MAF
-		dic_m=dict()
-		dic_f=dict()
+		dic_sex=dict() # sex specific dictionary
 		dic_both=dict()
 
-
+		#actually open file, read line by line
 		with open(f,"r") as f_read:
 			for line in f_read.readlines():
 				line_split=line.split("\t")
+				#get interesting columns
 				chr=line_split[0] #chr
 				pos=line_split[1] #pos
 				gtex_maf=line_split[3] #GTEx MAF
@@ -99,40 +105,79 @@ for vartype in ["SNP","indel","SV"]:
 				varswitch=line_split[53].strip() ## A->C as AC
 				gnomad_anno=line_split[34] # GNOMAD annotation to further split
 				gnomad_split=gnomad_anno.split(';')
-				gnomad_maf_both=float((([col for col in gnomad_split if af_both.match(col)])[0].split("="))[1])
-				gnomad_maf_m=float((([col for col in gnomad_split if af_m.match(col)])[0].split("="))[1])
-				gnomad_maf_f=float((([col for col in gnomad_split if af_f.match(col)])[0].split("="))[1])
+				if gnomad_split[0] == "NO_MATCH":
+					gnomad_maf_both=float(0)		
+					gnomad_maf_m=float(0)		
+					gnomad_maf_f=float(0)		
+				else:
+					gnomad_maf_both=float((([col for col in gnomad_split if af_both.match(col)])[0].split("="))[1])
+					gnomad_maf_m=float((([col for col in gnomad_split if af_m.match(col)])[0].split("="))[1])
+					gnomad_maf_f=float((([col for col in gnomad_split if af_f.match(col)])[0].split("="))[1])
 	
+				#get difference between MAF m vs F (controlling for divide by zero situation)
 				if (gnomad_maf_m+gnomad_maf_f)/2 == 0:
 					gnomad_maf_diff=0
 				else:
 					gnomad_maf_diff=(gnomad_maf_m-gnomad_maf_f)/((gnomad_maf_m+gnomad_maf_f)/2)
+				#only write to file those with a sex MAF differences of 10%
 				if gnomad_maf_diff > 0.1:
-					outwrite_mafdiff.write(("\t".join([chr,pos,ensg, vartype,ind,ref,alt,varswitch,
+					outwrite_mafdiff.write(("\t".join([chr,pos,ensg, vartype,ind,sex,ref,alt,varswitch,
 						gtex_maf, str(gnomad_maf_both),str(gnomad_maf_m),str(gnomad_maf_f),
 						genetype,str(gnomad_maf_diff)])+"\n").encode())
-				#print("\t".join([chr,pos,ensg, vartype,ind,ref,alt,varswitch,
+				#print("\t".join([chr,pos,ensg, vartype,ind,sex,ref,alt,varswitch,
 				#		gtex_maf, str(gnomad_maf_both),str(gnomad_maf_m),str(gnomad_maf_f),
 				#		genetype,str(gnomad_maf_diff)]))
 
-				if gnomad_maf_both < 0.01:
-					store_line=[chr,pos,ensg, vartype,ind,ref,alt,varswitch,
+				#only store rare variants at a level of less than 0.01
+				#this is the both case
+				if gnomad_maf_both < min_maf:
+					store_line=[chr,pos,ensg, vartype,ind,sex,ref,alt,varswitch,
 						gtex_maf, gnomad_maf_both,gnomad_maf_m,gnomad_maf_f,
 						genetype,gnomad_maf_diff]
+					#if there is already a RV recorded for this gene
 					if ensg in dic_both:
-						dic_current_min_maf=(dic_both[ensg])[9]
+						#get current min MAF
+						dic_current_min_maf=float((dic_both[ensg])[9])
+						#if this is more rare, store this instead
 						if gnomad_maf_both < dic_current_min_maf:
 							this_count=dic_both[ensg][-1]+1
 							store_line.append(this_count)
 							dic_both[ensg]=store_line
 						else:
+							# if this is not more rare, just inc the count of numRVs for this gene
 							dic_both[ensg][-1]+=1
+					#if there is not a RV recorded for this gene, store this one
 					else:
 						store_line.append(1)
 						dic_both[ensg]=store_line
+				#now do the same as above, but for the sex of this ind
+				if sex == "male":
+					gnomad_sex=gnomad_maf_m
+				elif sex == "female":
+					gnomad_sex=gnomad_maf_f
+				else:
+					print("ERROR: INVALID SEX")
+				if gnomad_sex < min_maf:
+					store_line=[chr,pos,ensg, vartype,ind,sex,ref,alt,varswitch,
+						gtex_maf, gnomad_maf_both,gnomad_maf_m,gnomad_maf_f,
+						genetype,gnomad_maf_diff]
+					if ensg in dic_sex:
+						dic_current_min_maf=float((dic_sex[ensg])[9])
+						if gnomad_maf_both < dic_current_min_maf:
+							this_count=dic_sex[ensg][-1]+1
+							store_line.append(this_count)
+							dic_sex[ensg]=store_line
+						else:
+							dic_sex[ensg][-1]+=1
+					else:
+						store_line.append(1)
+						dic_sex[ensg]=store_line
+
 			##writes the dictionary to a file
 			for key_both in dic_both:			
 				outwrite_maf_both.write((key_both+"\t"+'\t'.join(map(str,dic_both[key_both]))+'\n').encode())
+			for key_both in dic_sex:			
+				outwrite_sex.write((key_both+"\t"+'\t'.join(map(str,dic_sex[key_both]))+'\n').encode())
 		break
 	break				
 
@@ -140,4 +185,3 @@ outwrite_mafdiff.close()
 outwrite_maf_both.close()
 outwrite_maf_m.close()
 outwrite_maf_f.close()
-
