@@ -21,6 +21,7 @@ import gzip
 #parser.add_argument('out_m', type=str, help='outfile collaped m')
 #parser.add_argument('out_f', type=str, help='outfile collaped f')
 #parser.add_argument('out_b', type=str, help='outfile collaped both')
+#parser.add_argument('sex_file', type=str, help='GTEX sample file that can get sex')
 #args = parser.parse_args()
 
 dir_read="/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/bySiteAnnoX/GenesAnno"
@@ -28,6 +29,8 @@ out_mafdiff="/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/maf_di
 out_maf_both="/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/collapsed_maf_both_x.tsv.gz"
 out_maf_m="/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/collapsed_maf_m_x.tsv.gz"
 out_maf_f="/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/collapsed_maf_f_x.tsv.gz"
+sex_file="/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/sample_annotations/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS_v2_downloaded_april2020.txt"
+
 #compile at the beginning for speed
 af_both=re.compile("AF_nfe=")
 af_m=re.compile("AF_nfe_male=")
@@ -38,6 +41,21 @@ outwrite_mafdiff=gzip.open(out_mafdiff,"wb")
 outwrite_maf_both=gzip.open(out_maf_both,"wb")
 outwrite_maf_m=gzip.open(out_maf_m,"wb")
 outwrite_maf_f=gzip.open(out_maf_f,"wb")
+
+#get sex per individual
+sex_convert_key={}
+sex_convert_key["1"]="male"
+sex_convert_key["2"]="female"
+print(sex_convert_key)
+sex_key={}
+with open(sex_file,"r") as sex_f_read:
+	next(sex_f_read)
+	for sex_line in sex_f_read.readlines():
+		sex_line_split=sex_line.split("\t")
+		sex_key[sex_line_split[0]]=sex_convert_key[sex_line_split[2]]
+print("key for sex")
+print(sex_key)
+
 
 colname_mafdiff=["chr","pos","ensg"," vartype","ind","ref","alt","varswitch","gtex_maf",
 			"gnomad_maf_both","gnomad_maf_m","gnomad_maf_f","genetype","gnomad_maf_diff"]
@@ -57,6 +75,8 @@ for vartype in ["SNP","indel","SV"]:
 		f_split=f.split("/")[-1]
 		f_split_again=f_split.split("_")
 		ind=f_split_again[1]
+		sex=sex_key[ind]
+		print(sex)
 
 		#new dictionary for individuals
 		#keys are genes
