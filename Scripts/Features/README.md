@@ -23,4 +23,17 @@ This using the correct gtf annotates the actual genes that are within a 10000 bp
 
 
 ### rule vcf_add_genes_aut     
-Agains ame as above, just in autosomal specific directories    
+Again same as above, just in autosomal specific directories     
+
+
+### rule collapse_vars_to_genes_x:
+This collapse the variant information to just one information per gene. This does so by taking the minimum MAF and reporting only that variant per gene. This does this for the nef_both MAF, as well as the nef_m and nef_f MAF (output into separate file). Just for fun, also writes to a file for any M vs. F MAF difference greate than cutoff_mafdiff parameter     
+ - input: gene anno directory from above to read from, file wtih information about the sex of the individual       
+ - params:  maf min to report it was a MAF, cutoff for mafdiff between the sexes      
+ - output: maff_diff file, collapsed file for both/m/f (4 total)           
+ - scripts: Scripts/Features/collapse_variants_genes.py     
+
+
+
+
+
