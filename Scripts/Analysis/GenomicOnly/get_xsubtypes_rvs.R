@@ -37,7 +37,7 @@ wrong_self_reported_ancestry<-c("GTEX-11TT1", "GTEX-12ZZX", "GTEX-131XF", "GTEX-
 
 
 exp_data = fread(infile,data.table=F)
-colnames(exp_data)<-c("chr","start","end","maf","gtex_sample","vartype")
+colnames(exp_data)<-c("chr","start","end","maf","gtex_sample","vartype","ensg","genetype")
 euro<-fread(euro_file)
 euro_vec_unchecked<-as.character(data.frame(euro)[,1])
 euro_vec<-euro_vec_unchecked[!(euro_vec_unchecked %in% wrong_self_reported_ancestry )]
@@ -97,8 +97,8 @@ get_mww_test_m_f_par<-function(maf_m,maf_f,this_var,mult_test_type="BH",par_hash
        }
        mw_test_p_reg<-unlist(lapply(sort(unique(maf_m$UpperBound)),
                                      function(x)
-                                       wilcox.test(as.numeric(maf_m %>% dplyr::filter(vartype==this_var & par_region==this_par_region & UpperBound==x) %>% pull(N.cum)),
-                                                   as.numeric(maf_f %>% dplyr::filter(vartype==this_var & par_region==this_par_region & UpperBound==x) %>% pull(N.cum)))$p.value
+                                       wilcox.test(as.numeric(maf_m %>% dplyr::filter(vartype==this_var & par_region==this_par_region & UpperBound==x) %>% pull(N.cum.adj)),
+                                                   as.numeric(maf_f %>% dplyr::filter(vartype==this_var & par_region==this_par_region & UpperBound==x) %>% pull(N.cum.adj)))$p.value
        ))
       # mw_test_p_reg<- wilcox.test(as.numeric(maf_m %>% dplyr::filter(vartype==this_var & par_region==this_par_region) %>% pull(N.cum)),
       #                                          as.numeric(maf_f %>% dplyr::filter(vartype==this_var & par_region==this_par_region ) %>% pull(N.cum)))$p.value
@@ -177,7 +177,7 @@ for (this_subregion in rownames(subregion_df)){
   par_region=mapply(function(s,e){
     if(s>=this_s & e<=this_e){this_subregion}
     else{"NA"}
-  },exp_data_euro$start,exp_data_euro$end)
+  },as.numeric(exp_data_euro$start),as.numeric(exp_data_euro$end))
   exp_data_euro_wpars<-cbind(exp_data_euro,par_region)
   
   #look only at this subregion
@@ -237,11 +237,11 @@ write.table(cum_maf_summ_plot_m_and_f_parreg_adj,gzfile(out_numrvs), quote = F,s
 
 ###and significance:
 mmw_snps_par<-get_mww_test_m_f_par(this_cum_maf_parreg_m_double,this_cum_maf_parreg_f,"SNPs","BH",par_hash)
-mmw_indels_par<-get_mww_test_m_f_par(this_cum_maf_parreg_m_double,this_cum_maf_parreg_f,this_var = "indels","BH",par_hash)
-mmw_sv_par<-get_mww_test_m_f_par(this_cum_maf_parreg_m_double,this_cum_maf_parreg_f,"SV","BH",par_hash)
-mmw_all_par<-rbind(mmw_snps_par[-1,],
-                   mmw_indels_par[-1,],
-                   mmw_sv_par[-1,]) 
+#mmw_indels_par<-get_mww_test_m_f_par(this_cum_maf_parreg_m_double,this_cum_maf_parreg_f,this_var = "indels","BH",par_hash)
+#mmw_sv_par<-get_mww_test_m_f_par(this_cum_maf_parreg_m_double,this_cum_maf_parreg_f,"SV","BH",par_hash)
+mmw_all_par<-rbind(mmw_snps_par[-1,] ) #,
+                  # mmw_indels_par[-1,],
+                  # mmw_sv_par[-1,]) 
 
 write.table(mmw_all_par,gzfile(out_sigdif), quote = F,sep="\t",row.names = F) 
 
