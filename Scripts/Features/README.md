@@ -34,6 +34,10 @@ This collapse the variant information to just one information per gene. This doe
  - scripts: Scripts/Features/collapse_variants_genes.py     
 
 
-
+### rule combine_rvs_inds_x
+This takes the final gene anno files that are by individual, and put them into a combined file in a more manageable useful way      
+final headers are: chr,start,end,maf,sample,vartype,ensg,genetype       
+ - input: genes anno dir 
+ - output: combined file (x_all_rvs_inds_types.txt.gz)
 
 
