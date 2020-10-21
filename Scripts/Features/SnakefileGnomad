@@ -8,35 +8,36 @@ with open(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.tx
 	SAMPLES=f.readlines()
 	SAMPLES=[this_sample.strip() for this_sample in SAMPLES]
 
-FILES=os.listdir("Output/features_v8/bySiteAnnoX")
+FILES=os.listdir("Output/features_v8/bySiteAnnoAut")
 #FILES=os.listdir("Output/features_v8/bySite")
 split_files=[f.split("_") for f in FILES]
+print(split_files)
 IDS_VARTYPES=[]
 for splitf in split_files:
 	print(splitf)
 	if len(splitf) == 1:
 		continue
 	#make sure european, if not skip
-	if splitf[1] in SAMPLES:
-		id_and_vartype=splitf[1]+"_"+splitf[2]
+	if splitf[0] in SAMPLES:
+		id_and_vartype=splitf[0]+"_"+splitf[1] #subtract 1 for aut
 		IDS_VARTYPES.append(id_and_vartype)
 	#break
 #CHRNUM="X"
 print(IDS_VARTYPES)
-CHRNUM="X" #range(1,23) #+"X"
-print(CHRNUM)
+CHRNUM=range(1,23) #+"X"
 
 rule all:
 	input:
-		config["RAREDIR"]+"/features_v8/maf_diff_x.tsv.gz",
-		config["RAREDIR"]+"/features_v8/collapsed_maf_both_x.tsv.gz",
-		config["RAREDIR"]+"/features_v8/collapsed_maf_m_x.tsv.gz",
-		config["RAREDIR"]+"/features_v8/collapsed_maf_f_x.tsv.gz",
-		config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types.txt.gz"
+		#config["RAREDIR"]+"/features_v8/maf_diff_aut.tsv.gz",
+		#config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut.tsv.gz",
+		#config["RAREDIR"]+"/features_v8/collapsed_maf_m_aut.tsv.gz",
+		#config["RAREDIR"]+"/features_v8/collapsed_maf_f_aut.tsv.gz",
+		config["RAREDIR"]+"/enrichments_v8/aut_all_rvs_inds_types.txt.gz"
+		##config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types.txt.gz",
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAnnoX/GenesAnno/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
 		#sample_vartype=IDS_VARTYPES,chrN=CHRNUM)	
-		####expand(config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GenesAnno/{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
-		####sample_vartype=IDS_VARTYPES,chrN=CHRNUM)
+		#expand(config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GenesAnno/{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
+		#sample_vartype=IDS_VARTYPES,chrN=CHRNUM)
 		#config["RAREDIR"]+"/features_v8/GTF/combine_genes.log"
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAnnoX/GenesAnno/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
 		#sample_vartype=IDS_VARTYPES,chrN=CHRNUM)
@@ -209,6 +210,31 @@ rule collapse_vars_to_genes_x:
 		echo "completed: collapse_vars_to_genes_x"
 		"""
 
+rule collapse_vars_to_genes_aut:
+	input:
+		#sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GenesAnno/{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
+		dir_read=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GenesAnno",
+		sex_file=config["GTEX_SUBJECTSv8"],
+		myscript=config["SCRIPTSDIR"]+"/Features/collapse_variants_genes.py"
+	params:
+		min_maf=0.01,
+		cutoff_mafdiff=0.1
+	output:
+		out_mafdiff=config["RAREDIR"]+"/features_v8/maf_diff_aut.tsv.gz",
+		out_maf_both=config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut.tsv.gz",
+		out_maf_m=config["RAREDIR"]+"/features_v8/collapsed_maf_m_aut.tsv.gz",
+		out_maf_f=config["RAREDIR"]+"/features_v8/collapsed_maf_f_aut.tsv.gz"
+	shell:
+		"""
+		module load python3
+		echo "running: collapse_vars_to_genes_x"
+		python {input.myscript} --dir_read {input.dir_read} --sex_file {input.sex_file} \
+			--maf_filter {params.min_maf} --cutoff_mafdiff {params.cutoff_mafdiff} \
+			--out_mafdiff {output.out_mafdiff} --out_b {output.out_maf_both} \
+			--out_m {output.out_maf_m} --out_f {output.out_maf_f}
+		echo "completed: collapse_vars_to_genes_x"
+		"""
+
 
 rule combine_rvs_inds_x:
 	input:
@@ -240,36 +266,66 @@ rule combine_rvs_inds_x:
 
 		gzip {params.pregz}
 		"""
-		#awk -F"\t" '{{print $35}}' | awk -F"AF_nfe=" '{{print $2}}' | awk -F";" '{{print $1}}'
-
-		
 rule combine_rvs_inds_aut:
 	input:
-		file_dir=config["RAREDIR"]+"/features_v8/bySiteAut",
-		sv_file=config["RAREDIR"]+"/features_v8/all_rare_variants_noWindow_HallLabSV_hg38_corrected.bed"
+		file_dir=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GenesAnno"
 	params:
 		pregz=config["RAREDIR"]+"/enrichments_v8/aut_all_rvs_inds_types.txt",
-		pattern="GTEX*gz"
+		pattern="*SNP*gz"
 	output:
 		gz=config["RAREDIR"]+"/enrichments_v8/aut_all_rvs_inds_types.txt.gz"
 	shell:
 		"""
-		echo -e chr\tstart\tend\tmaf\tsample\tvartype	> {params.pregz}
+		#chrX	247403	247403	2.33349e-02	GTEX-111CU	SNPs	ENSG00000228572.7	unprocessed_pseudogene
+		#header ^^^ (Ex line above)
+		echo -e chr\tstart\tend\tmaf\tsample\tvartype\tensg\tgenetype	> {params.pregz}
 
+		#only keep valuable information (see header above), just awking for manipulation
 		for f in {input.file_dir}/{params.pattern}
 		do
 			echo $f
 			gtex_id=`echo $f | awk -F"/" '{{print $NF}}' | grep -o -P 'GTEX.{{0,6}}'`
 			var_type=`echo $f | awk -F"/" '{{print $NF}}' | egrep -o '_indels|_SNPs|_SV' | cut -c2-`
 			echo $gtex_id","$var_type
-			zcat $f | awk -F"\t" -v gtex_id=$gtex_id -v var_type=$var_type '{{print $1"\t"$2"\t"$3"\t"$4"\t"gtex_id"\t"var_type}}' \
+			less $f | \
+				awk -F"\t" -v gtex_id=$gtex_id -v var_type=$var_type '{{print $1"\t"$2"\t"$3"\t"$4"\t"gtex_id"\t"var_type"\t"$35"\t"$51"\t"$55}}' | \
+				awk -F"AF_nfe=" '{{print $2"\t"$0}}' | awk -F";" '{{print $1"\t"$0}}' | \
+				awk -F"\t" 'BEGIN{{OFS="\t"}}{{print $2,$3,$4,$8,$6,$7,$(NF-1),$NF}}' | sed 's/\"//g' | sed 's/;//g' \
 			 >> {params.pregz}
 		done
-		
-		less -S {input.sv_file} | awk -F"\t" '{{print $1"\t"$2"\t"$3"\t"$5"\t"$4"\tSV"}}' >> {params.pregz}
 
 		gzip {params.pregz}
 		"""
+		#awk -F"\t" '{{print $35}}' | awk -F"AF_nfe=" '{{print $2}}' | awk -F";" '{{print $1}}'
+
+		
+#rule combine_rvs_inds_aut:
+#	input:
+#		file_dir=config["RAREDIR"]+"/features_v8/bySiteAut",
+#		sv_file=config["RAREDIR"]+"/features_v8/all_rare_variants_noWindow_HallLabSV_hg38_corrected.bed"
+#	params:
+#		pregz=config["RAREDIR"]+"/enrichments_v8/aut_all_rvs_inds_types.txt",
+#		pattern="GTEX*gz"
+#	output:
+#		gz=config["RAREDIR"]+"/enrichments_v8/aut_all_rvs_inds_types.txt.gz"
+#	shell:
+#		"""
+#		echo -e chr\tstart\tend\tmaf\tsample\tvartype	> {params.pregz}
+#
+#		for f in {input.file_dir}/{params.pattern}
+#		do
+#			echo $f
+#			gtex_id=`echo $f | awk -F"/" '{{print $NF}}' | grep -o -P 'GTEX.{{0,6}}'`
+#			var_type=`echo $f | awk -F"/" '{{print $NF}}' | egrep -o '_indels|_SNPs|_SV' | cut -c2-`
+#			echo $gtex_id","$var_type
+#			zcat $f | awk -F"\t" -v gtex_id=$gtex_id -v var_type=$var_type '{{print $1"\t"$2"\t"$3"\t"$4"\t"gtex_id"\t"var_type}}' \
+#			 >> {params.pregz}
+#		done
+#		
+#		less -S {input.sv_file} | awk -F"\t" '{{print $1"\t"$2"\t"$3"\t"$5"\t"$4"\tSV"}}' >> {params.pregz}
+#
+#		gzip {params.pregz}
+#		"""
 
 
 #rule combine_vcf_zscore_x:
