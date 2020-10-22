@@ -25,7 +25,7 @@ chrtype <- as.character(opt$chrtype)
 maf <- as.numeric(opt$maf)
 # summary_stat <- as.character(opt$summary_stat)
 print(paste0("my chr is : ",chrtype))
-if(chrtype != "aut" & chrtype != "x"){stop("ERROR: chrtype must be aut or x")}
+#if(chrtype != "aut" & chrtype != "x"){stop("ERROR: chrtype must be aut or x")}
 
 # infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/x_all_rvs_inds_types.txt.gz"
 # euro_file<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt"
@@ -86,7 +86,7 @@ if(chrtype == "x"){
   
 }
 
-final_maf_all<-rbind(final_maf_m,final_maf_m)
+final_maf_all<-rbind(final_maf_f,final_maf_m)
 
 
 write.table(final_maf_all,gzfile(outfile), quote = F,sep="\t",row.names = F) 
