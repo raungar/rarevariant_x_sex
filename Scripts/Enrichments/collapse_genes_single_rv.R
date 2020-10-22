@@ -20,7 +20,7 @@ option_list = list(
 opt_parser = OptionParser(option_list = option_list)
 opt = parse_args(opt_parser)
 infile <- as.character(opt$infile)
-outfile <- as.numeric(opt$outfile)
+outfile <- as.character(opt$outfile)
 
 # zscore<-2
 #  infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/outliers_zthresh3_nphen5_noglobal_medz_varAnnot_x_m.txt"
@@ -71,4 +71,4 @@ while (i<=nrow((exp_data))){
 }
 
 
-save(seen_genes,file=outfile)
+saveRDS(seen_genes,outfile)
