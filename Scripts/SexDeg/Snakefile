@@ -1,0 +1,24 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+
+import os, glob
+
+FILES = [ os.path.basename(x) for x in glob.glob(config["FILESDIR"]+"/SexDEGs/*csv") ]
+TISSUES=  list(set([ "".join(((x.split("-")[1]).split("."))[0]) for x in FILES]))
+print(TISSUES)
+
+
+rule all:
+	input: 
+		config["RAREDIR"]+"/sexdeg_v8/all_genes.txt",
+		#expand(config["RAREDIR"]+"/sexdeg_v8/smg_{tissue}.txt",tissue=TISSUES)
+
+rule get_genes:
+	input:
+		config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_gathered_both_half.regress.txt.gz"
+	output:
+		config["RAREDIR"]+"/sexdeg_v8/all_genes.txt"
+	shell:
+		"""
+		less {input} | awk -F"\t" 'NR>1 {{print $2}}' | sort | uniq > {output}
+		"""
