@@ -6,11 +6,14 @@ import os, glob
 FILES = [ os.path.basename(x) for x in glob.glob(config["FILESDIR"]+"/SexDEGs/*csv") ]
 TISSUES=  list(set([ "".join(((x.split("-")[1]).split("."))[0]) for x in FILES]))
 print(TISSUES)
+TISSUES="BREAST"
 
 
 rule all:
 	input: 
 		config["RAREDIR"]+"/sexdeg_v8/all_genes.txt",
+		expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_{tissue}.txt",
+			tissue=TISSUES)
 		#expand(config["RAREDIR"]+"/sexdeg_v8/smg_{tissue}.txt",tissue=TISSUES)
 
 rule get_genes:
@@ -21,4 +24,15 @@ rule get_genes:
 	shell:
 		"""
 		less {input} | awk -F"\t" 'NR>1 {{print $2}}' | sort | uniq > {output}
+		"""
+rule overlap_genes_sexdegs:
+	input:
+		genes=config["RAREDIR"]+"/sexdeg_v8/all_genes.txt",
+		sexdegs=config["FILESDIR"]+"/SexDEGs/sexDEGS-{tissue}.csv",
+		myscript=config["SCRIPTSDIR"]+"/SexDeg/combine_allgenes_sexdegs.sh"
+	output:
+		config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_{tissue}.txt"
+	shell:
+		"""
+		sh {input.myscript} {input.genes} {input.sexdegs} {output}
 		"""
