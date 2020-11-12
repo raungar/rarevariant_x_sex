@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, glob
 
 print(sys.version)
 configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
@@ -8,8 +8,8 @@ with open(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.tx
 	SAMPLES=f.readlines()
 	SAMPLES=[this_sample.strip() for this_sample in SAMPLES]
 
-FILES=os.listdir("Output/features_v8/bySiteAnnoAut")
-#FILES=os.listdir("Output/features_v8/bySite")
+#FILES=os.listdir("Output/features_v8/bySiteAnnoAut")
+FILES=glob.glob("Output/features_v8/bySite/*SNP*")
 split_files=[f.split("_") for f in FILES]
 print(split_files)
 IDS_VARTYPES=[]
@@ -18,13 +18,13 @@ for splitf in split_files:
 	if len(splitf) == 1:
 		continue
 	#make sure european, if not skip
-	if splitf[0] in SAMPLES:
-		id_and_vartype=splitf[0]+"_"+splitf[1] #subtract 1 for aut
+	if splitf[2] in SAMPLES:
+		id_and_vartype=splitf[2]+"_"+splitf[3] #subtract 1 for aut
 		IDS_VARTYPES.append(id_and_vartype)
 	#break
-#CHRNUM="X"
+CHRNUM="X"
 print(IDS_VARTYPES)
-CHRNUM=range(1,23) #+"X"
+#CHRNUM=range(1,23) #+"X"
 
 rule all:
 	input:
@@ -32,7 +32,11 @@ rule all:
 		#expand(config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_chr{chrN}.tsv.gz",chrN=CHRNUM),
 		#expand(config["RAREDIR"]+"/features_v8/collapsed_maf_m_aut_chr{chrN}.tsv.gz",chrN=CHRNUM),
 		#expand(config["RAREDIR"]+"/features_v8/collapsed_maf_f_aut_chr{chrN}.tsv.gz",chrN=CHRNUM),
-		expand(config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types.txt.gz",chrN=CHRNUM)
+		#expand(config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/chr{chrN}.gtf",chrN=CHRNUM)
+		expand(config["RAREDIR"]+"/features_v8/bySiteAnnoX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
+		sample_vartype=IDS_VARTYPES,chrN=CHRNUM),
+		config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_x.tsv.gz"
+		#########expand(config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types.txt.gz",chrN=CHRNUM)
 		##config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types.txt.gz",
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAnnoX/GenesAnno/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
 		#sample_vartype=IDS_VARTYPES,chrN=CHRNUM)	
@@ -153,7 +157,7 @@ rule gtf_split_by_gene:
 		Scripts/Features/gtf_by_chr.sh {input.genes} {params.prefix} > {output.gtf_split_log}
 		"""
 
-rule_gtf_split_by_gene_lincRNA_protcod_only:
+rule gtf_split_by_gene_lincRNA_protcod_only:
 	input:
 		gtf=config["RAREDIR"]+"/features_v8/GTF/chr{chrN}.gtf",
 		gtf_split_log=config["RAREDIR"]+"/features_v8/GTF/combine_genes.log"
@@ -169,15 +173,16 @@ rule_gtf_split_by_gene_lincRNA_protcod_only:
 rule vcf_add_genes_x:
 	input:
 		sample_anno=config["RAREDIR"]+"/features_v8/bySiteAnnoX/x_{sample_vartype}_chr{chrN}_anno.bed.gz",
-		genes=config["RAREDIR"]+"/features_v8/GTF/chrX.gtf"
+		genes=config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/chrX.gtf"
 	output:
-		sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAnnoX/GenesAnno/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz"
+		sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAnnoX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz"
 		
 	shell:
 		"""
 		echo "rule vcf_add_genes_x"
 		module load bedtools
 		bedtools window -a {input.sample_anno} -b {input.genes} -w 10000 | awk -F"\t" '{{print $0"\t"$6$7}}'  > {output.sample_anno_genes}
+		bedtools window -a {input.sample_anno} -b {input.genes} -w 10000 -v  | awk -F"\t" '{{printf $0"\t"; for (i=1;i<19; i++){{printf "\tNA"}}; print ""}}'>> {output.sample_anno_genes}
 
 		"""
 
@@ -200,17 +205,17 @@ rule vcf_add_genes_aut:
 rule collapse_vars_to_genes_x:
 	input:
 		#sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GenesAnno/{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
-		dir_read=config["RAREDIR"]+"/features_v8/bySiteAnnoX/GenesAnno",
+		dir_read=config["RAREDIR"]+"/features_v8/bySiteAnnoX/GeneAnnoProtCodLinc",
 		sex_file=config["GTEX_SUBJECTSv8"],
 		myscript=config["SCRIPTSDIR"]+"/Features/collapse_variants_genes.py"
 	params:
 		min_maf=0.01,
 		cutoff_mafdiff=0.1
 	output:
-		out_mafdiff=config["RAREDIR"]+"/features_v8/maf_diff_x.tsv.gz",
-		out_maf_both=config["RAREDIR"]+"/features_v8/collapsed_maf_both_x.tsv.gz",
-		out_maf_m=config["RAREDIR"]+"/features_v8/collapsed_maf_m_x.tsv.gz",
-		out_maf_f=config["RAREDIR"]+"/features_v8/collapsed_maf_f_x.tsv.gz"
+		out_mafdiff=config["RAREDIR"]+"/features_v8/maf_diff_linc_prot_x.tsv.gz",
+		out_maf_both=config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_x.tsv.gz",
+		out_maf_m=config["RAREDIR"]+"/features_v8/collapsed_maf_m_linc_prot_x.tsv.gz",
+		out_maf_f=config["RAREDIR"]+"/features_v8/collapsed_maf_f_linc_prot_x.tsv.gz"
 	shell:
 		"""
 		module load python3
