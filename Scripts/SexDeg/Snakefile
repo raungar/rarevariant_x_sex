@@ -5,14 +5,16 @@ import os, glob
 
 FILES = [ os.path.basename(x) for x in glob.glob(config["FILESDIR"]+"/SexDEGs/*csv") ]
 TISSUES=  list(set([ "".join(((x.split("-")[1]).split("."))[0]) for x in FILES]))
-print(TISSUES)
 TISSUES="BREAST"
+print(TISSUES)
 
 
 rule all:
 	input: 
 		config["RAREDIR"]+"/sexdeg_v8/all_genes.txt",
-		expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_{tissue}.txt",
+		#expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.txt.gz",
+		#expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.txt.gz",
+		expand(config["RAREDIR"]+"/sexdeg_v8/rr_{tissue}.txt",
 			tissue=TISSUES)
 		#expand(config["RAREDIR"]+"/sexdeg_v8/smg_{tissue}.txt",tissue=TISSUES)
 
@@ -34,5 +36,50 @@ rule overlap_genes_sexdegs:
 		config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_{tissue}.txt"
 	shell:
 		"""
+		#echo "DN"
 		sh {input.myscript} {input.genes} {input.sexdegs} {output}
 		"""
+
+rule add_RVs:
+	input:
+		#rvs=config["RAREDIR"]+"/features_v8/collapsed_maf_both_x.tsv.gz",
+		rvs=config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_x.tsv.gz",
+		sexdegs=config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_{tissue}.txt",
+		myscript=config["SCRIPTSDIR"]+"/SexDeg/intersect_sexdegs_rvs.py"
+	output:
+		config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.txt.gz"
+	params:
+		min=0,
+		max=0.001
+	log:
+		config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.log"
+	shell:
+		"""
+		python3 {input.myscript} --rvsites_file {input.rvs} \
+		--genes_sexdegs {input.sexdegs} --outfile {output} \
+		--logfile {log} --minmaf {params.min} --maxmaf {params.max}
+		"""
+
+rule get_frac_file:
+	input: 
+		rv_file=config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.txt.gz",
+		script=config["SCRIPTSDIR"]+"/SexDeg/get_rr.sh"
+	output:
+		config["RAREDIR"]+"/sexdeg_v8/risktable_{tissue}.txt"
+	shell:
+		"""
+		sh {input.script} {input.rv_file} {output}
+		"""
+		
+rule calc_risk:
+	input:
+		infile=config["RAREDIR"]+"/sexdeg_v8/risktable_{tissue}.txt",
+		rscript=config["SCRIPTSDIR"]+"/SexDeg/get_rr_epitab.R"
+	output:
+		config["RAREDIR"]+"/sexdeg_v8/rr_{tissue}.txt"
+	shell:
+		"""
+		module load R
+		Rscript {input.rscript} --infile {input.infile} --outfile {output}
+		"""
+	
