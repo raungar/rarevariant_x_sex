@@ -5,6 +5,8 @@ import re
 parser = argparse.ArgumentParser(description='argparser')
 parser.add_argument('--genes_sexdegs', type=str, help='genes + sex deg file')
 parser.add_argument('--rvsites_file', type=str, help='collpsed rv file')
+parser.add_argument('--minmaf', type=float, help='min minor allel frequency')
+parser.add_argument('--maxmaf', type=float, help='min minor allel frequency')
 parser.add_argument('--outfile', type=str, help='outfile')
 parser.add_argument('--logfile', type=str, help='logfile for ununsed genes')
 args = parser.parse_args()
@@ -12,10 +14,12 @@ sexdegs_file=args.genes_sexdegs
 rv_file=args.rvsites_file
 outfile=args.outfile
 logfile=args.logfile
+minmaf=args.minmaf
+maxmaf=args.maxmaf
 outfile_write=gzip.open(outfile,"wb")
 logfile_write=open(logfile,"w")
 
-
+print("will filter between " + str(minmaf) + " and " + str(maxmaf))
 
 
 #rv_file="Output/features_v8/collapsed_maf_both_x.tsv.gz"
@@ -23,14 +27,17 @@ logfile_write=open(logfile,"w")
 
 #read in all genes into a dictionary, default beta (sexdeg) is 0
 genes_dic={}
+chr_dic={}
 
 j=1
 
 with open (sexdegs_file, "r") as f_degs:
 	for line in f_degs.readlines():
 		line_spl=line.strip().split("\t")
-		ensg=line_spl[0]
-		beta=line_spl[1]
+		chr=line_spl[0]
+		ensg=line_spl[1]
+		beta=line_spl[2]
+		chr_dic[ensg]=chr
 		genes_dic[ensg]=[beta,0,1,"NA"] #this will be beta, inds, min MAF, sex [na/m/f/b]
 
 i=1
@@ -53,6 +60,11 @@ with gzip.open(rv_file,"rb") as f_read:
 		gene_match_ind=int(gene_match[1])
 		gene_match_mafmin=float(gene_match[2])
 		gene_match_sex=gene_match[3]
+
+		print("maf: "+str(maf)+" , minmaf: "+str(minmaf))
+		#SET MAF TO 1 if not within "RARE" def
+		if not (float(maf) >= float(minmaf) and float(maf)<float(maxmaf)):
+			maf=1
 		print("i have: " +ensg+","+sex+","+str(maf)+" --- then.... "+str(gene_match_beta)+","+str(gene_match_sex)+","+str(gene_match_mafmin))
 
 		#if gene_match_sex is NA , then no rv has been found near it yet, so skip ahead	
@@ -76,10 +88,13 @@ with gzip.open(rv_file,"rb") as f_read:
 #	outfile_write('\t'.join([str(k),map(str,v)]))
 
 ####coutfile_write.write('\t'.join([str(k),'\t'.join(map(str,v)]))
-outfile_write.write(('\t'.join(["ensg","num_inds","min_maf","sex"])+"\n").encode('utf-8'))
+outfile_write.write(('\t'.join(["chr","ensg","beta","num_inds","min_maf","sex"])+"\n").encode('utf-8'))
 for k,v in genes_dic.items():
-	my_str=k+"\t"+'\t'.join(map(str,v))+"\n"
-	outfile_write.write(my_str.encode('utf-8'))
+	try:
+		my_str=chr_dic[k]+"\t"+k+"\t"+'\t'.join(map(str,v))+"\n"
+		outfile_write.write(my_str.encode('utf-8'))
+	except:
+		logfile_write.write(k+"\n")
 	#print('\t'.join([str(k),map(str,v)]))
 
 outfile_write.close()
