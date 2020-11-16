@@ -10,9 +10,13 @@ outfile=$3
 
 #read in all genes into a dictionary, default beta (sexdeg) is 0
 declare -A genes_dic
+declare -A chr_dic
 while read line;
 do
-	genes_dic["${line}"]=0
+	chr=`echo $line | awk '{print $1}'`
+	gene=`echo $line | awk '{print $2}'`
+	genes_dic[$gene]=0
+	chr_dic[$gene]=$chr
 
 done < $all_genes_file
 
@@ -41,6 +45,6 @@ done < $sexdegs_file
 #print so tab delimeted ensg/beta
 for key in "${!genes_dic[@]}"
 do 
-	echo -e $key"\t"${genes_dic["${key}"]} >> "${outfile}"
+	echo -e ${chr_dic["${key}"]}"\t"$key"\t"${genes_dic["${key}"]} >> "${outfile}"
 done
 
