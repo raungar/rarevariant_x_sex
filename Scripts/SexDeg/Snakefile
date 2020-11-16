@@ -11,11 +11,11 @@ print(TISSUES)
 
 rule all:
 	input: 
-		config["RAREDIR"]+"/sexdeg_v8/all_genes.txt",
+		config["RAREDIR"]+"/sexdeg_v8/all_genes_chr.txt"
 		#expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.txt.gz",
 		#expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.txt.gz",
-		expand(config["RAREDIR"]+"/sexdeg_v8/rr_{tissue}.txt",
-			tissue=TISSUES)
+		#expand(config["RAREDIR"]+"/sexdeg_v8/rr_{tissue}.txt",
+		#		tissue=TISSUES)
 		#expand(config["RAREDIR"]+"/sexdeg_v8/smg_{tissue}.txt",tissue=TISSUES)
 
 rule get_genes:
@@ -27,9 +27,21 @@ rule get_genes:
 		"""
 		less {input} | awk -F"\t" 'NR>1 {{print $2}}' | sort | uniq > {output}
 		"""
+rule get_chr:
+	input:
+		genelist=config["RAREDIR"]+"/sexdeg_v8/all_genes.txt",
+		gtf=config["GTEX_GENES"],
+		script=config["SCRIPTSDIR"]+"/SexDeg/gtf_to_genes_chr.py"
+	output:
+		outfile=config["RAREDIR"]+"/sexdeg_v8/all_genes_chr.txt"
+	shell:
+		"""
+		python3 {input.script} --infile {input.genelist} --gtf {input.gtf} --outfile {output.outfile}
+		"""
+
 rule overlap_genes_sexdegs:
 	input:
-		genes=config["RAREDIR"]+"/sexdeg_v8/all_genes.txt",
+		genes=config["RAREDIR"]+"/sexdeg_v8/all_genes_chr.txt",
 		sexdegs=config["FILESDIR"]+"/SexDEGs/sexDEGS-{tissue}.csv",
 		myscript=config["SCRIPTSDIR"]+"/SexDeg/combine_allgenes_sexdegs.sh"
 	output:
