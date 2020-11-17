@@ -1,4 +1,4 @@
-import os, sys, glob
+import os, sys, glob, re
 
 print(sys.version)
 configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
@@ -8,9 +8,10 @@ with open(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.tx
 	SAMPLES=f.readlines()
 	SAMPLES=[this_sample.strip() for this_sample in SAMPLES]
 
-#FILES=os.listdir("Output/features_v8/bySiteAnnoAut")
-FILES=glob.glob("Output/features_v8/bySite/*SNP*")
-split_files=[f.split("_") for f in FILES]
+#FILES=os.listdir("Output/features_v8/bySiteAnnoAut/*ZZ*SNP*")
+FILES=glob.glob("Output/features_v8/bySiteAnnoAut/*SNP*")
+#FILES=glob.glob("Output/features_v8/bySite/*SNP*")
+split_files=[re.split("_|/",f) for f in FILES]
 print(split_files)
 IDS_VARTYPES=[]
 for splitf in split_files:
@@ -18,13 +19,16 @@ for splitf in split_files:
 	if len(splitf) == 1:
 		continue
 	#make sure european, if not skip
-	if splitf[2] in SAMPLES:
-		id_and_vartype=splitf[2]+"_"+splitf[3] #subtract 1 for aut
+	#if splitf[2] in SAMPLES:
+	if splitf[4] in SAMPLES:
+		id_and_vartype=splitf[4]+"_"+splitf[5] #subtract 1 for aut
+		#id_and_vartype=splitf[2]+"_"+splitf[3] #subtract 1 for aut
 		IDS_VARTYPES.append(id_and_vartype)
 	#break
-CHRNUM="X"
+#CHRNUM="X"
 print(IDS_VARTYPES)
-#CHRNUM=range(1,23) #+"X"
+CHRNUM=range(1,23) #+"X"
+CHROMOSOMES=range(1,22)
 
 rule all:
 	input:
@@ -33,9 +37,13 @@ rule all:
 		#expand(config["RAREDIR"]+"/features_v8/collapsed_maf_m_aut_chr{chrN}.tsv.gz",chrN=CHRNUM),
 		#expand(config["RAREDIR"]+"/features_v8/collapsed_maf_f_aut_chr{chrN}.tsv.gz",chrN=CHRNUM),
 		#expand(config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/chr{chrN}.gtf",chrN=CHRNUM)
-		expand(config["RAREDIR"]+"/features_v8/bySiteAnnoX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
-		sample_vartype=IDS_VARTYPES,chrN=CHRNUM),
-		config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_x.tsv.gz"
+		#expand(config["RAREDIR"]+"/features_v8/bySiteAnnoX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
+		#expand(config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
+		#expand(config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_chr{chrN}.tsv.gz",
+		expand(config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types_prot_linc.txt.gz",
+		sample_vartype=IDS_VARTYPES,chrN=CHRNUM)
+		#config["RAREDIR"]+"/features_v8/collapsed_maf_both_all.tsv.gz"
+		#config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_x.tsv.gz"
 		#########expand(config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types.txt.gz",chrN=CHRNUM)
 		##config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types.txt.gz",
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAnnoX/GenesAnno/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
@@ -189,16 +197,17 @@ rule vcf_add_genes_x:
 rule vcf_add_genes_aut:
 	input:
 		sample_anno=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/{sample_vartype}_chr{chrN}_anno.bed.gz",
-		genes=config["RAREDIR"]+"/features_v8/GTF/chr{chrN}.gtf"
+		genes=config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/chr{chrN}.gtf"
 	output:
-		sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GenesAnno/{sample_vartype}_chr{chrN}_anno_genes.bed.gz"
+		sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes.bed.gz"
 		
 	shell:
 		"""
-		echo "rule vcf_add_genes_x"
+		echo "rule vcf_add_genes_aut"
 		module load bedtools
 		#bedtools window -a {input.sample_anno} -b {input.genes} -w 10000 | awk -F"\t" '{{print $0"\t"$6$7}}'  > {output.sample_anno_genes}
 		bedtools window -a {input.sample_anno} -b {input.genes} -w 10000  > {output.sample_anno_genes}
+		bedtools window -a {input.sample_anno} -b {input.genes} -w 10000 -v  | awk -F"\t" '{{printf $0"\t"; for (i=1;i<18; i++){{printf "\tNA"}}; print ""}}'>> {output.sample_anno_genes}
 
 		"""
 
@@ -230,12 +239,13 @@ rule collapse_vars_to_genes_x:
 rule collapse_vars_to_genes_aut:
 	input:
 		#sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GenesAnno/{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
-		dir_read=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GenesAnno",
+		dir_read=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GeneAnnoProtCodLinc",
 		sex_file=config["GTEX_SUBJECTSv8"],
 		myscript=config["SCRIPTSDIR"]+"/Features/collapse_variants_genes_aut.py"
 	params:
 		min_maf=0.01,
-		cutoff_mafdiff=0.1
+		cutoff_mafdiff=0.1,
+		chr="chr{chrN}_"
 	output:
 		out_mafdiff=config["RAREDIR"]+"/features_v8/maf_diff_aut_chr{chrN}.tsv.gz",
 		out_maf_both=config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_chr{chrN}.tsv.gz",
@@ -248,19 +258,31 @@ rule collapse_vars_to_genes_aut:
 		python {input.myscript} --dir_read {input.dir_read} --sex_file {input.sex_file} \
 			--maf_filter {params.min_maf} --cutoff_mafdiff {params.cutoff_mafdiff} \
 			--out_mafdiff {output.out_mafdiff} --out_b {output.out_maf_both} \
-			--out_m {output.out_maf_m} --out_f {output.out_maf_f}
+			--out_m {output.out_maf_m} --out_f {output.out_maf_f} --chr {params.chr}
 		echo "completed: collapse_vars_to_genes_x"
 		"""
 
+rule combine_all_collapse_vars_to_genes:
+	input:
+		aut=expand(config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_chr{chrom}.tsv.gz",chrom=CHROMOSOMES),
+		x=config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_x.tsv.gz"
+	output:
+		config["RAREDIR"]+"/features_v8/collapsed_maf_both_all.tsv.gz"
+	shell:
+		"""
+		zcat {input.aut} {input.x} | gzip > {output}
 
+		"""
+		
+	
 rule combine_rvs_inds_x:
 	input:
-		file_dir=config["RAREDIR"]+"/features_v8/bySiteAnnoX/GenesAnno"
+		file_dir=config["RAREDIR"]+"/features_v8/bySiteAnnoX/GeneAnnoProtCodLinc"
 	params:
-		pregz=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types.txt",
+		pregz=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types_prot_linc.txt",
 		pattern="x*SNP*gz"
 	output:
-		gz=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types.txt.gz"
+		gz=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types_prot_linc.txt.gz"
 	shell:
 		"""
 		#chrX	247403	247403	2.33349e-02	GTEX-111CU	SNPs	ENSG00000228572.7	unprocessed_pseudogene
@@ -285,12 +307,12 @@ rule combine_rvs_inds_x:
 		"""
 rule combine_rvs_inds_aut:
 	input:
-		file_dir=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GenesAnno"
+		file_dir=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GeneAnnoProtCodLinc"
 	params:
-		pregz=config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types.txt",
+		pregz=config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types_prot_linc.txt",
 		pattern="*SNP*{chrN}*gz"
 	output:
-		gz=config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types.txt.gz"
+		gz=config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types_prot_linc.txt.gz"
 	shell:
 		"""
 		#chrX	247403	247403	2.33349e-02	GTEX-111CU	SNPs	ENSG00000228572.7	unprocessed_pseudogene
