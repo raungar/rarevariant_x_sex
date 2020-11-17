@@ -5,17 +5,22 @@ import os, glob
 
 FILES = [ os.path.basename(x) for x in glob.glob(config["FILESDIR"]+"/SexDEGs/*csv") ]
 TISSUES=  list(set([ "".join(((x.split("-")[1]).split("."))[0]) for x in FILES]))
-TISSUES="BREAST"
+#TISSUES="BREAST"
 print(TISSUES)
+CHR=["x","aut"]
+MINMAF=0
+MAXMAF=0.01
 
 
 rule all:
 	input: 
-		config["RAREDIR"]+"/sexdeg_v8/all_genes_chr.txt"
+		config["RAREDIR"]+"/sexdeg_v8/all_genes_chr.txt",
 		#expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.txt.gz",
+		expand(config["RAREDIR"]+"/sexdeg_v8/rr_{tissue}_{minmaf}_{maxmaf}_{chr}.txt",
+				tissue=TISSUES,chr=CHR,minmaf=MINMAF,maxmaf=MAXMAF),
+		expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}_{minmaf}_{maxmaf}.txt.gz",
+				tissue=TISSUES,chr=CHR,minmaf=MINMAF,maxmaf=MAXMAF)
 		#expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.txt.gz",
-		#expand(config["RAREDIR"]+"/sexdeg_v8/rr_{tissue}.txt",
-		#		tissue=TISSUES)
 		#expand(config["RAREDIR"]+"/sexdeg_v8/smg_{tissue}.txt",tissue=TISSUES)
 
 rule get_genes:
@@ -55,16 +60,16 @@ rule overlap_genes_sexdegs:
 rule add_RVs:
 	input:
 		#rvs=config["RAREDIR"]+"/features_v8/collapsed_maf_both_x.tsv.gz",
-		rvs=config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_x.tsv.gz",
+		rvs=config["RAREDIR"]+"/features_v8/collapsed_maf_both_all.tsv.gz",
 		sexdegs=config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_{tissue}.txt",
 		myscript=config["SCRIPTSDIR"]+"/SexDeg/intersect_sexdegs_rvs.py"
 	output:
-		config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.txt.gz"
+		config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}_{minmaf}_{maxmaf}.txt.gz"
 	params:
-		min=0,
-		max=0.001
+		min="{minmaf}",
+		max="{maxmaf}"
 	log:
-		config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.log"
+		config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}_{minmaf}_{maxmaf}.log"
 	shell:
 		"""
 		python3 {input.myscript} --rvsites_file {input.rvs} \
@@ -74,21 +79,22 @@ rule add_RVs:
 
 rule get_frac_file:
 	input: 
-		rv_file=config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.txt.gz",
+		rv_file=config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}_{minmaf}_{maxmaf}.txt.gz",
 		script=config["SCRIPTSDIR"]+"/SexDeg/get_rr.sh"
 	output:
-		config["RAREDIR"]+"/sexdeg_v8/risktable_{tissue}.txt"
+		out_aut=config["RAREDIR"]+"/sexdeg_v8/risktable_{tissue}_{minmaf}_{maxmaf}_aut.txt",
+		out_x=config["RAREDIR"]+"/sexdeg_v8/risktable_{tissue}_{minmaf}_{maxmaf}_x.txt"
 	shell:
 		"""
-		sh {input.script} {input.rv_file} {output}
+		sh {input.script} {input.rv_file} {output.out_aut} {output.out_x}
 		"""
 		
 rule calc_risk:
 	input:
-		infile=config["RAREDIR"]+"/sexdeg_v8/risktable_{tissue}.txt",
+		infile=config["RAREDIR"]+"/sexdeg_v8/risktable_{tissue}_{chr}_{minmaf}_{maxmaf}.txt",
 		rscript=config["SCRIPTSDIR"]+"/SexDeg/get_rr_epitab.R"
 	output:
-		config["RAREDIR"]+"/sexdeg_v8/rr_{tissue}.txt"
+		config["RAREDIR"]+"/sexdeg_v8/rr_{tissue}_{chr}_{minmaf}_{maxmaf}.txt"
 	shell:
 		"""
 		module load R
