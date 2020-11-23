@@ -141,7 +141,7 @@ for (this_subregion in rownames(subregion_df)){
   par_region=mapply(function(s,e){
     if(s>=this_s & e<=this_e){this_subregion}
     else{"NA"}
-  },as.numeric(exp_data_euro)$start,as.numeric(exp_data_euro)$end)
+  },as.numeric(exp_data_euro$start),as.numeric(exp_data_euro$end))
   exp_data_euro_wpars<-cbind(exp_data_euro,par_region)
   
   #look only at this subregion
