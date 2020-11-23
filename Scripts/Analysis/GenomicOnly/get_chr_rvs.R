@@ -23,10 +23,10 @@ chrlens <- as.character(opt$chrlen_infile)
 out_numrvs <- as.character(opt$out_numrvs)
 out_sigdif <- as.character(opt$out_sigdif)
 chrtype <- as.character(opt$chrtype)
+# summary_stat <- as.character(opt$summary_stat)
 
 print(paste0("my chr is : ",chrtype))
-if(chrtype != "aut" & chrtype != "x"){stop("ERROR: chrtype must be aut or x")}
-
+# if(chrtype != "aut" & chrtype != "x"){stop("ERROR: chrtype must be aut or x")}
 # infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/aut_all_rvs_inds_types.txt.gz"
 # euro_file<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt"
 # sex_file<-"/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/sample_annotations/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS_v2_downloaded_april2020.txt"
@@ -42,7 +42,7 @@ wrong_self_reported_ancestry<-c("GTEX-11TT1", "GTEX-12ZZX", "GTEX-131XF", "GTEX-
 #Read everything in and make proper hashes 
 exp_data = fread(infile,data.table=F)
 #exp_data=fread(cmd = paste("head -n 501 | tail -500", infile),data.table=F)
-colnames(exp_data)<-c("chr","start","end","maf","gtex_sample","vartype")
+colnames(exp_data)<-c("chr","start","end","maf","gtex_sample","vartype", "ensg","genetype")
 euro<-fread(euro_file)
 euro_vec_unchecked<-as.character(data.frame(euro)[,1])
 euro_vec<-euro_vec_unchecked[!(euro_vec_unchecked %in% wrong_self_reported_ancestry )]
@@ -92,8 +92,8 @@ get_mww_test_m_f<-function(maf_m,maf_f,this_var,mult_test_type){
     }
     mw_test_p<-unlist(lapply(sort(unique(maf_m$UpperBound)),
                                    function(x)
-                                     wilcox.test(as.numeric(as.data.frame(maf_m)[maf_m$UpperBound ==x  & maf_m$vartype==this_var &  maf_m$chr==this_chr,"N.cum"]),
-                                                 as.numeric(as.data.frame(maf_f)[maf_f$UpperBound ==x  &  maf_f$vartype==this_var &  maf_f$chr==this_chr,"N.cum"]))$p.value)
+                                     wilcox.test(as.numeric(as.data.frame(maf_m)[maf_m$UpperBound ==x  & maf_m$vartype==this_var &  maf_m$chr==this_chr,"N.cum.adj"]),
+                                                 as.numeric(as.data.frame(maf_f)[maf_f$UpperBound ==x  &  maf_f$vartype==this_var &  maf_f$chr==this_chr,"N.cum.adj"]))$p.value)
     )
    this_mw_df<- data.frame("maf"=sort(unique(maf_m$UpperBound)), "pval"=mw_test_p,
                            "padj"=p.adjust(mw_test_p,n=nrow_f,method =mult_test_type), "vartype"=this_var,
@@ -138,6 +138,9 @@ if(chrtype == "x"){
   cum_maf_summ_m_double<-get_summary(this_cum_maf_m_double, "N.cum.adj")
   cum_maf_summ_combined<-rbind(cbind(cum_maf_summ_m_double, "sex"="male"),
                                cbind(cum_maf_summ_f, "sex"="female"))
+  # cum_maf_summ_combined<-rbind(cbind(cum_maf_summ_m, "sex"="male"),
+  #                              cbind(cum_maf_summ_f, "sex"="female"),
+  #                              cbind(cum_maf_summ_m_double, "sex"="male_double"))
   print("chr x - males have been doubled")
   
 }
@@ -149,23 +152,23 @@ write.table(cum_maf_summ_combined,gzfile(out_numrvs), quote = F,sep="\t",row.nam
 #only double males for the X!
 if(chrtype == "x"){
   mmw_snps<-get_mww_test_m_f(this_cum_maf_m_double,this_cum_maf_f,"SNPs","BH")
-  mmw_indels<-get_mww_test_m_f(this_cum_maf_m_double,this_cum_maf_f,"indels","BH")
-  mmw_sv<-get_mww_test_m_f(this_cum_maf_m_double,this_cum_maf_f,"SV","BH")
-  mmw_all<-rbind(mmw_snps[-1,],
-                 mmw_indels[-1,],
-                 mmw_sv[-1,])
+  #mmw_indels<-get_mww_test_m_f(this_cum_maf_m_double,this_cum_maf_f,"indels","BH")
+ # mmw_sv<-get_mww_test_m_f(this_cum_maf_m_double,this_cum_maf_f,"SV","BH")
+  mmw_all<-rbind(mmw_snps[-1,] ) #,
+                 #mmw_indels[-1,],
+                # mmw_sv[-1,])
   
 }else{
   print("snps...")
   mmw_snps<-get_mww_test_m_f(this_cum_maf_m,this_cum_maf_f,"SNPs","BH")
   print("indels...")
-  mmw_indels<-get_mww_test_m_f(this_cum_maf_m,this_cum_maf_f,"indels","BH")
+  #mmw_indels<-get_mww_test_m_f(this_cum_maf_m,this_cum_maf_f,"indels","BH")
   print("sv....")
-  mmw_sv<-get_mww_test_m_f(this_cum_maf_m,this_cum_maf_f,"SV","BH")
+ # mmw_sv<-get_mww_test_m_f(this_cum_maf_m,this_cum_maf_f,"SV","BH")
   print("combining....")
-  mmw_all<-rbind(mmw_snps[-1,],
-                 mmw_indels[-1,],
-                 mmw_sv[-1,])
+  mmw_all<-rbind(mmw_snps[-1,]) #,
+               #  mmw_indels[-1,],
+               #  mmw_sv[-1,])
   
 }
 print("writing....")
