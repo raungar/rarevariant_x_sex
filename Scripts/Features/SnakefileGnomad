@@ -27,7 +27,7 @@ for splitf in split_files:
 	#break
 #CHRNUM="X"
 print(IDS_VARTYPES)
-CHRNUM=range(1,23) #+"X"
+CHRNUM=range(1,23)
 CHROMOSOMES=range(1,22)
 
 rule all:
@@ -40,8 +40,10 @@ rule all:
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAnnoX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
 		#expand(config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_chr{chrN}.tsv.gz",
-		expand(config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types_prot_linc.txt.gz",
-		sample_vartype=IDS_VARTYPES,chrN=CHRNUM)
+		#expand(config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types_linc_prot.txt.gz",
+		#sample_vartype=IDS_VARTYPES,chrN=CHRNUM),
+		#config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types_linc_prot.txt.gz"
+		config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_aut.tsv.gz"
 		#config["RAREDIR"]+"/features_v8/collapsed_maf_both_all.tsv.gz"
 		#config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_x.tsv.gz"
 		#########expand(config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types.txt.gz",chrN=CHRNUM)
@@ -247,10 +249,10 @@ rule collapse_vars_to_genes_aut:
 		cutoff_mafdiff=0.1,
 		chr="chr{chrN}_"
 	output:
-		out_mafdiff=config["RAREDIR"]+"/features_v8/maf_diff_aut_chr{chrN}.tsv.gz",
-		out_maf_both=config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_chr{chrN}.tsv.gz",
-		out_maf_m=config["RAREDIR"]+"/features_v8/collapsed_maf_m_aut_chr{chrN}.tsv.gz",
-		out_maf_f=config["RAREDIR"]+"/features_v8/collapsed_maf_f_aut_chr{chrN}.tsv.gz"
+		out_mafdiff=config["RAREDIR"]+"/features_v8/maf_diff_aut_chr{chrN}_linc_prot.tsv.gz",
+		out_maf_both=config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_chr{chrN}_linc_prot.tsv.gz",
+		out_maf_m=config["RAREDIR"]+"/features_v8/collapsed_maf_m_aut_chr{chrN}_linc_prot.tsv.gz",
+		out_maf_f=config["RAREDIR"]+"/features_v8/collapsed_maf_f_aut_chr{chrN}_linc_prot.tsv.gz"
 	shell:
 		"""
 		module load python3
@@ -262,12 +264,22 @@ rule collapse_vars_to_genes_aut:
 		echo "completed: collapse_vars_to_genes_x"
 		"""
 
+rule combine_aut_collapse_vars_to_genes:
+	input:
+		aut=expand(config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_chr{chrom}_linc_prot.tsv.gz",chrom=CHROMOSOMES),
+	output:
+		config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_aut.tsv.gz"
+	shell:
+		"""
+		zcat {input.aut} | gzip > {output}
+
+		"""
 rule combine_all_collapse_vars_to_genes:
 	input:
-		aut=expand(config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_chr{chrom}.tsv.gz",chrom=CHROMOSOMES),
+		aut=expand(config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_chr{chrom}_linc_prot.tsv.gz",chrom=CHROMOSOMES),
 		x=config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_x.tsv.gz"
 	output:
-		config["RAREDIR"]+"/features_v8/collapsed_maf_both_all.tsv.gz"
+		config["RAREDIR"]+"/features_v8/collapsed_maf_both_all_linc_prot.tsv.gz"
 	shell:
 		"""
 		zcat {input.aut} {input.x} | gzip > {output}
@@ -279,10 +291,10 @@ rule combine_rvs_inds_x:
 	input:
 		file_dir=config["RAREDIR"]+"/features_v8/bySiteAnnoX/GeneAnnoProtCodLinc"
 	params:
-		pregz=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types_prot_linc.txt",
+		pregz=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types_linc_prot.txt",
 		pattern="x*SNP*gz"
 	output:
-		gz=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types_prot_linc.txt.gz"
+		gz=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types_linc_prot.txt.gz"
 	shell:
 		"""
 		#chrX	247403	247403	2.33349e-02	GTEX-111CU	SNPs	ENSG00000228572.7	unprocessed_pseudogene
@@ -309,10 +321,10 @@ rule combine_rvs_inds_aut:
 	input:
 		file_dir=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GeneAnnoProtCodLinc"
 	params:
-		pregz=config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types_prot_linc.txt",
+		pregz=config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types_linc_prot.txt",
 		pattern="*SNP*{chrN}*gz"
 	output:
-		gz=config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types_prot_linc.txt.gz"
+		gz=config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types_linc_prot.txt.gz"
 	shell:
 		"""
 		#chrX	247403	247403	2.33349e-02	GTEX-111CU	SNPs	ENSG00000228572.7	unprocessed_pseudogene
