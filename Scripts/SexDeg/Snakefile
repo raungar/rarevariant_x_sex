@@ -10,16 +10,18 @@ print(TISSUES)
 CHR=["x","aut"]
 MINMAF=0
 MAXMAF=0.01
-
+beta_min="0.111"
 
 rule all:
 	input: 
 		config["RAREDIR"]+"/sexdeg_v8/all_genes_chr.txt",
+		config["RAREDIR"]+"/sexdeg_v8/combined_sexdegs.txt.gz"
+
 		#expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.txt.gz",
-		expand(config["RAREDIR"]+"/sexdeg_v8/rr_{tissue}_{minmaf}_{maxmaf}_{chr}.txt",
-				tissue=TISSUES,chr=CHR,minmaf=MINMAF,maxmaf=MAXMAF),
-		expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}_{minmaf}_{maxmaf}.txt.gz",
-				tissue=TISSUES,chr=CHR,minmaf=MINMAF,maxmaf=MAXMAF)
+		#expand(config["RAREDIR"]+"/sexdeg_v8/rr_{beta_min}_{tissue}_{minmaf}_{maxmaf}_{chr}.txt",
+		#		tissue=TISSUES,chr=CHR,minmaf=MINMAF,maxmaf=MAXMAF,beta_min=beta_min),
+		#expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_"+beta_min+"_{tissue}_{minmaf}_{maxmaf}.txt.gz",
+		#		tissue=TISSUES,chr=CHR,minmaf=MINMAF,maxmaf=MAXMAF)
 		#expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}.txt.gz",
 		#expand(config["RAREDIR"]+"/sexdeg_v8/smg_{tissue}.txt",tissue=TISSUES)
 
@@ -49,19 +51,21 @@ rule overlap_genes_sexdegs:
 		genes=config["RAREDIR"]+"/sexdeg_v8/all_genes_chr.txt",
 		sexdegs=config["FILESDIR"]+"/SexDEGs/sexDEGS-{tissue}.csv",
 		myscript=config["SCRIPTSDIR"]+"/SexDeg/combine_allgenes_sexdegs.sh"
+	params:
+		abs_beta_min=beta_min
 	output:
-		config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_{tissue}.txt"
+		config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_beta"+beta_min+"_{tissue}.txt"
 	shell:
 		"""
 		#echo "DN"
-		sh {input.myscript} {input.genes} {input.sexdegs} {output}
+		sh {input.myscript} {input.genes} {input.sexdegs} {output} {params}
 		"""
 
 rule add_RVs:
 	input:
 		#rvs=config["RAREDIR"]+"/features_v8/collapsed_maf_both_x.tsv.gz",
 		rvs=config["RAREDIR"]+"/features_v8/collapsed_maf_both_all.tsv.gz",
-		sexdegs=config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_{tissue}.txt",
+		sexdegs=config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_beta"+beta_min+"_{tissue}.txt",
 		myscript=config["SCRIPTSDIR"]+"/SexDeg/intersect_sexdegs_rvs.py"
 	output:
 		config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}_{minmaf}_{maxmaf}.txt.gz"
@@ -69,7 +73,7 @@ rule add_RVs:
 		min="{minmaf}",
 		max="{maxmaf}"
 	log:
-		config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}_{minmaf}_{maxmaf}.log"
+		config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_"+beta_min+"_{tissue}_{minmaf}_{maxmaf}.log"
 	shell:
 		"""
 		python3 {input.myscript} --rvsites_file {input.rvs} \
@@ -79,11 +83,12 @@ rule add_RVs:
 
 rule get_frac_file:
 	input: 
-		rv_file=config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}_{minmaf}_{maxmaf}.txt.gz",
+		#rv_file=config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_{tissue}_{minmaf}_{maxmaf}.txt.gz",
+		rv_file=config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_rvs_"+beta_min+"_{tissue}_{minmaf}_{maxmaf}.log",
 		script=config["SCRIPTSDIR"]+"/SexDeg/get_rr.sh"
 	output:
-		out_aut=config["RAREDIR"]+"/sexdeg_v8/risktable_{tissue}_{minmaf}_{maxmaf}_aut.txt",
-		out_x=config["RAREDIR"]+"/sexdeg_v8/risktable_{tissue}_{minmaf}_{maxmaf}_x.txt"
+		out_aut=config["RAREDIR"]+"/sexdeg_v8/risktable_"+beta_min+"_{tissue}_{minmaf}_{maxmaf}_aut.txt",
+		out_x=config["RAREDIR"]+"/sexdeg_v8/risktable_"+beta_min+"_{tissue}_{minmaf}_{maxmaf}_x.txt"
 	shell:
 		"""
 		sh {input.script} {input.rv_file} {output.out_aut} {output.out_x}
@@ -91,13 +96,39 @@ rule get_frac_file:
 		
 rule calc_risk:
 	input:
-		infile=config["RAREDIR"]+"/sexdeg_v8/risktable_{tissue}_{chr}_{minmaf}_{maxmaf}.txt",
+		infile=config["RAREDIR"]+"/sexdeg_v8/risktable_"+beta_min+"_{tissue}_{chr}_{minmaf}_{maxmaf}.txt",
 		rscript=config["SCRIPTSDIR"]+"/SexDeg/get_rr_epitab.R"
 	output:
-		config["RAREDIR"]+"/sexdeg_v8/rr_{tissue}_{chr}_{minmaf}_{maxmaf}.txt"
+		config["RAREDIR"]+"/sexdeg_v8/rr_"+beta_min+"_{tissue}_{chr}_{minmaf}_{maxmaf}.txt"
 	shell:
 		"""
 		module load R
 		Rscript {input.rscript} --infile {input.infile} --outfile {output}
 		"""
 	
+rule combine_sexdegs:
+	input:
+		tissues=expand(config["RAREDIR"]+"/sexdeg_v8/all_genes_sexDEGs_{this_tissue}.txt",
+			this_tissue=TISSUES)
+
+	output:
+		config["RAREDIR"]+"/sexdeg_v8/combined_sexdegs.txt.gz"
+
+	params:
+		all_tiss=expand("{my_tissue}",my_tissue=TISSUES)
+	shell:
+		"""
+		echo "PARAMS"
+		echo "{params}"
+		echo "INPUT FILES"
+		echo "{input}"
+		tissues_reformat=`echo "{params}" | sed 's/,\s//g' |  sed -e 's/\[//g' | sed -e 's/\]//g'  | sed -e "s/'/\t/g"`
+		echo "REFORMATTED YO"
+		header=`echo -e "CHR\tENSG$tissues_reformat"`
+		echo $header |  sed -e '1s/ /\t/g'  
+		echo $header |  sed -e '1s/ /\t/g' | gzip -c > {output}
+		paste {input} | awk '{{printf $1"\t"$2; for (i=3;i<=NF;i+=3){{printf "\t"$i}}; print""}}' | gzip -c >> {output}
+
+		"""
+		#Output/sexdeg_v8/all_genes_sexDEGs_{"WHLBLD","THYROID"}.txt
+		# | awk '{printf $1"\t"$2; for (i=3;i<=NF;i+=3){printf "\t"$i}; printf"\n"}
