@@ -13,27 +13,7 @@ print(SEX_GROUPS)
 
 rule all:
 	input: 
-		config["RAREDIR"]+"/preprocessing_v8/tpm_dif_file.txt"
-		#expand(config["RAREDIR"]+"/gather_filter_norm_expr_{this_group}.log", this_group=SEX_GROUPS)
-		#expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subsetted_x_{this_group}.txt.gz", this_group=SEX_GROUPS),
-		#expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subsetted_aut_{this_group}.txt.gz", this_group=SEX_GROUPS)
-		#config["RAREDIR"]+"/preprocessing_v8/log.regress_sex.txt"
-		#config["RAREDIR"]+"/preprocessing_v8/get_tissue_by_individual.log"
-		#config["RAREDIR"]+"/preprocessing_v8/get_resids_ztrans.log",
-		#config["RAREDIR"]+"/preprocessing_v8/log.regress_sex.txt"
-		###config["RAREDIR"]+"/preprocessing_v8/log.regress_sex.txt",
-		#expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_{type}_{this_group}.txt.gz",
-		#type=TYPES, this_group=SEX_GROUPS),
-		##expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset_x_{this_group}.txt.gz", this_group=SEX_GROUPS),
-		##expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset_aut_{this_group}.txt.gz", this_group=SEX_GROUPS)
-		###expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset_aut_{this_group}.txt.gz",this_group=SEX_GROUPS)
-
-		#expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_{this_group}.txt.gz", this_group=SEX_GROUPS)
-		#expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.{type}.{this_group}.txt.gz", 
-		#type=TYPES, this_group=SEX_GROUPS)
-		#expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.{type}.{this_group}.txt.gz", 
-		#type=SEX_GROUPS_TYPES["types"], this_group=SEX_GROUPS_TYPES["sex_groups"])
-		#expand(config["RAREDIR"]+"/outliers_v8/gtex_2017-06-05_normalized_expression_subset.x.{group}.txt.gz",  group=GROUPS)
+		config["RAREDIR"]+"/preprocessing_v8/get_peer_factors.log"
 
 #first run to prepare files
 rule get_samples_tissues:
@@ -204,7 +184,7 @@ rule get_resids_ztrans_regresssex:
 		logfile="log.residuals_sexregress.tsv",
 		inclsex="F"
 	output:
-		config["RAREDIR"]+"/preprocessing_v8/log.regress_sex.txt"
+		config["RAREDIR"]+"/preprocessing_v8/regress_sex.txt.log"
 	run:
 		#"""sh /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER.sh \
 		shell("""
@@ -218,20 +198,13 @@ rule get_resids_ztrans_regresssex:
 			{input.metadata_file} {params.factors_type} {params.logfile} {params.inclsex} $file
 			#break;
 		done
-		#for file in `ls {input.peerdir}/*pinal*log2*ztrans*both*half.txt`
-		#do
-		#	echo $file >> {output}
-		#	sbatch /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER_residuals.sh \
-		#	{input.peerdir} {input.scriptdir} {params.gtex_v8_eqtl_dir} {input.RAREDIR} {input.covs} \
-		#	{input.metadata_file} {params.factors_type} {params.logfile} {params.inclsex} $file
-		#	#break;
-		#done
 		""")
 
 rule get_tissue_by_individual:
 	input:
 		RAREDIR=config["RAREDIR"],
-		log=config["RAREDIR"]+"/preprocessing_v8/peer_correct_sex_log.log"
+		log=config["RAREDIR"]+"/preprocessing_v8/peer_correct_sex_log.log",
+		prev_rule=config["RAREDIR"]+"/preprocessing_v8/regress_sex.txt.log"
 	output:
 		log=config["RAREDIR"]+"/preprocessing_v8/get_tissue_by_individual.log"
 	shell:
@@ -299,11 +272,3 @@ rule filter_tissues_individuals:
 			--outfile_x {output.outfile_x} --outfile_a {output.outfile_a} --group {params.my_group}
 		"""
 
-
-
-#my_group=lambda wildcards: SEX_GROUPS_TYPES["sex_groups"]
-#lambda wildcards: \
-#	[ind_file=[config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_individuals_all_normalized_samples_"+sex_group+".txt" \
-#		for sex_group in SEX_GROUPS_TYPES["sex_groups"]
-#	],
-#	tissue_file= "d" #config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_tissue_by_ind_"+SEX_GROUPS_TYPES["sex_groups"]+".txt",

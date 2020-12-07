@@ -22,14 +22,13 @@ srun="srun -n1 -N1 --exclusive"
 
 peerdir=${1} #${RAREDIR}/preprocessing_v8/PEER_v8
 scriptdir=${2} #`dirname \$(readlink -f "\$0")`
-gtex_v8_eqtl_dir=${3} #${GTEXv8}/eqtl/GTEx_Analysis_v8_eQTL
-RAREDIR=${4}
-pcs=${5}
-md=${6}
-factors_type=${7} #factors or factors prefix for when transform by sex
-logfile=${8} #log file change
-incl_sex=${9}  # T or F
-traitsFileName=${10}
+RAREDIR=${3}
+pcs=${4}
+md=${5}
+factors_type=${6} #factors or factors prefix for when transform by sex
+logfile=${7} #log file change
+incl_sex=${8}  # T or F
+traitsFileName=${9}
 
 echo "${traitsFileName}"
 #for traitsFileName in `ls ${peerdir}/*log2.ztrans*.txt`
@@ -70,19 +69,18 @@ echo "${traitsFileName}"
         sex="${sex}.regress"
     fi
 
-    outfile=${prefix}.${sex}.peer.v8ciseQTLs.ztrans.txt
+    outfile=${prefix}.${sex}.peer.ztrans.txt
 
 
 
     # computing residuals
     echo "${scriptdir}/calculate_PEER_residuals.R $traitsFileName ${pcs} \
-            ${indir}/factors.tsv ${gtex_v8_eqtl_dir}/${tissue}.v8.egenes.txt.gz \
-        $RAREDIR/preprocessing_v8/gtex_2017-06-05_v8_genotypes_cis_eQTLs_012_processed.txt \
-        ${prefix}.${sex}.peer.v8ciseQTLs.ztrans.txt &> ${outdir}/log.residuals.txt  "
+            ${indir}/factors.tsv  \
+        ${prefix}.${sex}.peer.ztrans.txt &> ${outdir}/log.residuals.txt  "
 
+	#3 and 4 removed
     Rscript ${scriptdir}/calculate_PEER_residuals.R $traitsFileName ${pcs} \
-            ${indir} ${gtex_v8_eqtl_dir}/${tissue}.v8.egenes.txt.gz \
-        $RAREDIR/preprocessing_v8/gtex_2017-06-05_v8_genotypes_cis_eQTLs_012_processed.txt \
+            ${indir} \
         ${outfile} ${md} ${factors_type} ${incl_sex} &> ${outdir}/${logfile}
 
     #break
