@@ -9,7 +9,7 @@ library(stringr)
 
 #-------------- MAIN
 print("ENTERING R SCRIPT...")
-
+print(date())
 args = commandArgs(trailingOnly = T)
 if (length(args) < 6) {
   cat("Usage: Rscript calculate_PEER_residuals.R RPKM COV PEER EQTLCALLS EQTLGENOS OUT\n", file = stderr())
@@ -20,12 +20,12 @@ if (length(args) < 6) {
 expr_file = args[1]
 covs_file = args[2]
 tissue_dir = args[3] #ex: /preprocessing/PEER_v8/Whole_Blood_Factors35
-eqtl_call_file = args[4]
-eqtl_geno_file = args[5]
-out_file = args[6]
-metadata_file=args[7]
-factors_type=args[8] #either factors or factors_sexregress
-incl_sex=args[9]
+#eqtl_call_file = args[4]
+#eqtl_geno_file = args[5]
+out_file = args[4]
+metadata_file=args[5]
+factors_type=args[6] #either factors or factors_sexregress
+incl_sex=args[7]
 
 print(out_file)
 
@@ -35,7 +35,25 @@ print(out_file)
 #eqtl_call_file = '/mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/eqtl_updated_annotation/v6p_fastQTL_FOR_QC_ONLY/Whole_Blood_Analysis.v6p.FOR_QC_ONLY.egenes.txt.gz'
 #eqtl_geno_file = '/srv/scratch/restricted/GOATs/preprocessing/gtex_2016-01-15_v7_genotypes_v6p_cis_eQTLs_012_processed.txt'
 #out_file = '/srv/scratch/restricted/GOATs/preprocessing/PEER_v7/Whole_Blood.peer.v6pciseQTLs.ztrans.txt'
+print(paste0("EQTL CLALL FILE" ,eqtl_call_file))
 
+#rm(eqtl_geno_file)
+#print("EQTL FILE")
+#print("/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/eqtl/GTEx_Analysis_v8_eQTL/Brain_Spinal_cord_cervical_c-1.v8.egenes.txt.gz")
+#eqtl_geno_file="/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/eqtl/GTEx_Analysis_v8_eQTL/Brain_Spinal_cord_cervical_c-1.v8.egenes.txt.gz"
+
+
+if(grepl("pinal_cord",eqtl_geno_file,fixed=T)){
+  print("Then new eqtl_gene_file")
+  eqtl_geno_file="/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/eqtl/GTEx_Analysis_v8_eQTL/Brain_Spinal_cord_cervical_c-1.v8.egenes.txt.gz"
+
+}
+
+if(grepl("pinal_cord",eqtl_call_file,fixed=T)){
+  print("Then new eqtl_gene_file")
+  ##eqtl_call_file="/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/eqtl/GT$
+  eqtl_call_file="/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/eqtl/GTEx_Analysis_v8_eQTL/Brain_Spinal_cord_cervical_c-1.v8.egenes.txt.gz"
+}
 ## Read in expression and covariate matrices
 expr = read.table(expr_file, header = T, sep = '\t', row.names = 1)
 covs = read.table(covs_file, header = T, sep = '\t', row.names = 1)
@@ -89,6 +107,7 @@ print(head(covs,1))
 #print("NROW COVS")
 #print(nrow(covs))
 
+print(paste0("inclu sex? ",incl_sex))
 
 if(incl_sex == "T"){
 	print("INCLUDING SEX")
@@ -123,7 +142,9 @@ expr = expr[inds_to_keep, ]
 
 ## Read in eQTL data for this tissue
 ## Restrict to the individuals with expression data for this tissue
+print(paste0("reading eqtl_calls: ",eqtl_call_file))
 eqtl_calls = read.table(eqtl_call_file, sep = '\t', header = T) %>% select(Gene = gene_id, Chrom = chr, Pos = variant_pos, Qval = qval)
+print(paste0("reading eqtl geno file: ",eqtl_geno_file))
 eqtl_genos = as.data.frame(fread(eqtl_geno_file,header=T))
 
 #print("eqtl genos")
