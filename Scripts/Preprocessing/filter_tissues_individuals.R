@@ -9,6 +9,8 @@ require(stringr)
 require(data.table)
 library(optparse)
 
+set.seed(12345)
+
 get_opt_parser<-function(){
         option_list = list(
                  make_option(c("-r", "--RAREDIR"), type="character", default=NULL, help="RAREDIR"),
@@ -42,12 +44,12 @@ print(norm_expr_file)
 
 # RAREDIR="/oak/stanford/groups/smontgom/raungar/Sex/Output"
 # sample_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_v8_samples_tissues.txt"
-# norm_expr_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_normalized_expression_m.txt"
+# norm_expr_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_normalized_expression_aut_m.txt.gz"
 # x_gtf_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/x_proteincoding_lncrna.gtf"
 # a_gtf_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/autosomal_proteincoding_lncrna.gtf"
 # outfile_x="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.x.both.txt.gz"
 # outfile_a="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.aut.both.txt.gz"
-# my_group="male"
+# my_group="m"
 # 
 
 
@@ -110,10 +112,22 @@ expr2 = fread(norm_expr_file, header=T)
 print("EXPR") #Adipose_Subcu
 #print(head(expr))
 tissue_dic<-sort(unique(meta$Tissue))
+print("tissue dic pre becoming a dictionary so it's just vals")
+print(tissue_dic)
+print("len meta than expr tissue")
+print(length(unique(meta$Tissue)))
+print(length(unique(expr$Tissue)))
 names(tissue_dic)<-sort(unique(expr$Tissue))
-#print(tissue_dic)
-expr$Tissue<-tissue_dic[expr$Tissue]
+print("tissue_dic!!")
+print(tissue_dic)
+print("now printing unique(meta$Tissue)")
+print(unique(meta$Tissue))
+print("now printing unique(expr$Tissue)")
+print(unique(expr$Tissue))
+######expr$Tissue<-tissue_dic[expr$Tissue]
 #print(head(expr))
+print("expr tissues....")
+print(unique(expr$Tissue))
 
 colnames(expr) = gsub("[.]", "-", colnames(expr))
 #print(head(colnames(expr)))
@@ -121,6 +135,8 @@ meta = meta[meta$Id %in% colnames(expr), ]
 
 ## Get tissue and sample names
 tissues = sort(unique(meta$Tissue))
+print("TISSUES FROM META")
+print(tissues)
 brain.indices = grep('Brain', tissues)
 individuals = unique(meta$Id)
 
@@ -131,6 +147,7 @@ for (t in tissues) {
     inds = meta$Id[meta$Tissue == t]
     exp.design[t, inds] = 1
 }
+
 
 #missingness.ind = plot.ind.miss(exp.design, 'Missingness by individual (original)', thresh = NULL)
 #missingness.tiss = plot.tissue.miss(exp.design, 'Missingness by tissue (original)', thresh = NULL)
@@ -146,10 +163,11 @@ for (t in tissues) {
 #tissues.final=as.character(tiss.miss$tissue)
 tissues.final=rownames(exp.design)
 print("TISSUES FINAL")
-#print(tissues.final)
+print(tissues.final)
 
 #tissues.final = as.character(missingness.tiss$keep)
 exp.design = exp.design[tissues.final, ]
+
 
 #print("begin ind.miss")
 ## Filter for individuals with at most 75% missingness (based on subset set of tissues)
@@ -173,13 +191,16 @@ write.table(exp.design, paste0(dir, '/gtex_2017-06-05_v8_design_passed_',my_grou
             sep = '\t', quote = F, col.names = T, row.names = T)
 
 ## Subset the normalized expression file to the individuals and tissues selected
-#print("EXPR TISSUE IN FINAL")
+print("EXPR TISSUE IN FINAL")
 #print(expr$Tissue)
 #print(head(expr))
-#print(unique(expr$Tissue))
+print(unique(expr$Tissue))
 #print(unique(tissues.final))
 
 expr.subset = expr[which(expr$Tissue %in% tissues.final),]
+
+print("expr subset tissue")
+print(unique(expr.subset$Tissue))
 #head(expr.subset)
 rm(expr)
 #expr.subset = expr.subset[, c('Tissue', 'Gene', sort(get(inds.final)))]
@@ -268,5 +289,6 @@ write.table(expr.subset.x, gzout_x, sep = '\t', quote = F, col.names = T, row.na
 close(gzout_x)
 
 print("complete")
+
 
 

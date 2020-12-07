@@ -10,6 +10,7 @@ set.seed(1234) #IMPORTANT: RANDOM SUBSETTING OF INDIVIDUALS
 require(data.table)
 require(ggplot2)
 require(stringr)
+library(tidyverse)
 
 library("optparse") #for passing args
 ##------------- FUNCTIONS
@@ -22,6 +23,7 @@ get_opt_parser<-function(){
                  make_option(c("-m", "--map_file_prefix"), type="character", default="gtex_2017-06-05_v8_samples_tissues.txt", help="output file samples"),
                  make_option(c("-t", "--do_tissues"), type="logical", default=NULL, help="T (first time run) or F (second time run)"),
                  make_option(c("-r", "--GTEX_RNAv8"), type="character", default=NULL, help="GTEX_RNAv8"),
+                 make_option(c("-e", "--euro_file"), type="character", default=NULL, help="unambiguous european list"),
                  make_option(c("-o", "--TPM_DIF_FILE"), type="character", default="F", help="GTEX_RNAv8")
         ) 
         opt_parser = OptionParser(option_list=option_list)
@@ -29,23 +31,9 @@ get_opt_parser<-function(){
 }
 
 
-## Function to put together the command to split the given matrix by tissue
-##    datatype should be either 'read' or 'rpkm'
-##    mapfile should be the file with the sampleID-tissue correspondance
-##    outdir should be the directory to write the new files to
-make.split.command = function(datatype, mapfile, outdir, GTEX_RNAv8) {
-   # comm = paste0('python preprocessing/correction/preprocess_expr_split_by_tissues.py ',
-    comm = paste0('python preprocessing/split_expr_by_tissues.py ',
-                  '--gtex ', GTEX_RNAv8, '/GTEx_Analysis_v8_RNA-seq_RNA-SeQCv1.1.8_gene_',
-                  datatype, '.gct.gz ',
-                  '--sample ', mapfile, ' --out ', outdir,
-                  ' --end .', datatype, '.txt')
-    return(comm)
-}
-
 ##get most frequent individuals
 #return type is a table
-get_ind<-function(tissues, dir){
+get_ind<-function(tissues, dir,euro){
   ind_list<-c()
   for(tissue in tissues){
     this_header = fread(paste0(dir, tissue, '.tpm.txt'),nrows=1,header=F,sep="\t")
@@ -53,7 +41,8 @@ get_ind<-function(tissues, dir){
   }
   ind_table<-table(ind_list)
   ind_table_nogene<-rev(sort(ind_table[-1]))
-  return(ind_table_nogene)
+  ind_table_nogene_euro<-ind_table_nogene[names(ind_table) %in% euro]
+  return(ind_table_nogene_euro)
 
 }
 
@@ -72,20 +61,18 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
     stopifnot(sum(colnames(tpm) != colnames(reads)) == 0)
     
     if(sum(tpm$Gene != reads$Gene)){
-	print("WARNING: HAVING TO SUBSET GENES")
-	print(paste0("there are ", length(tpm$Gene[!(tpm$Gene %in% reads$Gene)]), " genes in TPM not in reads and there are ", 
-		length(tpm$Gene[!(reads$Gene %in% tpm$Gene)]), " genes in reads but not in TPM. "))	
-	#tpm<-tpm$Gene[(tpm$Gene %in% reads$Gene),]
-	tpm_red<-tpm %>% dplyr::filter(Gene %in% reads$Gene) %>%  dplyr::arrange(match(Gene,reads$Gene))
-	print(head(tpm_red$Gene))
-	tpm <- as.data.table(tpm_red )
-	print(head(tpm$Gene))
+      	print("WARNING: HAVING TO SUBSET GENES")
+      	print(paste0("there are ", length(tpm$Gene[!(tpm$Gene %in% reads$Gene)]), " genes in TPM not in reads and there are ", 
+      		length(tpm$Gene[!(reads$Gene %in% tpm$Gene)]), " genes in reads but not in TPM. "))	
+      	#tpm<-tpm$Gene[(tpm$Gene %in% reads$Gene),]
+      	tpm_red<-tpm %>% dplyr::filter(Gene %in% reads$Gene) %>%  dplyr::arrange(match(Gene,reads$Gene))
+      	print(head(tpm_red$Gene))
+      	tpm <- as.data.table(tpm_red )
+      	print(head(tpm$Gene))
     }
     stopifnot(sum(tpm$Gene != reads$Gene) == 0)
     genes = tpm$Gene
     
-  #  print(head(covs$SUBJID))
-   # print("^subjid, below colnames tpm")
 
     ### MALES AND FEMALES SEPARATELY NOW: RAU
     covs.subset = covs$SUBJID[covs$SUBJID %in% colnames(tpm)]
@@ -93,28 +80,28 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
     #check to see if single sex tissue
     sex_table<-table(covs.subset_full$SEX)
     if(length(sex_table)==1){
-      print(paste0(tissue,": no subsetting, this is a sex-specific tissue"))
-      tpm.single = tpm[, c(covs.subset), with = F]
-      reads.single = reads[, c(covs.subset), with = F]
-      ind.filt.single = round(0.2*ncol(tpm.single)) #20% of people
-      #how many people pass 20% of tpm filtering and min reads numbering
-      indices.keep.single = (rowSums(tpm.single > tpm.filt & reads.single > read.filt) >= ind.filt.single )
-      tpm.cut.single = tpm[indices.keep.single, -1]
-      tpm.out.single = scale(t(log2(tpm.cut.single + 2))) #log and z transform
-      colnames(tpm.out.single) = genes[indices.keep.single]
-      
-      if(names(sex_table)==1){
-        this_sex="m"
-      }else if(names(sex_table)==2){
-        this_sex="f"
-      }else{
-        stop("ERROR, sex does not make sense (not 1/2)")
-      }
-      
-      write.table(tpm.out.single, paste0(dir, tissue, ".log2.ztrans.",this_sex,".txt"), quote = F, sep = '\t', row.names = T, col.names = T)
-      
-      ###DO SPECIAL THINGY HERE
-      return()	
+        print(paste0(tissue,": no subsetting, this is a sex-specific tissue"))
+        tpm.single = tpm[, c(covs.subset), with = F]
+        reads.single = reads[, c(covs.subset), with = F]
+        ind.filt.single = round(0.2*ncol(tpm.single)) #20% of people
+        #how many people pass 20% of tpm filtering and min reads numbering
+        indices.keep.single = (rowSums(tpm.single > tpm.filt & reads.single > read.filt) >= ind.filt.single )
+        tpm.cut.single = tpm[indices.keep.single, -1]
+        tpm.out.single = scale(t(log2(tpm.cut.single + 2))) #log and z transform
+        colnames(tpm.out.single) = genes[indices.keep.single]
+        
+        if(names(sex_table)==1){
+          this_sex="m"
+        }else if(names(sex_table)==2){
+          this_sex="f"
+        }else{
+          stop("ERROR, sex does not make sense (not 1/2)")
+        }
+        
+        write.table(tpm.out.single, paste0(dir, tissue, ".log2.ztrans.",this_sex,".txt"), quote = F, sep = '\t', row.names = T, col.names = T)
+        
+        ###DO SPECIAL THINGY HERE
+        return()	
     }else{
       
       #subset individuals to males and females and both
@@ -125,8 +112,8 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
         mix_sex_fm="male"
         covs.m.all<-covs$SUBJID[covs$SEX==min_sex]
         covs.m<-covs.mf.all[covs.m.all %in% colnames(tpm)]
-	half_m<-floor(length(covs.m)/2)
-	covs.m.half<-names(rev(sort(inds[covs.m]))[1:half_m])
+	      half_m<-floor(length(covs.m)/2)
+	      covs.m.half<-names(rev(sort(inds[covs.m]))[1:half_m])
         covs.m.all<-covs$SUBJID[covs$SEX==max_sex]
         covs.f.sub<-covs.m.all[covs.f.all %in% colnames(tpm)]
         #sample to individuals that are in the most tissues
@@ -136,12 +123,12 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
         min_sex_fm="female"
         covs.f.all<-covs$SUBJID[covs$SEX==min_sex]
         covs.f<-covs.f.all[covs.f.all %in% colnames(tpm)]
-	half_f<-floor(length(covs.f)/2)
-	covs.f.half<-names(rev(sort(inds[covs.f]))[1:half_f])
-        covs.m.all<-covs$SUBJID[covs$SEX==max_sex]
-        covs.m.sub<-covs.m.all[covs.m.all %in% colnames(tpm)]
-        #sample to individuals that are in the most tissues
-        covs.m<-names(rev(sort(inds[covs.m.sub]))[1:length(covs.f)]) 
+      	half_f<-floor(length(covs.f)/2)
+      	covs.f.half<-names(rev(sort(inds[covs.f]))[1:half_f])
+         covs.m.all<-covs$SUBJID[covs$SEX==max_sex]
+         covs.m.sub<-covs.m.all[covs.m.all %in% colnames(tpm)]
+              #sample to individuals that are in the most tissues
+         covs.m<-names(rev(sort(inds[covs.m.sub]))[1:length(covs.f)]) 
         covs.m.half<-names(rev(sort(inds[covs.m.sub]))[1:half_f]) 
       }else {
         min_sex_fm=stop("ERROR")
@@ -251,7 +238,7 @@ map_file_prefix = as.character(args$map_file_prefix) #Sys.getenv('GTEX_SUBJECTSv
 GTEX_RNAv8=as.character(args$GTEX_RNAv8)
 do_tissues=as.logical(args$do_tissues)
 tpm_dif_file=as.character(args$TPM_DIF_FILE)
-
+euro_file=as.character(args$euro_file)
 
 # dir = "/oak/stanford/groups/smontgom/raungar/Sex/Output"
 # peer.dir = paste0(dir, '/preprocessing_v8/PEER_v8/')
@@ -262,10 +249,10 @@ tpm_dif_file=as.character(args$TPM_DIF_FILE)
 # GTEX_RNAv8="/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/rna_seq"
 # do_tissues<-as.logical("T")
 # tpm_dif_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/tpm_dif_file.txt"
+# euro_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids_notambiguous.txt"
 
-
-
-
+euro_df<-read_tsv(euro_file,col_names = F)
+euro<-euro_df$X1
 ## Make output directory if it doesn't exist
 #print(paste('mkdir -p', peer.dir))
 system(paste('mkdir -p', peer.dir))
@@ -297,13 +284,15 @@ sex = read.csv(subject.file, header = T, stringsAsFactors = F, sep = '\t')[, c(1
 covariates = merge(pcs, sex, by = 'SUBJID')
 
 
+
 if(do_tissues){
   print("Do tissues")
   if(tpm_dif_file != "F"){
     header<-data.frame("tissue","m_only","f_only")
     write.table(header, file=tpm_dif_file,sep="\t",quote = F,row.names = F,col.names = F)
   }
-  ind_table<-get_ind(tissues, peer.dir)
+  #get the number of tissues each individual has (artificially randomly select for most number of tissues)
+  ind_table<-get_ind(tissues, peer.dir,euro)
 	sapply(tissues, ztrans.tissue, dir = peer.dir, covs = covariates,
 	       tpm_dif_file=tpm_dif_file,inds=ind_table)
 } else{

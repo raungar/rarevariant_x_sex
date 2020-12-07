@@ -11,7 +11,8 @@ set -o nounset -o errexit -o pipefail
 
 dir=${RAREDIR}/preprocessing_v8
 
-group=("m" "f" "both" "both.sex" "both.regress" "both_half" "both_half.sex" "both_half.regress" )
+#group=("m" "f" "both" "both.sex" "both.regress" "both_half" "both_half.sex" "both_half.regress" )
+group=("m" "f" "both_half.regress" )
 
 for group in ${group[@]}
 do

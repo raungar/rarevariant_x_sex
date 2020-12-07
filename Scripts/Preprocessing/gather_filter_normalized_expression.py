@@ -14,7 +14,6 @@ import numpy as np
 from operator import itemgetter
 import argparse
 
-print("GATHERING")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-d","--RAREDIR",help="RARE DIR PATH, no trailing /")
@@ -42,23 +41,27 @@ my_group=args.group
 
 exprdir = dir + 'PEER_v8/'
 
+
+print("GATHERING:"+my_group)
+
+
 # read IDs into a list
 # add 'GTEX-' as a prefix and sort by id
 ind = open(individualsFile, 'r')
 individuals = [i.strip() for i in ind.readlines()]
 individuals.sort()
 ind.close()
-print("INDIVIDUALS")
-print(individuals)
+#print("INDIVIDUALS")
+#print(individuals)
 
 # read in tissues to process in a list
 # sort it
 tis = open(tissueNamesFile, 'r')
 tissues = [t.strip() for t in tis.readlines()]
 tissues= [t.split("\t")[0] for t in tissues]
-print(tissues)
-del tissues[0]
-print(tissues)
+#print(tissues)
+##del tissues[0] #remvoed rau 09/08/2020
+#print(tissues)
 tissues.sort()
 #tissues.remove("Tissue") 
 tissues=np.unique(tissues)
@@ -66,6 +69,8 @@ tis.close()
 print("TISSUES")
 print(tissues)
 
+print("OUTFILE")
+print(outfile)
 # prepare output file
 out = open(outfile, 'w')
 out.write('\t'.join(['Tissue','Gene'] + individuals) + '\n')
@@ -92,7 +97,7 @@ for tissue in tissues:
 		ngenes = sum(1 for _ in expr)
 		expr.close()
 
-		print("NGENES: " , ngenes)
+		#print("NGENES: " , ngenes)
 
 		# make sure that individual IDs line up
 		orig = [(['Id'] + individuals)[i-1] for i in index2add ]
@@ -114,7 +119,7 @@ for tissue in tissues:
 		values = values[:, cols2keep]
 		# put the values into the right slots in the preallocated array
 		padded[:,index2add] = values
-		print("padded shape",padded.shape)
+		#print("padded shape",padded.shape)
 		#print(1)
 		#padded2=np.array([x.decode() for x in padded])
 		#print(2)
