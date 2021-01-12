@@ -9,7 +9,7 @@ with open(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.tx
 	SAMPLES=[this_sample.strip() for this_sample in SAMPLES]
 
 #FILES=os.listdir("Output/features_v8/bySiteAnnoAut/*ZZ*SNP*")
-FILES=glob.glob("Output/features_v8/bySiteAnnoAut/*SNP*")
+FILES=glob.glob("Output/features_v8/bySiteAut/*SNP*")
 #FILES=glob.glob("Output/features_v8/bySite/*SNP*")
 split_files=[re.split("_|/",f) for f in FILES]
 print(split_files)
@@ -26,12 +26,17 @@ for splitf in split_files:
 		IDS_VARTYPES.append(id_and_vartype)
 	#break
 #CHRNUM="X"
+#IDS_VARTYPES="GTEX-111CU_SNPs"
 print(IDS_VARTYPES)
-CHRNUM=range(1,23)
-CHROMOSOMES=range(1,22)
+CHRNUM=range(12,23)
+CHROMOSOMES=range(12,23)
+#CHRNUM="X"
+#CHROMOSOMES="X"
 
 rule all:
 	input:
+		expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/{sample_vartype}_chr{chrN}_anno.bed.gz",
+			chrN=CHRNUM,sample_vartype=IDS_VARTYPES),
 		#expand(config["RAREDIR"]+"/features_v8/maf_diff_aut_chr{chrN}.tsv.gz",chrN=CHRNUM),
 		#expand(config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_chr{chrN}.tsv.gz",chrN=CHRNUM),
 		#expand(config["RAREDIR"]+"/features_v8/collapsed_maf_m_aut_chr{chrN}.tsv.gz",chrN=CHRNUM),
@@ -43,7 +48,7 @@ rule all:
 		#expand(config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types_linc_prot.txt.gz",
 		#sample_vartype=IDS_VARTYPES,chrN=CHRNUM),
 		#config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types_linc_prot.txt.gz"
-		config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_aut.tsv.gz"
+		#config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_aut.tsv.gz"
 		#config["RAREDIR"]+"/features_v8/collapsed_maf_both_all.tsv.gz"
 		#config["RAREDIR"]+"/features_v8/collapsed_maf_both_linc_prot_x.tsv.gz"
 		#########expand(config["RAREDIR"]+"/enrichments_v8/{chrN}_all_rvs_inds_types.txt.gz",chrN=CHRNUM)
@@ -96,7 +101,7 @@ rule vcf_anno_run_chrX:
 		#sample_w_headers=config["RAREDIR"]+"/features_v8/bySiteHeaders/x_{sample_vartype}_features_wheader.bed.gz"
 		sample=config["RAREDIR"]+"/features_v8/bySite/x_{sample_vartype}_features.bed.gz"
 	output:
-		sample_anno=config["RAREDIR"]+"/features_v8/bySiteAnnoX/x_{sample_vartype}_chr{chrN}_anno.bed.gz"
+		sample_anno=config["RAREDIR"]+"/features_v8/bySiteXFIX/x_{sample_vartype}_chr{chrN}_anno.bed.gz"
 	shell:
 		"""
 		date
@@ -104,9 +109,9 @@ rule vcf_anno_run_chrX:
 		set +o pipefail;
 		module load bedtools
 		##get matches
-		zcat {input.sample} | awk -F"\t" 'BEGIN {{OFS="\t"}} {{$3=$3-1; print $0}}' | bedtools intersect -a stdin -b {input.gnomad} -wa -wb | awk -F"\t|;" '{{if($6 == $31  && $7==$32){{print $0}}}}' > {output.sample_anno}.match
+		zcat {input.sample} | awk -F"\t" 'BEGIN {{OFS="\t"}} {{$3=$3-1; print $0}}' | bedtools intersect -a stdin -b {input.gnomad} -wa -wb | awk -F"\t|;" '{{if($6 == $32  || $7==$32){{print $0}}}}' > {output.sample_anno}.match
 		#adjust so same length as the matched file, unmatched column is "NO_MATCH"
-		less {input.sample} |  awk -F"\t" 'BEGIN {{OFS="\t"}} {{$3=$3-1; print $0}}'  | bedtools intersect -a stdin  -b {output.sample_anno}.match -v | awk -F "\t" '{{print $0"\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNO_MATCH"}}' > {output.sample_anno}.nomatch
+		zcat {input.sample} |  awk -F"\t" 'BEGIN {{OFS="\t"}} {{$3=$3-1; print $0}}'  | bedtools intersect -a stdin  -b {output.sample_anno}.match -v | awk -F "\t" '{{print $0"\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNO_MATCH"}}' > {output.sample_anno}.nomatch
 		echo "sorting and combining"
 		cat {output.sample_anno}.match {output.sample_anno}.nomatch | sort -k1,1 -k2,2n | gzip -c > {output.sample_anno}
 		echo "DONE"
@@ -118,25 +123,17 @@ rule vcf_anno_run_chrX:
 rule vcf_anno_run_aut:
 	input:
 		gnomad=config["GNOMAD"]+"/gnomad.genomes.r3.0.sites.chr{chrN}.vcf.bgz",
-		#gnomad="/oak/stanford/groups/smontgom/raungar/Sex/GTEX-R53T_SNPs.tmp.gz",
-              	#gnomad=config["GNOMAD"]+"/gnomad.genomes.r3.0.sites.chr{chrN}.vcf.bgz",
-		#sample_w_headers=config["RAREDIR"]+"/features_v8/bySiteHeaders/x_{sample_vartype}_features_wheader.bed.gz"
 		sample=config["RAREDIR"]+"/features_v8/bySiteAut/{sample_vartype}_features.bed.gz"
 	params:
 		chr="chr{chrN}"
 	output:
-		sample_anno=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/{sample_vartype}_chr{chrN}_anno.bed.gz"
+		sample_anno=config["RAREDIR"]+"/features_v8/bySiteAutFIX/{sample_vartype}_chr{chrN}_anno.bed.gz"
 	shell:
 		"""
 		echo "rule vcf_anno_run_aut"
 		module load bedtools
-		echo "start again: "`date`
-		#zcat {input.sample} | grep {params.chr} | awk -F"\t" 'BEGIN {{OFS="\t"}} {{$3=$3-1; print $0}}' > {output.sample_anno}.tmpin
-		#bedtools intersect -a {output.sample_anno}.tmpin -b {input.gnomad} -wa -wb | awk -F"\t|;" '{{if($6 == $39  && $7==$40){{print $0}}}}' > {output.sample_anno}.match
-		#bedtools intersect -a {output.sample_anno}.tmpin  -b {output.sample_anno}.match -v | awk -F "\t" '{{print $0"\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNO_MATCH"}}' > {output.sample_anno}.nomatch
 		echo "intersect... "`date`
-		zcat {input.sample} | grep {params.chr} | awk -F"\t" 'BEGIN {{OFS="\t"}} {{$3=$3-1; print $0}}' | bedtools intersect -a stdin -b {input.gnomad} -wa -wb | awk -F"\t|;" '{{if($6 == $39  && $7==$40){{print $0}}}}' > {output.sample_anno}.match
-		#zcat {input.sample} | grep {params.chr} | awk -F"\t" 'BEGIN {{OFS="\t"}} {{$3=$3-1; print $0}}' | bedtools intersect -a stdin -b {input.gnomad} -wa -wb  > {output.sample_anno}.match
+		zcat {input.sample} | grep {params.chr} | awk -F"\t" 'BEGIN {{OFS="\t"}} {{$3=$3-1; print $0}}' | bedtools intersect -a stdin -b {input.gnomad} -wa -wb | awk -F"\t|;" '{{if($6 == $40 || $7==$40){{print $0}}}}' > {output.sample_anno}.match
 		echo "matched. getting no match: "`date`
 		zcat {input.sample} | grep {params.chr} | awk -F"\t" 'BEGIN {{OFS="\t"}} {{$3=$3-1; print $0}}' | bedtools intersect -a stdin  -b {output.sample_anno}.match -v | awk -F "\t" '{{print $0"\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNO_MATCH"}}' > {output.sample_anno}.nomatch
 		
@@ -185,7 +182,7 @@ rule vcf_add_genes_x:
 		sample_anno=config["RAREDIR"]+"/features_v8/bySiteAnnoX/x_{sample_vartype}_chr{chrN}_anno.bed.gz",
 		genes=config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/chrX.gtf"
 	output:
-		sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAnnoX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz"
+		sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz"
 		
 	shell:
 		"""
@@ -201,7 +198,7 @@ rule vcf_add_genes_aut:
 		sample_anno=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/{sample_vartype}_chr{chrN}_anno.bed.gz",
 		genes=config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/chr{chrN}.gtf"
 	output:
-		sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes.bed.gz"
+		sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAutFix/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes.bed.gz"
 		
 	shell:
 		"""
