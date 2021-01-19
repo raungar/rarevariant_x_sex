@@ -59,6 +59,7 @@ sex_convert_key={}
 sex_convert_key["1"]="male"
 sex_convert_key["2"]="female"
 sex_key={}
+
 with open(sex_file,"r") as sex_f_read:
 	next(sex_f_read)
 	for sex_line in sex_f_read.readlines():
@@ -79,7 +80,7 @@ outwrite_maf_f.write(('\t'.join(map(str,colname_collapsed))+"\n").encode())
 ### loop through SNPS/INDELS/SV
 for vartype in ["SNP","indel","SV"]:
 	## loop through all inds in this vartype
-	for f in glob.glob(dir_read+"/*"+vartype+"*"):
+	for f in glob.glob(dir_read+"/*"+vartype+"*genes.bed.gz"):
 		print(f)
 		#open file and read line by line
 		#get individual ID and sex of this individual
@@ -123,9 +124,22 @@ for vartype in ["SNP","indel","SV"]:
 				gnomad_anno=line_split[34] # GNOMAD annotation to further split
 				gnomad_split=gnomad_anno.split(';')
 				if gnomad_split[0] == "NO_MATCH":
-					gnomad_maf_both=float(0)		
-					gnomad_maf_m=float(0)		
-					gnomad_maf_f=float(0)		
+					print("NO MATCH: ",ref,",",alt,",",gtex_maf)
+					#this prepares for cases where the reference allelse is actually teh minor allele
+					if ref == alt:
+						gnomad_maf_both=float(gtex_maf)
+						gnomad_maf_m=float(gtex_maf)
+						gnomad_maf_f=float(gtex_maf)
+					#if it's been seen in gtex more than once, it shouldnt have MAF of zero
+					elif float(gtex_maf) > 0.001:
+						gnomad_maf_both=float(gtex_maf)
+						gnomad_maf_m=float(gtex_maf)
+						gnomad_maf_f=float(gtex_maf)
+					else:
+						gnomad_maf_both=float(0)		
+						gnomad_maf_m=float(0)		
+						gnomad_maf_f=float(0)		
+					print("both: ",gnomad_maf_both," , m: ", gnomad_maf_m, " , f: ", gnomad_maf_f)
 				else:
 					gnomad_maf_both=float((([col for col in gnomad_split if af_both.match(col)])[0].split("="))[1])
 					gnomad_maf_m=float((([col for col in gnomad_split if af_m.match(col)])[0].split("="))[1])
