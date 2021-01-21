@@ -30,15 +30,21 @@ for splitf in split_files:
 #CHRNUM="X"
 #IDS_VARTYPES="GTEX-111CU_SNPs"
 print(IDS_VARTYPES)
-CHRNUM=range(20,23)
-CHROMOSOMES=range(20,23)
-#CHRNUM="X"
-#CHROMOSOMES="X"
+CHRNUM=range(12,23)
+CHROMOSOMES=range(12,23)
+CHRNUM="X"
+CHROMOSOMES="X"
 
 rule all:
 	input:
-		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_aut_chr{chrN}_linc_prot.tsv.gz",
-			chrN=CHRNUM)
+		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_aut_chr{chrN}_linc_prot.tsv.gz",
+		#	chrN=CHRNUM),
+		#expand(config["RAREDIR"]+"/features_v8/Combined/{chrN}_all_rvs_inds_types_linc_prot.txt.gz",
+		#	chrN=CHRNUM),
+		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes_all.bed.gz",
+		###expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz"
+		expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz"
+			chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
 		##expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
 		##	chrN=CHRNUM,sample_vartype=IDS_VARTYPES),
 		##expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes_all.bed.gz",
@@ -47,8 +53,6 @@ rule all:
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/x_{sample_vartype}_chr{chrN}_anno.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
-		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes_all.bed.gz",
-		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES),
 		#expand(config["RAREDIR"]+"/features_v8/Combined/{chrN}_all_rvs_inds_types_linc_prot.txt.gz",
 		#	chrN=CHRNUM),
 		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_f_linc_prot_x.tsv.gz"
@@ -213,6 +217,34 @@ rule vcf_add_genes_aut:
 
 		"""
 
+rule corrects_annos_x:
+	input:
+		bedfile=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz"
+		script=config["scripts_dir"]+"/Features/correct_anno_to_single_variant.py"
+	params:
+		chr="x"
+	output:
+		config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz"
+	shell:
+		"""
+		module load python
+		python {input.script} --chr {params} --infile {input.bedfile} --outfile {output}
+		"""
+rule corrects_annos_aut:
+	input:
+		bedfile=config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes.bed.gz"
+		script=config["scripts_dir"]+"/Features/correct_anno_to_single_variant.py"
+	params:
+		chr="{chrN}"
+	output:
+		config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz"
+	shell:
+		"""
+		module load python
+		python {input.script} --chr {params} --infile {input.bedfile} --outfile	{output}
+		"""
+		
+
 rule collapse_vars_to_genes_x:
 	input:
 		#sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAutFIX/GenesAnno/{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
@@ -247,7 +279,7 @@ rule collapse_vars_to_genes_aut:
 	params:
 		min_maf=0.01,
 		cutoff_mafdiff=0.1,
-		chr="chr{chrN}_"
+		chr="chr{chrN}"
 	output:
 		out_mafdiff=config["RAREDIR"]+"/features_v8/Collapsed/maf_diff_aut_chr{chrN}_linc_prot.tsv.gz",
 		out_maf_both=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_aut_chr{chrN}_linc_prot.tsv.gz",
@@ -292,7 +324,7 @@ rule combine_rvs_inds_x:
 		file_dir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc"
 	params:
 		pregz=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_linc_prot.txt",
-		pattern="x*SNP*gz"
+		pattern="x*SNP*genes.bed.gz"
 	output:
 		gz=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_linc_prot.txt.gz"
 	shell:
@@ -328,7 +360,7 @@ rule combine_rvs_inds_aut:
 		file_dir=config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc"
 	params:
 		pregz=config["RAREDIR"]+"/features_v8/Combined/{chrN}_all_rvs_inds_types_linc_prot.txt",
-		pattern="*SNP*{chrN}*gz"
+		pattern="*SNP*{chrN}*genes.bed.gz"
 	output:
 		gz=config["RAREDIR"]+"/features_v8/Combined/{chrN}_all_rvs_inds_types_linc_prot.txt.gz"
 	shell:
