@@ -80,7 +80,7 @@ outwrite_maf_f.write(('\t'.join(map(str,colname_collapsed))+"\n").encode())
 ### loop through SNPS/INDELS/SV
 for vartype in ["SNP","indel","SV"]:
 	## loop through all inds in this vartype
-	for f in glob.glob(dir_read+"/*"+vartype+"*genes.bed.gz"):
+	for f in glob.glob(dir_read+"/*"+vartype+"*reduced.bed.gz"):
 		print(f)
 		#open file and read line by line
 		#get individual ID and sex of this individual
@@ -96,7 +96,6 @@ for vartype in ["SNP","indel","SV"]:
 		else:
 			print("ERROR: INVALID SEX")
 
-
 		#new dictionary for individuals
 		#keys are genes
 		#value is minim MAF
@@ -104,9 +103,10 @@ for vartype in ["SNP","indel","SV"]:
 		dic_both=dict()
 
 		#actually open file, read line by line
-		with open(f,"r") as f_read:
+		print("continue...")
+		with gzip.open(f,"r") as f_read:
 			for line in f_read.readlines():
-				line_split=line.split("\t")
+				line_split=(line.decode('utf-8')).split("\t")
 				#get interesting columns
 				chr=line_split[0] #chr
 				pos=line_split[1] #pos
@@ -144,6 +144,12 @@ for vartype in ["SNP","indel","SV"]:
 					gnomad_maf_both=float((([col for col in gnomad_split if af_both.match(col)])[0].split("="))[1])
 					gnomad_maf_m=float((([col for col in gnomad_split if af_m.match(col)])[0].split("="))[1])
 					gnomad_maf_f=float((([col for col in gnomad_split if af_f.match(col)])[0].split("="))[1])
+					if (float(gtex_maf)>0.01) and (gnomad_maf_both < 0.01): 
+						gnomad_maf_both=float(gtex_maf)
+					if (float(gtex_maf)>0.01) and (gnomad_maf_m < 0.01): 
+						gnomad_maf_m=float(gtex_maf)
+					if (float(gtex_maf)>0.01) and (gnomad_maf_f < 0.01): 
+						gnomad_maf_f=float(gtex_maf)
 				#get difference between MAF m vs F (controlling for divide by zero situation)
 				if (gnomad_maf_m+gnomad_maf_f)/2 == 0:
 					gnomad_maf_diff=0
@@ -160,7 +166,8 @@ for vartype in ["SNP","indel","SV"]:
 
 				#only store rare variants at a level of less than 0.01
 				#this is the both case
-				if gnomad_maf_both < min_maf:
+				#if gnomad_maf_both < min_maf:
+				if 1==1:
 					store_line=[chr,pos,ensg, vartype,ind,sex,ref,alt,varswitch,
 						gtex_maf, gnomad_maf_both,gnomad_maf_m,gnomad_maf_f,
 						genetype,gnomad_maf_diff]
