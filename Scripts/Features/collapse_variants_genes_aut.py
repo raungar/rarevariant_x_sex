@@ -146,14 +146,25 @@ for vartype in ["SNP","indel","SV"]:
 				else:
 					#search for the correct gnomad maf (it's in different columns in each file, so it looks for af_nfe= etc and takes that col)
 					#and then grabs
-					gnomad_maf_both=float((([col for col in gnomad_split if af_both.match(col)])[0].split("="))[1])
-					gnomad_maf_m=float((([col for col in gnomad_split if af_m.match(col)])[0].split("="))[1])
-					found_af_nfe=([col for col in gnomad_split if af_f.match(col)])[0]
+					found_af_nfe_both=([col for col in gnomad_split if af_both.match(col)])
+					try:
+						gnomad_maf_both=float((found_af_nfe_both[0]).split("=")[1])
+					except: 
+						gnomad_maf_both=float(gtex_maf)
+						
+					#gnomad_maf_both=float((([col for col in gnomad_split if af_both.match(col)])[0].split("="))[1])
+					#gnomad_maf_m=float((([col for col in gnomad_split if af_m.match(col)])[0].split("="))[1])
+					found_af_nfe_m=[col for col in gnomad_split if af_m.match(col)]
+					try:
+						gnomad_maf_m=float((found_af_nfe_m[0]).split("=")[1])
+					except:
+						gnomad_maf_m=float(gnomad_maf_both)
+					found_af_nfe=([col for col in gnomad_split if af_f.match(col)])
 					#catch exception -- one or two files for some reason have a random line without gnomad_maf_f ... just set to gnomad_maf_both
 					try:
-						gnomad_maf_f=float((found_af_nfe).split("=")[1])
+						gnomad_maf_f=float((found_af_nfe[0]).split("=")[1])
 					except:
-						gnomad_maf_f=gnomad_maf_both
+						gnomad_maf_f=float(gnomad_maf_both)
 					#cant be rare if not rare in gtex
 					if (float(gtex_maf)>0.01) and (gnomad_maf_both < 0.01):
 						gnomad_maf_both=float(gtex_maf)
@@ -190,7 +201,7 @@ for vartype in ["SNP","indel","SV"]:
 						#get current min MAF
 						dic_current_min_maf=float((dic_both[ensg])[9])
 						#if this is more rare, store this instead
-						if gnomad_maf_both < dic_current_min_maf:
+						if float(gnomad_maf_both) < float(dic_current_min_maf):
 							this_count=dic_both[ensg][-1]+1
 							store_line.append(this_count)
 							dic_both[ensg]=store_line
@@ -203,9 +214,9 @@ for vartype in ["SNP","indel","SV"]:
 						dic_both[ensg]=store_line
 				#now do the same as above, but for the sex of this ind
 				if sex == "male":
-					gnomad_sex=gnomad_maf_m
+					gnomad_sex=float(gnomad_maf_m)
 				elif sex == "female":
-					gnomad_sex=gnomad_maf_f
+					gnomad_sex=float(gnomad_maf_f)
 				else:
 					print("ERROR: INVALID SEX")
 				if gnomad_sex < min_maf:
@@ -214,7 +225,7 @@ for vartype in ["SNP","indel","SV"]:
 						genetype,gnomad_maf_diff]
 					if ensg in dic_sex:
 						dic_current_min_maf=float((dic_sex[ensg])[9])
-						if gnomad_maf_both < dic_current_min_maf:
+						if float(gnomad_maf_both) < float(dic_current_min_maf):
 							this_count=dic_sex[ensg][-1]+1
 							store_line.append(this_count)
 							dic_sex[ensg]=store_line
