@@ -80,7 +80,7 @@ print("BEGINNING TO PROCESS")
 
 for tissue in tissues:
 
-	filename = exprdir + tissue + '.' + my_group+ '.peer.v8ciseQTLs.ztrans.txt'
+	filename = exprdir + tissue + '.' + my_group+ '.peer.ztrans.txt'
 	print(filename)
 
 	# read in header and figure out which columns to keep
@@ -89,6 +89,10 @@ for tissue in tissues:
 		expr = open(filename, 'r')
 		headerList = expr.readline().strip().split()
 		subjectIDs = headerList[1:]
+
+		if(len(subjectIDs)<50):
+			print("not adding "+ tissue+" because only "+str(len(subjectIDs))+ " individuals")
+			continue
 		cols2keep = [(i+1,subject) for (i,subject) in enumerate(subjectIDs) if subject in individuals]
         	# sort by subject ID (because brain_cerebellum wasn't sorted for some reason)
 		sorted2keep = sorted(cols2keep, key=itemgetter(1))

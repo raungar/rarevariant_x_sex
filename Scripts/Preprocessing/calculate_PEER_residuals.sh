@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=peer
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=3
 #SBATCH --partition=interactive
 #SBATCH --account=default
 ##SBATCH --time=06:59:00
 #SBATCH --time=02:59:00
-#SBATCH --mem-per-cpu=6G
+#SBATCH --mem-per-cpu=5G
 #SBATCH --output="/oak/stanford/groups/smontgom/raungar/Sex/Jobs/peer_%j.out"
 #SBATCH --error="/oak/stanford/groups/smontgom/raungar/Sex/Jobs/peer_%j.err"
 
@@ -66,7 +66,7 @@ echo "${traitsFileName}"
     
     if [[ "$factors_type" == *"regress"* ]]
     then
-        sex="${sex}.regress"
+        sex="${sex}_regress"
     fi
 
     outfile=${prefix}.${sex}.peer.ztrans.txt

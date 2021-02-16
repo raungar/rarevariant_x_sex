@@ -2,7 +2,7 @@
 configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
 
 #SEX_GROUPS=["both.sex","both.regress","both","m","f","both_half.sex","both_half.regress","both_half"]
-SEX_GROUPS=["both_half.regress","m","f"]
+SEX_GROUPS=["both_half_regress","m","f"]
 TYPES=["x","aut"]
 #SEX_GROUPS_TYPES={ 
 #	"sex_groups": ["both.sex","both.regress","both","m","f"],
@@ -13,13 +13,19 @@ print(SEX_GROUPS)
 
 rule all:
 	input: 
-		config["RAREDIR"]+"/preprocessing_v8/get_peer_factors.log"
+		config["RAREDIR"]+"/preprocessing_v8/get_peer_factors.log",
+           	config["RAREDIR"]+"/preprocessing_v8/get_resids_ztrans.log",
+		config["RAREDIR"]+"/preprocessing_v8/peer_correct_sex_log.log",
+		config["RAREDIR"]+"/preprocessing_v8/regress_sex.txt.log",
+		config["RAREDIR"]+"/preprocessing_v8/get_resids_ztrans.f.log",
+		expand(config["RAREDIR"]+"/preprocessing_v8/gather_filter_norm_expr_{this_group}.log",this_group=SEX_GROUPS),
+		expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subsetted_aut_{this_group}.txt.gz",this_group=SEX_GROUPS)
 
 #first run to prepare files
 rule get_samples_tissues:
 	input:
 		RAREDIR=config["RAREDIR"],
-		GTEX_PCv8=config["GTEX_PCv8"],
+ 		GTEX_PCv8=config["GTEX_PCv8"],
 		GTEX_SUBJECTSv8=config["GTEX_SUBJECTSv8"],
 		GTEX_SAMPLESv8=config["GTEX_SAMPLESv8"],
 		GTEX_RNAv8=config["GTEX_RNAv8"]
@@ -129,12 +135,11 @@ rule get_resids_ztrans:
 		logfile="log.residuals.tsv",
 		inclsex="F"
 	output:
-           	log=config["RAREDIR"]+"/preprocessing_v8/get_resids_ztrans.log"
+           	log=config["RAREDIR"]+"/preprocessing_v8/get_resids_ztrans.f.log"
 
 	run:
 		shell("""
-		#for file in `ls {input.peerdir}/*log2.ztrans*half.txt`
-		for file in `ls {input.peerdir}/*pinal*log2.ztrans*.txt`
+		for file in `ls {input.peerdir}/*log2.ztrans*.f.txt`
 		do
 			echo $file > {output.log}
 			sbatch /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER_residuals.sh \
@@ -160,13 +165,11 @@ rule peer_correct_sex:
 		shell("""
 		#for file in `ls {input.dir_peer}/*/factors.tsv`
 		module load R
-		#for file in `ls {input.dir_peer}/*both_half/factors.tsv`
-		for file in `ls {input.dir_peer}/*pinal*both_half/factors.tsv`
+		for file in `ls {input.dir_peer}/*both_half/factors.tsv`
 		do
 			echo "this file: $file" >> {output.log}
 			sbatch /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/get_residuals_peer_by_sex.sh \
 			{input.dir_peer} {input.metadata_file} {input.script} $file {params.outfile}; 
-			#break;
 		done
 		""")
 
@@ -179,7 +182,6 @@ rule get_resids_ztrans_regresssex:
 		covs="/oak/stanford/groups/smontgom/raungar/Sex/Files/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze_20genotPCs.txt",
 		metadata_file=config["GTEX_SUBJECTSv8"]
 	params:
-		gtex_v8_eqtl_dir=config["GTEXv8"]+"/eqtl/GTEx_Analysis_v8_eQTL",
 		factors_type="factors_sexregress",
 		logfile="log.residuals_sexregress.tsv",
 		inclsex="F"
@@ -194,7 +196,7 @@ rule get_resids_ztrans_regresssex:
 		do
 			echo $file >> {output}
 			sbatch /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER_residuals.sh \
-			{input.peerdir} {input.scriptdir} {params.gtex_v8_eqtl_dir} {input.RAREDIR} {input.covs} \
+			{input.peerdir} {input.scriptdir} {input.RAREDIR} {input.covs} \
 			{input.metadata_file} {params.factors_type} {params.logfile} {params.inclsex} $file
 			#break;
 		done
@@ -239,7 +241,7 @@ rule gather_filter_norm_expr:
 
 	output:
 		outpath=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_gathered_{this_group}.txt.gz",
-		log=config["RAREDIR"]+"/gather_filter_norm_expr_{this_group}.log"
+		log=config["RAREDIR"]+"/preprocessing_v8/gather_filter_norm_expr_{this_group}.log"
 
 	shell:
 		"""

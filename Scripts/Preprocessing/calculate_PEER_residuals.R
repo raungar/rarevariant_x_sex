@@ -5,8 +5,6 @@ rm(list = ls())
 require(data.table)
 require(plyr)
 require(dplyr)
-library(readr)
-library(tidyverse)
 
 #-------------- MAIN
 print("ENTERING R SCRIPT...")
@@ -70,6 +68,7 @@ if(incl_sex == "T"){
 }
 
 ## Remove individuals with missing covariates
+print("removing missing individuals")
 inds_to_keep = rowSums(is.na(covs)) == 0
 covs = covs[inds_to_keep, ]
 expr = expr[inds_to_keep, ]
@@ -79,14 +78,12 @@ expr = expr[inds_to_keep, ]
 resids = matrix(, ncol = ncol(expr), nrow = nrow(expr))
 rownames(resids) = rownames(expr)
 colnames(resids) = colnames(expr)
-
+print("performing regression")
 for(i in 1:ncol(expr)){
 	gene = names(expr)[i]
 	data = as.data.frame(cbind(expr[, i], covs))
 	colnames(data) = c('RPKM', colnames(covs))
 	model = lm(RPKM ~ ., data = data)
-	#print("MODEL SUMMARY")
-	#print(summary(model))
 	resids[, i] = model$residuals
 }
 
