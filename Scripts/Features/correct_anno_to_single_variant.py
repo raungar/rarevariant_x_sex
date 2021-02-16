@@ -64,7 +64,13 @@ with open(infile,"r") as f_read:
 			else:
 				gnomad_maf=float(0)		
 		else:
-			gnomad_maf=float((([col for col in gnomad_split if af_gnomad.match(col)])[0].split("="))[1])
+			found_af=[col for col in gnomad_split if af_gnomad.match(col)]
+			try:
+				gnomad_maf=float(((found_af[0]).split("="))[1])
+			except:
+				gnomad_maf=float(gtex_maf)
+			##gnomad_maf=float(([0].split("="))[1])
+			#gnomad_maf=float((([col for col in gnomad_split if af_gnomad.match(col)])[0].split("="))[1])
 
 		#if there is already a RV recorded for this gene
 		if pos in dic_maf:

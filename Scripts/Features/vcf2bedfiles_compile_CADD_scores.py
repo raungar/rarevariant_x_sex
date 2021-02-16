@@ -20,6 +20,8 @@ import pysam
 import sys
 import os
 
+print("running vcf2bedfiles_compile_CADD_scores.py")
+
 filename = os.environ['CADD']
 
 # BED FIELDS

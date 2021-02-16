@@ -1,6 +1,9 @@
 #!/bin/bash
 
+
 set -o nounset -o errexit -o pipefail
+
+echo "running: vcf2bedfiles_compile_CADD_scores.sh"
 
 # get CADD scores for each of the individual SNP bed files
 
@@ -16,7 +19,7 @@ outdir=${indir}/withCADD
 
 # make output directory if it doesn't exist
 if [ ! -d $outdir ]; then
-    mkdir $outdir
+    mkdir -p $outdir
 fi
 
 export indir
@@ -24,10 +27,16 @@ export indir
 date
 echo
 
-parallel --jobs 20 "echo {}; cat {} | ${scriptdir}/vcf2bedfiles_compile_CADD_scores.py > {.}.CADD.bed" ::: ${indir}/*_SNPs.bed
+#parallel --jobs 20 "echo {}; cat {} | ${scriptdir}/vcf2bedfiles_compile_CADD_scores.py > {.}.CADD.bed" ::: ${indir}/*_SNPs.bed
+for file in `ls ${indir}/*_SNPs.bed`
+do
+	prefix="${s%.bed}"
+	${scriptdir}/vcf2bedfiles_compile_CADD_scores.py $file > $outdir/prefix.CADD.bed
+done
+
 
 # mv all created files to withCADD directory
-mv ${indir}/*CADD.bed $outdir
+$mv ${indir}/*CADD.bed $outdir
 
 echo
 date

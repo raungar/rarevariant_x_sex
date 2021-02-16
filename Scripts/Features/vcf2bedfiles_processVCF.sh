@@ -2,6 +2,8 @@
 
 # Author: Emily Tsang
 
+echo "running vcf2bedfiles_processVCF.sh"
+
 # uses vcftools to extract relevant information from vcf files
 # helper script for vcf2bedfiles
 
@@ -38,12 +40,21 @@ awk -v indincl=$indincl 'BEGIN{
     }
 }' > $keeplist
 
-# SNPs
-vcftools --gzvcf $vcf --out ${outprefix}_SNPs --maf $minmaf --max-maf $maxmaf --remove-filtered-all --keep $keeplist --remove-indels --max-missing-count 10 --freq &
-vcftools --gzvcf $vcf --out ${outprefix}_SNPs --maf $minmaf --max-maf $maxmaf --remove-filtered-all --keep $keeplist --remove-indels --max-missing-count 10 --extract-FORMAT-info GT &
 
-# indels
-vcftools --gzvcf $vcf --out ${outprefix}_indels --maf $minmaf --max-maf $maxmaf --remove-filtered-all --keep $keeplist --keep-only-indels --max-missing-count 10 --freq &
-vcftools --gzvcf $vcf --out ${outprefix}_indels --maf $minmaf --max-maf $maxmaf --remove-filtered-all --keep $keeplist --keep-only-indels --max-missing-count 10 --extract-FORMAT-info GT
+echo "KEEP DONE"
+date
 
+if [ ! -f ${outprefix}_SNPs ]
+then
+	# SNPs
+	vcftools --gzvcf $vcf --out ${outprefix}_SNPs --maf $minmaf --max-maf $maxmaf --remove-filtered-all --keep $keeplist --remove-indels --max-missing-count 10 --freq &
+	vcftools --gzvcf $vcf --out ${outprefix}_SNPs --maf $minmaf --max-maf $maxmaf --remove-filtered-all --keep $keeplist --remove-indels --max-missing-count 10 --extract-FORMAT-info GT &
+fi
+
+if [ ! -f ${outprefix}_indels ]
+then
+	# indels
+	vcftools --gzvcf $vcf --out ${outprefix}_indels --maf $minmaf --max-maf $maxmaf --remove-filtered-all --keep $keeplist --keep-only-indels --max-missing-count 10 --freq &
+	vcftools --gzvcf $vcf --out ${outprefix}_indels --maf $minmaf --max-maf $maxmaf --remove-filtered-all --keep $keeplist --keep-only-indels --max-missing-count 10 --extract-FORMAT-info GT
+fi
 wait

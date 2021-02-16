@@ -35,10 +35,14 @@ CHRNUM=range(1,23)
 CHROMOSOMES=range(1,23)
 #CHRNUM="X"
 #CHROMOSOMES="X"
+GROUPS=["m","f","both"]
 
 rule all:
 	input:
-		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_aut_chr{chrN}_linc_prot_SNPs.tsv.gz",chrN=CHRNUM)
+		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_aut_chr{chrN}_linc_prot_SNPs.tsv.gz",chrN=CHRNUM)
+		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_m_linc_prot_aut.tsv.gz"
+
+		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_aut.tsv.gz"
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_x.tsv.gz",
@@ -303,18 +307,19 @@ rule collapse_vars_to_genes_aut:
 
 rule collapse_snps_only:
 	input:
-		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_aut_chr{chrN}_linc_prot.tsv.gz"
+		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_{group}_aut_chr{chrN}_linc_prot.tsv.gz"
 	output:
-		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_aut_chr{chrN}_linc_prot_SNPs.tsv.gz"
+		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_{group}_aut_chr{chrN}_linc_prot_SNPs.tsv.gz"
 	shell:
 		"""
-		zcat {input} | awk -F"\t" '{{if(=="SNP"){{print $0}}}}'  | gzip -c > {output}
+		zcat {input} | awk -F"\t" '{{if($4=="SNP"){{print $0}}}}'  | gzip -c > {output}
 		"""
 rule combine_aut_collapse_vars_to_genes:
 	input:
-		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_aut_chr{chrom}_linc_prot.tsv.gz",chrom=CHROMOSOMES),
+		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_m_aut_chr{chrom}_linc_prot.tsv.gz",chrom=CHROMOSOMES)
+		#	collapsed_maf_f_aut_chr19_linc_prot.tsv.gz
 	output:
-		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_aut.tsv.gz"
+		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_m_linc_prot_aut.tsv.gz"
 	shell:
 		"""
 		zcat {input.aut} | gzip > {output}
@@ -322,7 +327,7 @@ rule combine_aut_collapse_vars_to_genes:
 		"""
 rule combine_all_collapse_vars_to_genes:
 	input:
-		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_aut_chr{chrom}_linc_prot.tsv.gz",chrom=CHROMOSOMES),
+		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_aut_chr{chrom}_linc_prot_SNPs.tsv.gz",chrom=CHROMOSOMES),
 		x=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_x.tsv.gz"
 	output:
 		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_all_linc_prot.tsv.gz"

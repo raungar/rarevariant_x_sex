@@ -48,7 +48,7 @@ af_both=re.compile("AF_nfe=")
 af_m=re.compile("AF_nfe_male=")
 af_f=re.compile("AF_nfe_female=")
 
-
+##open files to write to
 outwrite_mafdiff=gzip.open(out_mafdiff,"wb")
 outwrite_maf_both=gzip.open(out_maf_both,"wb")
 outwrite_maf_m=gzip.open(out_maf_m,"wb")
@@ -60,6 +60,7 @@ sex_convert_key["1"]="male"
 sex_convert_key["2"]="female"
 sex_key={}
 
+#get sex of individual
 with open(sex_file,"r") as sex_f_read:
 	next(sex_f_read)
 	for sex_line in sex_f_read.readlines():
