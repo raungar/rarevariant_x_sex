@@ -4,8 +4,7 @@ rule all:
 	input: 
 		config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/chrX.vcf",
 		config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/chrX_MQ.txt",
-		config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/chrX_GQ_MAF.txt",
-		config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/chrX_GQ.txt"
+		config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/chrX_GQ_MAF.txt"
 
 rule get_chr_rvs:
 	input:
@@ -42,10 +41,10 @@ rule get_gq_df:
 		"""
 		#header
 		grep "#CHROM" {input}  | head -1 | \
-			awk -F"\t" '{{printf $1"\t"$2"\t"; for(i=10; i<NF; i++){{printf $i"\t"}}; print ""}}' > {output}
+			awk -F"\t" '{{printf $1"\t"$2"\t"; for(i=9; i<NF; i++){{printf $i"\t"}}; print ""}}' > {output}
 		#get gq finally
 		cat {input} | \
-			awk -F"[\t|;]" '{{ if(!($1 ~ /^#/)){{printf $1"\t"$2"\t"$3"\t"; for(i=NF-838;i<NF; i++){{printf $i"\t"}}; print ""}}}}' > tmp | \
+			awk -F"[\t|;]" '{{ if(!($1 ~ /^#/)){{printf $1"\t"$2"\t"$9"\t"; for(i=NF-838;i<NF; i++){{printf $i"\t"}}; print ""}}}}' | \
 			awk -F"[:|\t]" '{{ printf $1"\t"$2"\t"$3"\t"; for(i=12; i<NF; i=i+5){{printf $i"\t"}} print ""}}' | \
 			sed 's/AF=//g' >> {output}
 

@@ -36,7 +36,7 @@ wrong_self_reported_ancestry<-c("GTEX-11TT1", "GTEX-12ZZX", "GTEX-131XF", "GTEX-
 
 #Read everything in and make proper hashes 
 exp_data = fread(infile,data.table=F)
-colnames(exp_data)<-c("chr","start","end","maf","gtex_sample","vartype")
+colnames(exp_data)<-c("chr","start","end","maf","gtex_sample","vartype","ensg","genetype")
 euro<-fread(euro_file)
 euro_vec_unchecked<-as.character(data.frame(euro)[,1])
 euro_vec<-euro_vec_unchecked[!(euro_vec_unchecked %in% wrong_self_reported_ancestry )]

@@ -1,38 +1,39 @@
 configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
 
-GROUPS=["both_half.regress","m","f"]
+GROUPS=["m","f"]
 TYPES=["x"]
-TYPES=range(1,23)
+#TYPES=range(1,23)
+print(TYPES)
 #TYPES.extend(range(1,23))
 #MAFS=[0.001,0.005,0.01]
 X_SUBTYPES=["PAR","PAR1","PAR2","NONPAR", "XCR1","XCR2","XTR","XAR"]
+filter_version=["types_filtsexdiff","types"]
 
 rule all:
 	input: 
-		config["RAREDIR"]+"/analysis_v8/genomic_only/effective_chr_len_prot_linc.txt"
-
+		config["RAREDIR"]+"/analysis_v8/genomic_only/effective_chr_len_prot_linc_xsubtype.txt"
+		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_{version}_sigdif_bins_linc_prot.txt.gz",type=TYPES,version=filter_version),
+		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_{version}_numrv_bins_linc_prot.txt.gz", subtype=X_SUBTYPES,version=filter_version)
+		#config["RAREDIR"]+"/analysis_v8/genomic_only/effective_chr_len_prot_linc.txt"
 		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_numrv.txt.gz", type=TYPES),
-		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_sigdif_bins_linc_prot.txt.gz",type=TYPES),
-		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv_linc_prot.txt.gz", subtype=X_SUBTYPES),
+		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv_linc_prot.txt.gz", subtype=X_SUBTYPES)
 		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_sigdif.txt.gz", type=TYPES),
-		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_sigdif_bins_linc_prot.txt.gz", type=TYPES),
 		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_maf_{maf}.txt.gz", type=TYPES, maf=MAFS),
 		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv.txt.gz", subtype=X_SUBTYPES),
 		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_sigdif.txt.gz", subtype=X_SUBTYPES),
-		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv_bins_linc_prot.txt.gz", subtype=X_SUBTYPES)
 		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_sigdif_bins_linc_prot.txt.gz", subtype=X_SUBTYPES)
 
 rule get_chr_rvs:
 	input:
-		infile=config["RAREDIR"]+"/features_v8/Combined/{type}_all_rvs_inds_types_linc_prot.txt.gz",
+		infile=config["RAREDIR"]+"/features_v8/Combined/{type}_all_rvs_inds_{version}_linc_prot.txt.gz",
 		euro_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt",
 		sex_file=config["GTEX_SUBJECTSv8"], 
 		chrlen_file=config["chrlen_file"]
 	params:
 		chrtype="{type}"
 	output:
-		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_numrv_linc_prot.txt.gz",
-		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_sigdif_linc_prot.txt.gz"
+		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_{version}_numrv_linc_prot.txt.gz",
+		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_{version}_sigdif_linc_prot.txt.gz"
 		
 	shell:
 		"""
@@ -55,21 +56,36 @@ rule get_effective_chrlen:
 	shell:
 		"""
 		python {input.this_script} \
-			--dir_gtf {input.gtfdir} --chr_lens {input.chrlen_file} \
+			--dir_gtf {input.dir_gtf_f} --chr_lens {input.chrlen_file} \
+			--outfile {output}
+		"""
+
+rule get_effective_chrlen_xsubtype:
+	input:
+		chrlen_file=config["chrlen_file"],
+		gtf_f=config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/chrX.gtf",
+		this_script=config["SCRIPTSDIR"]+"/Analysis/GenomicOnly/get_effective_chrlen_xsubtype.py"
+	output:
+		effective_chrlen=config["RAREDIR"]+"/analysis_v8/genomic_only/effective_chr_len_prot_linc_xsubtype.txt"
+
+	shell:
+		"""
+		python {input.this_script} \
+			--gtf {input.gtf_f} --chr_lens {input.chrlen_file} \
 			--outfile {output}
 		"""
 
 rule get_chr_rvs_bins:
 	input:
-		infile=config["RAREDIR"]+"/features_v8/Combined/{type}_all_rvs_inds_types_linc_prot.txt.gz",
+		infile=config["RAREDIR"]+"/features_v8/Combined/{type}_all_rvs_inds_{version}_linc_prot.txt.gz",
 		euro_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt",
 		sex_file=config["GTEX_SUBJECTSv8"], 
 		chrlen_file=config["RAREDIR"]+"/analysis_v8/genomic_only/effective_chr_len_prot_linc.txt"
 	params:
 		chrtype="{type}"
 	output:
-		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_numrv_bins_linc_prot.txt.gz",
-		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_sigdif_bins_linc_prot.txt.gz"
+		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_{version}_numrv_bins_linc_prot.txt.gz",
+		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_{version}_sigdif_bins_linc_prot.txt.gz"
 		
 	shell:
 		"""
@@ -83,14 +99,14 @@ rule get_chr_rvs_bins:
 
 rule get_x_subtypes:
 	input:
-		infile=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_linc_prot.txt.gz",
+		infile=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_{version}_linc_prot.txt.gz",
 		euro_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt",
 		sex_file=config["GTEX_SUBJECTSv8"]
 	params:
-		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv_linc_prot.txt.gz"
+		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_{version}_numrv_linc_prot.txt.gz"
 	output:
-		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv_linc_prot.txt.gz",
-		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_sigdif_linc_prot.txt.gz"
+		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_{version}_numrv_linc_prot.txt.gz",
+		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_{version}_sigdif_linc_prot.txt.gz"
 	shell:
 		"""
 		module load R
@@ -102,14 +118,14 @@ rule get_x_subtypes:
 
 rule get_x_subtypes_bins:
 	input:
-		infile=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_linc_prot.txt.gz",
+		infile=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_{version}_linc_prot.txt.gz",
 		euro_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt",
 		sex_file=config["GTEX_SUBJECTSv8"]
 	params:
-		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv_bins_linc_prot.txt.gz"
+		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_{version}_numrv_bins_linc_prot.txt.gz"
 	output:
-		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv_bins_linc_prot.txt.gz",
-		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_sigdif_bins_linc_prot.txt.gz"
+		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_{version}_numrv_bins_linc_prot.txt.gz",
+		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_{version}_sigdif_bins_linc_prot.txt.gz"
 	shell:
 		"""
 		module load R
@@ -121,7 +137,7 @@ rule get_x_subtypes_bins:
 
 rule get_maf_distribution:
 	input:
-		infile=config["RAREDIR"]+"/features_v8/Combined/{type}_all_rvs_inds_types.txt.gz",
+		infile=config["RAREDIR"]+"/features_v8/Combined/{type}_all_rvs_inds_{version}.txt.gz",
 		chrlen_file=config["chrlen_file"],
 		euro_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt",
 		sex_file=config["GTEX_SUBJECTSv8"]
@@ -129,7 +145,7 @@ rule get_maf_distribution:
 		maf="{maf}",
 		chrtype="{type}"
 	output:
-		mafs=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_maf_{maf}.txt.gz",
+		mafs=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_maf_{maf}_{version}.txt.gz",
 	shell:
 		"""
 		module load R
