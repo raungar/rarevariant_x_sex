@@ -7,13 +7,13 @@ print(TYPES)
 #TYPES.extend(range(1,23))
 #MAFS=[0.001,0.005,0.01]
 X_SUBTYPES=["PAR","PAR1","PAR2","NONPAR", "XCR1","XCR2","XTR","XAR"]
-filter_version=["types_filtsexdiff","types"]
+filter_version=["typesFiltsexdiff","types"]
 
 rule all:
 	input: 
-		config["RAREDIR"]+"/analysis_v8/genomic_only/effective_chr_len_prot_linc_xsubtype.txt"
-		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_{version}_sigdif_bins_linc_prot.txt.gz",type=TYPES,version=filter_version),
-		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_{version}_numrv_bins_linc_prot.txt.gz", subtype=X_SUBTYPES,version=filter_version)
+		#config["RAREDIR"]+"/analysis_v8/genomic_only/effective_chr_len_prot_linc_xsubtype.txt"
+		expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_{version}_sigdif_bins_linc_prot.txt.gz",type=TYPES,version=filter_version),
+		expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_{version}_numrv_bins_linc_prot.txt.gz", subtype=X_SUBTYPES,version=filter_version)
 		#config["RAREDIR"]+"/analysis_v8/genomic_only/effective_chr_len_prot_linc.txt"
 		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_numrv.txt.gz", type=TYPES),
 		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv_linc_prot.txt.gz", subtype=X_SUBTYPES)
@@ -120,7 +120,8 @@ rule get_x_subtypes_bins:
 	input:
 		infile=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_{version}_linc_prot.txt.gz",
 		euro_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt",
-		sex_file=config["GTEX_SUBJECTSv8"]
+		sex_file=config["GTEX_SUBJECTSv8"],
+		effective_chrlen=config["RAREDIR"]+"/analysis_v8/genomic_only/effective_chr_len_prot_linc_xsubtype.txt"
 	params:
 		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_{version}_numrv_bins_linc_prot.txt.gz"
 	output:
@@ -131,7 +132,7 @@ rule get_x_subtypes_bins:
 		module load R
 		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Analysis/GenomicOnly/get_xsubtypes_rvs_bins.R \
 		--infile {input.infile} --euro_file {input.euro_file} \
-		--sex_file {input.sex_file} \
+		--sex_file {input.sex_file} --effective_chrlen {input.effective_chrlen} \
 		--out_numrvs {params.num_rvs} --out_sigdif {output.sig_dif}
 		"""
 
