@@ -9,12 +9,12 @@ with open(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.tx
 	SAMPLES=[this_sample.strip() for this_sample in SAMPLES]
 
 #FILES=os.listdir("Output/features_v8/bySiteAnnoAut/*ZZ*SNP*")
-print("EHLLO")
+#print("EHLLO")
 FILES=glob.glob("Output/features_v8/bySite/*SNP*")
-print(FILES)
+#print(FILES)
 ###FILES=glob.glob("Output/features_v8/bySiteXFIX/*SNP*")
 split_files=[re.split("_|/",f) for f in FILES]
-print(split_files)
+#print(split_files)
 IDS_VARTYPES=[]
 for splitf in split_files:
 	if len(splitf) == 1:
@@ -26,7 +26,7 @@ for splitf in split_files:
 	if splitf[5] in SAMPLES:
 		#id_and_vartype=splitf[4]+"_"+splitf[5] #subtract 1 for aut <- this is aut
 		id_and_vartype=splitf[5]+"_"+splitf[6] #subtract 1 for aut <-this isx
-		print(id_and_vartype)
+		#print(id_and_vartype)
 		#id_and_vartype=splitf[2]+"_"+splitf[3] #subtract 1 for aut
 		IDS_VARTYPES.append(id_and_vartype)
 	#break
@@ -39,14 +39,21 @@ print(IDS_VARTYPES)
 CHRNUM="X"
 CHROMOSOMES="X"
 GROUPS=["m","f","both"]
+#filter_version=["types_filtsexdiff","types"]
+SEXDIFF_VAL="5"
 
 rule all:
 	input:
 		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_m_linc_prot_aut.tsv.gz",
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq.bed",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
-		config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_linc_prot.txt.gz",
-		config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_filtsexdiff_linc_prot.txt.gz"
+		#config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_linc_prot.txt.gz",
+		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_{version}_linc_prot.txt.gz",version=filter_version)
+		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq.bed",
+		##expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq.bed",
+		##	sexdiff_val=SEXDIFF_VAL,sample_vartype=IDS_VARTYPES,chrN="X"),
+		expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_filtsexdiff{sexdiff_val}_linc_prot.txt.gz",
+			sexdiff_val=SEXDIFF_VAL)
 
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
@@ -192,7 +199,7 @@ rule vcf_add_genes_aut:
 
 		"""
 
-rule corrects_annos_x:
+rule reduces_annos_x:
 	input:
 		bedfile=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
 		script=config["SCRIPTSDIR"]+"/Features/correct_anno_to_single_variant.py"
@@ -205,7 +212,7 @@ rule corrects_annos_x:
 		module load python
 		python {input.script} --chr {params} --infile {input.bedfile} --outfile {output}
 		"""
-rule corrects_annos_aut:
+rule reduces_annos_aut:
 	input:
 		bedfile=config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
 		script=config["SCRIPTSDIR"]+"/Features/correct_anno_to_single_variant.py"
@@ -220,20 +227,23 @@ rule corrects_annos_aut:
 		"""
 rule remove_if_sexdiff:
 	input:
-		vcf=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz",
-		gq_file=config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/GQ_chrX_long_sexdiff10.bed"
+		vcf=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
+		gq_file=config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/GQ_chrX_long_sexdiff{sexdiff_val}.bed"
+	params:
+		config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ{sexdiff_val}"
 	output:
-		config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq.bed"
+		config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq.bed"
 	shell:
 		"""
 		module load bedtools
+		mkdir -p {params}
 		bedtools intersect -a {input.vcf} -b {input.gq_file} -v > {output}
 		"""
 		
 
 rule collapse_vars_to_genes_x:
 	input:
-		#sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAutFIX/GenesAnno/{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
+		#sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAutFIX/GenesAnno/{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz",
 		dir_read=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc",
 		sex_file=config["GTEX_SUBJECTSv8"],
 		myscript=config["SCRIPTSDIR"]+"/Features/collapse_variants_genes.py"
@@ -320,7 +330,7 @@ rule combine_rvs_inds_x:
 		file_dir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc"
 	params:
 		pregz=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_linc_prot.txt",
-		pattern="x*SNP*reduced.bed.gz"
+		pattern="x*SNP*genes.bed.gz"
 	output:
 		gz=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_linc_prot.txt.gz"
 	shell:
@@ -354,21 +364,24 @@ rule combine_rvs_inds_x:
 
 rule combine_rvs_inds_x_filtsexdiff:
 	input:
-		file_dir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ"
+		file_dir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ{sexdiff_val}"
 	params:
-		pregz=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_linc_prot.txt",
-		pattern="x*SNP*reduced.bed.gz"
+		pregz=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_filtsexdiff{sexdiff_val}_linc_prot.txt",
+		pattern="x*SNP*bed"
 	output:
-		gz=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_filtsexdiff_linc_prot.txt.gz"
+		gz=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_filtsexdiff{sexdiff_val}_linc_prot.txt.gz"
 	shell:
 		"""
+		set -e
 		#chrX	247403	247403	2.33349e-02	GTEX-111CU	SNPs	ENSG00000228572.7	unprocessed_pseudogene
 		#header ^^^ (Ex line above)
 		echo -e chr\tstart\tend\tmaf\tsample\tvartype\tensg\tgenetype	> {params.pregz}
+		echo "lets loop"
 
 		#only keep valuable information (see header above), just awking for manipulation
 		for f in {input.file_dir}/{params.pattern}
 		do
+			echo "$f"
 			gtex_id=`echo $f | awk -F"/" '{{print $NF}}' | grep -o -P 'GTEX.{{0,6}}'`
 			var_type=`echo $f | awk -F"/" '{{print $NF}}' | egrep -o '_indels|_SNPs|_SV' | cut -c2-`
 			echo $gtex_id","$var_type
@@ -382,8 +395,7 @@ rule combine_rvs_inds_x_filtsexdiff:
 					if($10=="NO_MATCH"){{
 						if($6==$7 || $5 > 0.001){{use_maf=$5}}else{{use_maf=0}}
 						print $2,$3,$4,use_maf,$8,$9,$(NF-1),$(NF-2);}} 
-					else print $6,$7,$8,$1,$12,$13,$3,$4}}' | sed 's/\"//g' | sed 's/;//g' \
-			 >> {params.pregz}
+					else print $6,$7,$8,$1,$12,$13,$3,$4}}' | sed 's/\"//g' | sed 's/;//g'  >> {params.pregz}
 		done
 
 		gzip {params.pregz}
@@ -393,9 +405,8 @@ rule combine_rvs_inds_aut:
 	input:
 		file_dir=config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc"
 	params:
-		pregz=config["RAREDIR"]+"/features_v8/
-Combined/{chrN}_all_rvs_inds_types_linc_prot.txt",
-		pattern="*SNP*{chrN}*reduced.bed.gz"
+		pregz=config["RAREDIR"]+"/features_v8/Combined/{chrN}_all_rvs_inds_types_linc_prot.txt",
+		pattern="*SNP*{chrN}*genes.bed.gz"
 	output:
 		gz=config["RAREDIR"]+"/features_v8/Combined/{chrN}_all_rvs_inds_types_linc_prot.txt.gz"
 	shell:
