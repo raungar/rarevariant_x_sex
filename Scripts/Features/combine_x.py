@@ -36,7 +36,7 @@ seen_dic={}
 
 
 ####put positions into found dic
-for this_f in glob.glob(args.indir+"/*bed"):
+for this_f in glob.glob(args.indir+"/*bed*"):
 	print(this_f)
 	with open(this_f, 'r') as f:
 		f_split=this_f.split("/")[-1]
@@ -53,7 +53,7 @@ for this_f in glob.glob(args.indir+"/*bed"):
 				seen_dic[pos]={sex}
 print(seen_dic)
 
-for this_f in glob.glob(args.indir+"/*bed"):
+for this_f in glob.glob(args.indir+"/*bed*"):
 	print(this_f)
 	with open(this_f, 'r') as f:
 		f_split=this_f.split("/")[-1]
@@ -68,6 +68,8 @@ for this_f in glob.glob(args.indir+"/*bed"):
 			chr=line_split[0] #chr
 			pos=line_split[1] #pos
 			gtex_maf=line_split[3] #GTEx MAF
+			ref=line_split[5]
+			alt=line_split[6]
 			ensg=line_split[42]
 			genetype=line_split[46]
 			gnomad_split=(line_split[34]).split(';')
@@ -80,16 +82,22 @@ for this_f in glob.glob(args.indir+"/*bed"):
 					gnomad_maf_both=float(gtex_maf)
 				else:
 					gnomad_maf_both=float(0)		
-				print("both: ",gnomad_maf_both," , m: ", gnomad_maf_m, " , f: ", gnomad_maf_f)
+				print("both: ",gnomad_maf_both)
 			else:
 				gnomad_maf_both=float((([col for col in gnomad_split if af_both.match(col)])[0].split("="))[1])
+			#if gtex maf is large than 1% difference, use gtex maf
+			if(float(gtex_maf)-float(gnomad_maf_both)>0.01):
+				use_maf=gtex_maf
+			else:
+				use_maf=str(gnomad_maf_both)
 			#print("\t".join([chr,pos,ensg, genetype,ind,sex,gtex_maf,str(gnomad_maf_both)]))
-			myline=[chr,pos,pos,str(gnomad_maf_both),ind,"SNPs",ensg, genetype,sex,gtex_maf]
+			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex]
 			#must be seen in both
 			if (len(seen_dic[pos])<2):
-				continue
 				outf_sex_all.write(("\t".join(myline)+"\n").encode('utf-8'))
+				continue
 			else:
 				outf_sex_inboth.write(("\t".join(myline)+"\n").encode('utf-8'))
+				outf_sex_all.write(("\t".join(myline)+"\n").encode('utf-8'))
 outf_sex_all.close()
 outf_sex_inboth.close()
