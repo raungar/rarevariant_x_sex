@@ -41,6 +41,7 @@ CHROMOSOMES="X"
 GROUPS=["m","f","both"]
 #filter_version=["types_filtsexdiff","types"]
 SEXDIFF_VAL="5"
+filter_version=["typesFiltsexdiff","types","typesFiltsexdiff5"]
 
 rule all:
 	input:
@@ -52,8 +53,9 @@ rule all:
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq.bed",
 		##expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq.bed",
 		##	sexdiff_val=SEXDIFF_VAL,sample_vartype=IDS_VARTYPES,chrN="X"),
-		expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_filtsexdiff{sexdiff_val}_linc_prot.txt.gz",
-			sexdiff_val=SEXDIFF_VAL)
+		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_filtsexdiff{sexdiff_val}_linc_prot.txt.gz",
+		#	sexdiff_val=SEXDIFF_VAL)
+		expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice{sexdiff_val}_linc_prot.txt.gz",  sexdiff_val=SEXDIFF_VAL)
 
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
@@ -209,7 +211,7 @@ rule reduces_annos_x:
 		config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz"
 	shell:
 		"""
-		module load python
+		module load python3
 		python {input.script} --chr {params} --infile {input.bedfile} --outfile {output}
 		"""
 rule reduces_annos_aut:
@@ -270,7 +272,7 @@ rule collapse_vars_to_genes_aut:
 	input:
 		#sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAnnoAut/GenesAnno/{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
 		dir_read=config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc",
-		sex_file=config["GTEX_SUBJECTSv8"],
+		sex_file=config["GTEX_SAMPLESv8"],
 		myscript=config["SCRIPTSDIR"]+"/Features/collapse_variants_genes_aut.py"
 	params:
 		min_maf=0.01,
@@ -324,7 +326,20 @@ rule combine_all_collapse_vars_to_genes:
 
 		"""
 		
-	
+rule combine_rvs_and_filtseentwice:
+	input:
+		sexfile=config["GTEX_SUBJECTSv8"],
+		indir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ5",
+		this_script=config["SCRIPTSDIR"]+"/Features/combine_x.py"
+	output:
+		outfile_all=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesALL{sexdiff_val}_linc_prot.txt.gz",
+		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice{sexdiff_val}_linc_prot.txt.gz"
+	shell:
+		"""
+		module load python3
+		python {input.this_script} --sexfile {input.sexfile} --indir {input.indir} \
+			--outfile_all {output.outfile_all} --outfile_inboth {output.outfile_inboth}
+		"""	
 rule combine_rvs_inds_x:
 	input:
 		file_dir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc"
@@ -338,7 +353,6 @@ rule combine_rvs_inds_x:
 		#chrX	247403	247403	2.33349e-02	GTEX-111CU	SNPs	ENSG00000228572.7	unprocessed_pseudogene
 		#header ^^^ (Ex line above)
 		echo -e chr\tstart\tend\tmaf\tsample\tvartype\tensg\tgenetype	> {params.pregz}
-
 		#only keep valuable information (see header above), just awking for manipulation
 		for f in {input.file_dir}/{params.pattern}
 		do
