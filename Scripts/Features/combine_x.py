@@ -9,6 +9,7 @@ parser.add_argument("--indir", type=str, help="the bed file", required=True)
 parser.add_argument("--outfile_all", type=str, help="outfile for this sex containing bed info and zscores", required=True)
 parser.add_argument("--outfile_inboth", type=str, help="outfile for this sex containing bed info and zscores", required=True)
 parser.add_argument("--sexfile", type=str, help="the sex of the individual", required=True)
+parser.add_argument("--filename_match", type=str, help="keyword to find right file", required=True)
 args = parser.parse_args()
 
 outf_sex_all=gzip.open(args.outfile_all,"wb")
@@ -36,7 +37,7 @@ seen_dic={}
 
 
 ####put positions into found dic
-for this_f in glob.glob(args.indir+"/*bed*"):
+for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 	print(this_f)
 	with open(this_f, 'r') as f:
 		f_split=this_f.split("/")[-1]
@@ -53,7 +54,7 @@ for this_f in glob.glob(args.indir+"/*bed*"):
 				seen_dic[pos]={sex}
 print(seen_dic)
 
-for this_f in glob.glob(args.indir+"/*bed*"):
+for this_f in glob.glob(args.indir+"/*"+filename_match):
 	print(this_f)
 	with open(this_f, 'r') as f:
 		f_split=this_f.split("/")[-1]

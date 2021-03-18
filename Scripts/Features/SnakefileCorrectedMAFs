@@ -9,9 +9,7 @@ with open(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.tx
 	SAMPLES=[this_sample.strip() for this_sample in SAMPLES]
 
 #FILES=os.listdir("Output/features_v8/bySiteAnnoAut/*ZZ*SNP*")
-#print("EHLLO")
 FILES=glob.glob("Output/features_v8/bySite/*SNP*")
-#print(FILES)
 ###FILES=glob.glob("Output/features_v8/bySiteXFIX/*SNP*")
 split_files=[re.split("_|/",f) for f in FILES]
 #print(split_files)
@@ -20,7 +18,6 @@ for splitf in split_files:
 	if len(splitf) == 1:
 		continue
 	#make sure european, if not skip
-	print(splitf)
 	#if splitf[2] in SAMPLES:
 	#if splitf[4] in SAMPLES:
 	if splitf[5] in SAMPLES:
@@ -32,7 +29,7 @@ for splitf in split_files:
 	#break
 #CHRNUM="X"
 #IDS_VARTYPES="GTEX-111CU_SNPs"
-print(IDS_VARTYPES)
+#print(IDS_VARTYPES)
 #CHRNUM=range(1,23)
 #CHRNUM=[1]
 #CHROMOSOMES=range(1,23)
@@ -332,6 +329,8 @@ rule combine_x_rvs_and_seentwice:
 		sexfile=config["GTEX_SUBJECTSv8"],
 		indir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc",
 		this_script=config["SCRIPTSDIR"]+"/Features/combine_x.py"
+	params:
+		file_glob_this="genes.bed.gz"
 	output:
 		outfile_all=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesALL_linc_prot.txt.gz",
 		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice_linc_prot.txt.gz"
@@ -339,13 +338,16 @@ rule combine_x_rvs_and_seentwice:
 		"""
 		module load python3
 		python {input.this_script} --sexfile {input.sexfile} --indir {input.indir} \
-			--outfile_all {output.outfile_all} --outfile_inboth {output.outfile_inboth}
+			--outfile_all {output.outfile_all} --outfile_inboth {output.outfile_inboth} \
+			--filename_match {params.file_glob_this}
 		"""	
 rule combine_x_rvs_and_filtseentwice:
 	input:
 		sexfile=config["GTEX_SUBJECTSv8"],
 		indir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ{sexdiff_val}",
 		this_script=config["SCRIPTSDIR"]+"/Features/combine_x.py"
+	params:
+		"bed"
 	output:
 		outfile_all=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesALL{sexdiff_val}_linc_prot.txt.gz",
 		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice{sexdiff_val}_linc_prot.txt.gz"
@@ -354,6 +356,7 @@ rule combine_x_rvs_and_filtseentwice:
 		module load python3
 		python {input.this_script} --sexfile {input.sexfile} --indir {input.indir} \
 			--outfile_all {output.outfile_all} --outfile_inboth {output.outfile_inboth}
+			--filename_match {params}
 		"""	
 rule combine_rvs_inds_x:
 	input:
