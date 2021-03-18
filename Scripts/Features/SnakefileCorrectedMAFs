@@ -40,7 +40,7 @@ CHRNUM="X"
 CHROMOSOMES="X"
 GROUPS=["m","f","both"]
 #filter_version=["types_filtsexdiff","types"]
-SEXDIFF_VAL="5"
+SEXDIFF_VAL=["5"]
 filter_version=["typesFiltsexdiff","types","typesFiltsexdiff5"]
 
 rule all:
@@ -55,7 +55,8 @@ rule all:
 		##	sexdiff_val=SEXDIFF_VAL,sample_vartype=IDS_VARTYPES,chrN="X"),
 		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_filtsexdiff{sexdiff_val}_linc_prot.txt.gz",
 		#	sexdiff_val=SEXDIFF_VAL)
-		expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice{sexdiff_val}_linc_prot.txt.gz",  sexdiff_val=SEXDIFF_VAL)
+		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice{sexdiff_val}_linc_prot.txt.gz",  sexdiff_val=SEXDIFF_VAL)
+		config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice_linc_prot.txt.gz"
 
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
@@ -326,10 +327,24 @@ rule combine_all_collapse_vars_to_genes:
 
 		"""
 		
-rule combine_rvs_and_filtseentwice:
+rule combine_x_rvs_and_seentwice:
 	input:
 		sexfile=config["GTEX_SUBJECTSv8"],
-		indir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ5",
+		indir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc",
+		this_script=config["SCRIPTSDIR"]+"/Features/combine_x.py"
+	output:
+		outfile_all=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesALL_linc_prot.txt.gz",
+		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice_linc_prot.txt.gz"
+	shell:
+		"""
+		module load python3
+		python {input.this_script} --sexfile {input.sexfile} --indir {input.indir} \
+			--outfile_all {output.outfile_all} --outfile_inboth {output.outfile_inboth}
+		"""	
+rule combine_x_rvs_and_filtseentwice:
+	input:
+		sexfile=config["GTEX_SUBJECTSv8"],
+		indir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ{sexdiff_val}",
 		this_script=config["SCRIPTSDIR"]+"/Features/combine_x.py"
 	output:
 		outfile_all=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesALL{sexdiff_val}_linc_prot.txt.gz",
