@@ -53,8 +53,11 @@ rule all:
 		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_filtsexdiff{sexdiff_val}_linc_prot.txt.gz",
 		#	sexdiff_val=SEXDIFF_VAL)
 		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice{sexdiff_val}_linc_prot.txt.gz",  sexdiff_val=SEXDIFF_VAL)
-		config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice_linc_prot.txt.gz"
-
+		#config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice_linc_prot.txt.gz"
+		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes_blacklisted.bed.gz",
+		#	chrN="X",sample_vartype=IDS_VARTYPES)
+		config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesBlacklistRemovedSeenTwice_linc_prot.txt.gz",
+		#config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice_linc_prot.txt.gz"
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
 
@@ -178,6 +181,18 @@ rule vcf_add_genes_x:
 		cp {output.sample_anno_genes} {output.sample_anno_genes_all}
 		bedtools window -a {input.sample_anno} -b {input.genes} -w 10000 -v  | awk -F"\t" '{{printf $0"\t"; for (i=1;i<19; i++){{printf "\tNA"}}; print ""}}'>> {output.sample_anno_genes_all}
 
+		"""
+
+rule remove_vars_in_blacklist:
+	input:
+		gtex_file=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz", #only within 10kb of a gene		
+		blacklist=config["FILESDIR"]+"/hg38-blacklist.v2.bed"
+	output:
+		config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes_blacklisted.bed.gz"
+	shell:
+		"""
+		module load bedtools
+		bedtools subtract -a {input.gtex_file} -b {input.blacklist} -A | gzip -c > {output}
 		"""
 
 rule vcf_add_genes_aut:
@@ -323,7 +338,6 @@ rule combine_all_collapse_vars_to_genes:
 		zcat {input.aut} {input.x} | gzip > {output}
 
 		"""
-		
 rule combine_x_rvs_and_seentwice:
 	input:
 		sexfile=config["GTEX_SUBJECTSv8"],
@@ -334,6 +348,23 @@ rule combine_x_rvs_and_seentwice:
 	output:
 		outfile_all=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesALL_linc_prot.txt.gz",
 		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice_linc_prot.txt.gz"
+	shell:
+		"""
+		module load python3
+		python {input.this_script} --sexfile {input.sexfile} --indir {input.indir} \
+			--outfile_all {output.outfile_all} --outfile_inboth {output.outfile_inboth} \
+			--filename_match {params.file_glob_this}
+		"""	
+rule combine_x_rvs_blcklst_removed_and_seentwice:
+	input:
+		sexfile=config["GTEX_SUBJECTSv8"],
+		indir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc",
+		this_script=config["SCRIPTSDIR"]+"/Features/combine_x_gz.py"
+	params:
+		file_glob_this="genes_blacklisted.bed.gz"
+	output:
+		outfile_all=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesBlacklistRemovedALL_linc_prot.txt.gz",
+		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesBlacklistRemovedSeenTwice_linc_prot.txt.gz"
 	shell:
 		"""
 		module load python3
