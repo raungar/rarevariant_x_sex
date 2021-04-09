@@ -37,11 +37,23 @@ CHRNUM="X"
 CHROMOSOMES="X"
 GROUPS=["m","f","both"]
 #filter_version=["types_filtsexdiff","types"]
-SEXDIFF_VAL=["5"]
-filter_version=["typesFiltsexdiff","types","typesFiltsexdiff5"]
-
+SEXDIFF_VAL=["5",""]
+filter_version=["typesSeenTwice","typesALL","typesBlacklistRemovedALL","typesBlacklistRemovedSeenTwice",
+                "typesGQ10BlacklistRemovedALL","typesGQ5BlacklistRemovedALL",
+                "typesGQ10BlacklistRemovedSeenTwice",  "typesGQ5BlacklistRemovedSeenTwice"]
 rule all:
 	input:
+		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_{this_type}.txt.gz",this_type=filter_version)
+		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice{sexdiff_val}_linc_prot.txt.gz",  sexdiff_val=SEXDIFF_VAL)
+		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq_blacklisted.bed.gz",
+		#		chrN=CHRNUM,sample_vartype=IDS_VARTYPES),
+		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ5/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq5_blacklisted.bed.gz",
+		#		chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
+		#config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesGQ10BlacklistRemovedSeenTwice_linc_prot.txt.gz",
+		#config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesGQ5BlacklistRemovedSeenTwice_linc_prot.txt.gz"
+		#config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesBlacklistRemovedSeenTwice_linc_prot.txt.gz",
+		#config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice_linc_prot.txt.gz"
+
 		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_m_linc_prot_aut.tsv.gz",
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq.bed",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
@@ -52,12 +64,9 @@ rule all:
 		##	sexdiff_val=SEXDIFF_VAL,sample_vartype=IDS_VARTYPES,chrN="X"),
 		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_types_filtsexdiff{sexdiff_val}_linc_prot.txt.gz",
 		#	sexdiff_val=SEXDIFF_VAL)
-		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice{sexdiff_val}_linc_prot.txt.gz",  sexdiff_val=SEXDIFF_VAL)
 		#config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice_linc_prot.txt.gz"
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes_blacklisted.bed.gz",
 		#	chrN="X",sample_vartype=IDS_VARTYPES)
-		config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesBlacklistRemovedSeenTwice_linc_prot.txt.gz",
-		#config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice_linc_prot.txt.gz"
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
 
@@ -255,7 +264,39 @@ rule remove_if_sexdiff:
 		bedtools intersect -a {input.vcf} -b {input.gq_file} -v > {output}
 		"""
 		
-
+rule remove_sexdiffvars_in_blacklist:
+	input:
+		gtex_file=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq.bed", #only within 10kb of a gene		
+		blacklist=config["FILESDIR"]+"/hg38-blacklist.v2.bed"
+	output:
+		config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq_blacklisted.bed.gz"
+	shell:
+		"""
+		module load bedtools
+		bedtools subtract -a {input.gtex_file} -b {input.blacklist} -A | gzip -c > {output}
+		"""
+rule remove_sexdiff5vars_in_blacklist:
+	input:
+		gtex_file=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ5/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq.bed", #only within 10kb of a gene		
+		blacklist=config["FILESDIR"]+"/hg38-blacklist.v2.bed"
+	output:
+		config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ5/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq5_blacklisted.bed.gz"
+	shell:
+		"""
+		module load bedtools
+		bedtools subtract -a {input.gtex_file} -b {input.blacklist} -A | gzip -c > {output}
+		"""
+rule collapse_combined:
+	input:
+		myscript=config["SCRIPTSDIR"]+"/Features/collapsed_combined_variants_genes.py",
+		combined=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_{this_type}_linc_prot.txt.gz"		
+	output:
+		outfile=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_{this_type}.txt.gz"
+	shell:
+		"""
+		module load python3
+		python3 {input.myscript} --combined_file {input.combined} --out {output.outfile}
+		"""
 rule collapse_vars_to_genes_x:
 	input:
 		#sample_anno_genes=config["RAREDIR"]+"/features_v8/bySiteAutFIX/GenesAnno/{sample_vartype}_chr{chrN}_anno_genes_reduced.bed.gz",
@@ -372,13 +413,47 @@ rule combine_x_rvs_blcklst_removed_and_seentwice:
 			--outfile_all {output.outfile_all} --outfile_inboth {output.outfile_inboth} \
 			--filename_match {params.file_glob_this}
 		"""	
+rule combine_x_rvs_sexdiff10_blcklst_removed_and_seentwice:
+	input:
+		sexfile=config["GTEX_SUBJECTSv8"],
+		indir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ",
+		this_script=config["SCRIPTSDIR"]+"/Features/combine_x_gz.py"
+	params:
+		file_glob_this="blacklisted.bed.gz"
+	output:
+		outfile_all=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesGQ10BlacklistRemovedALL_linc_prot.txt.gz",
+		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesGQ10BlacklistRemovedSeenTwice_linc_prot.txt.gz"
+	shell:
+		"""
+		module load python3
+		python {input.this_script} --sexfile {input.sexfile} --indir {input.indir} \
+			--outfile_all {output.outfile_all} --outfile_inboth {output.outfile_inboth} \
+			--filename_match {params.file_glob_this}
+		"""	
+rule combine_x_rvs_sexdiff5_blcklst_removed_and_seentwice:
+	input:
+		sexfile=config["GTEX_SUBJECTSv8"],
+		indir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ5",
+		this_script=config["SCRIPTSDIR"]+"/Features/combine_x_gz.py"
+	params:
+		file_glob_this="blacklisted.bed.gz"
+	output:
+		outfile_all=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesGQ5BlacklistRemovedALL_linc_prot.txt.gz",
+		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesGQ5BlacklistRemovedSeenTwice_linc_prot.txt.gz"
+	shell:
+		"""
+		module load python3
+		python {input.this_script} --sexfile {input.sexfile} --indir {input.indir} \
+			--outfile_all {output.outfile_all} --outfile_inboth {output.outfile_inboth} \
+			--filename_match {params.file_glob_this}
+		"""	
 rule combine_x_rvs_and_filtseentwice:
 	input:
 		sexfile=config["GTEX_SUBJECTSv8"],
 		indir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ{sexdiff_val}",
 		this_script=config["SCRIPTSDIR"]+"/Features/combine_x.py"
 	params:
-		"bed"
+		file_glob_this="bed"
 	output:
 		outfile_all=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesALL{sexdiff_val}_linc_prot.txt.gz",
 		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice{sexdiff_val}_linc_prot.txt.gz"
@@ -386,8 +461,8 @@ rule combine_x_rvs_and_filtseentwice:
 		"""
 		module load python3
 		python {input.this_script} --sexfile {input.sexfile} --indir {input.indir} \
-			--outfile_all {output.outfile_all} --outfile_inboth {output.outfile_inboth}
-			--filename_match {params}
+			--outfile_all {output.outfile_all} --outfile_inboth {output.outfile_inboth} \
+			--filename_match {params.file_glob_this}
 		"""	
 rule combine_rvs_inds_x:
 	input:
