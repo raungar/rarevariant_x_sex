@@ -12,7 +12,11 @@ library(optparse)
 
 option_list = list(
                 make_option(c("--infile"), type = 'character', default = NULL, help = "path of input file"),
+                make_option(c("--gtf_code_file"), type = 'character', default = NULL, help = "gtf_code_file preprocessing"),
+                make_option(c("--sex"), type = 'character', default = NULL, help = "ind sex"),
                 make_option(c("--par_file"), type = 'character', default = NULL, help = "path of x inactivation file"),
+                make_option(c("--max_maf"), type = 'character', default = NULL, help = "path of x inactivation file"),
+                make_option(c("--min_maf"), type = 'character', default = NULL, help = "path of x inactivation file"),
                 make_option(c("--out_rdata_relative"), type = 'character', default = NULL, help = "path of output file (RDATA) relative risk"),
                 make_option(c("--zscore"), type = 'numeric', default = NULL, help = "min z score")
         )
@@ -24,12 +28,16 @@ infile <- as.character(opt$infile)
 par_file <- as.character(opt$par_file)
 out_rdata_relative <- as.character(opt$out_rdata_relative)
 zscore <- as.numeric(opt$zscore)
-
+max_maf <- as.numeric(opt$max_maf)
+min_maf <- as.numeric(opt$min_maf)
+sex <- as.character(opt$sex)
+gtf_code_file<-as.character(opt$gtf_code_file)
 # # #zscore<-3
-#infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/outliers_zthresh3_nphen1_noglobal_medz_varAnnot_x_m.txt"
+# infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/x_outlier_noglobal_medz_varAnnot_zthresh2_nphen2_m_typesALL_linc_prot.txt.gz"
 # out_rdata_relative<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/relative_risk_z3_x_f.xci.RData"
-# par_file<-"/oak/stanford/groups/smontgom/raungar/Sex/Files/Tukiainen_xinact_par.tsv"
-#  zscore<-3
+#  par_file<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/par_table.txt"
+#  gtf_code_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/autosomal_proteincoding_lncrna.gtf"
+# # zscore<-2
 
 if(file.exists(out_rdata_relative)){stop("outfile - relative exists")}
 #if(file.exists(out_rdata_continuous)){stop("outfile - continuous exists")}
@@ -46,34 +54,60 @@ exp_data = fread(infile,data.table=F)
 #exp_data_final$variant_cat = new_cats
 exp_data$OutlierValue = -log10(2*pnorm(-abs(exp_data$MedZ)))
 exp_data$gene_id_red<-sapply(strsplit(exp_data$ensg,"\\."), "[[",1)
+exp_data$OutlierValue = -log10(2*pnorm(-abs(exp_data$MedZ)))
 
-par_df<-fread(par_file,data.table=F)
-par_df$GeneID_red<-sapply(strsplit(par_df$`Gene ID`,"\\."), "[[",1)
-exp_data<-merge(exp_data,par_df[c("PAR_BINARY", "GeneID_red")], by.x="gene_id_red",by.y="GeneID_red")
+print("filter for MAF")
+#choose rare/common
+has_variant<-apply((exp_data),1,function(x){
+  this_maf<-as.numeric(x[which(colnames(exp_data)=="use_maf")])
+  #no variants found w/in 10kb of gene, so not rare
+  if(is.na(this_maf)){"common"}
+  else if (this_maf>=min_maf & this_maf<max_maf){"rare"}
+  else if (this_maf>=max_maf){"common"}
+  else (stop("ERROR: VARIANT NOT MAKING SENSE"))
+})
+exp_data$has_variant<-has_variant
+
+gtf_code<-fread(gtf_code_file,header=F)
+genetype_dic=gtf_code$V2
+names(genetype_dic)<-gtf_code$V1
+exp_data$variant_cat<-genetype_dic[exp_data$ensg] 
+
+par_df<-fread(par_file,data.table=F,header = F)
+colnames(par_df)<-c("ensg","subregion")
+#par_df$GeneID_red<-sapply(strsplit(par_df$`Gene ID`,"\\."), "[[",1)
+# exp_data<-merge(exp_data,par_df[c("PAR_BINARY", "GeneID_red")], by.x="gene_id_red",by.y="GeneID_red")
 #colnames(exp_data)[colnames(exp_data)=="Combined XCI status"]<-"XCI_STATUS"
 
 print("filter")
 ### get relative risk per category
+
 exp_outliers = dplyr::filter(exp_data, abs(MedZ) >= zscore)
 exp_controls = dplyr::filter(exp_data, abs(MedZ) < zscore)
-
 print("relative risk")
 ### Relative risk
 risks = data.frame(Risk = numeric(), Lower = numeric(), Upper = numeric(), Pval = numeric(), St = character())
-par_status = unique(exp_data$PAR_BINARY)
+par_status = unique(par_df$subregion)
 for (par in par_status) {
+  this_par_subregion<-par_df%>%dplyr::filter(subregion==par)
    print(par)
-   exp_nn = nrow(dplyr::filter(exp_controls, PAR_BINARY != par))
-   exp_ny = nrow(dplyr::filter(exp_controls, PAR_BINARY == par))
-   exp_yn = nrow(dplyr::filter(exp_outliers, PAR_BINARY != par))
-   exp_yy = nrow(dplyr::filter(exp_outliers, PAR_BINARY == par))
+
+   exp_nn = nrow(exp_controls %>% dplyr::filter(ensg %in% this_par_subregion$ensg) %>% dplyr::filter( has_variant != "rare"))
+    exp_ny = nrow(exp_controls %>% dplyr::filter(ensg %in% this_par_subregion$ensg) %>% dplyr::filter(has_variant == "rare"))
+    exp_yn = nrow(exp_outliers %>% dplyr::filter(ensg %in% this_par_subregion$ensg) %>% dplyr::filter(has_variant != "rare"))
+    exp_yy = nrow(exp_outliers %>% dplyr::filter(ensg %in% this_par_subregion$ensg) %>% dplyr::filter(has_variant == "rare"))
+    
+   # exp_nn = nrow(dplyr::filter(exp_controls, PAR_BINARY != par))
+   # exp_ny = nrow(dplyr::filter(exp_controls, PAR_BINARY == par))
+   # exp_yn = nrow(dplyr::filter(exp_outliers, PAR_BINARY != par))
+   # exp_yy = nrow(dplyr::filter(exp_outliers, PAR_BINARY == par))
    exptable = rbind(c(exp_nn,exp_ny),c(exp_yn,exp_yy))
    err = epitab(exptable, method = 'riskratio')
    risks = rbind(risks, data.frame(Risk = err$tab[2,5],
                                    Lower = err$tab[2,6],
                                    Upper = err$tab[2,7],
                                    Pval = err$tab[2,8],
-                                   PAR_BINARY = par,
+                                   Subregion = par,
                                    Type = 'Total expression'))   
 }
 
@@ -90,7 +124,7 @@ for (par in par_status) {
 #                                 XCI_STATUS = "all",
 #                                 Type = 'Total expression'))   
 risks = risks %>% arrange(by=Risk) 
-risks$PAR_BINARY = factor(risks$PAR_BINARY, levels=unique(risks$PAR_BINARY))
+risks$Subregion = factor(risks$Subregion, levels=unique(risks$Subregion))
 # risks$Type = factor(risks$Type, levels=c('ASE','Splicing', 'Total expression'))
 
 
