@@ -28,7 +28,6 @@ for splitf in split_files:
 		IDS_VARTYPES.append(id_and_vartype)
 	#break
 #CHRNUM="X"
-#IDS_VARTYPES="GTEX-111CU_SNPs"
 #print(IDS_VARTYPES)
 #CHRNUM=range(1,23)
 #CHRNUM=[1]
@@ -41,9 +40,13 @@ SEXDIFF_VAL=["5",""]
 filter_version=["typesSeenTwice","typesALL","typesBlacklistRemovedALL","typesBlacklistRemovedSeenTwice",
                 "typesGQ10BlacklistRemovedALL","typesGQ5BlacklistRemovedALL",
                 "typesGQ10BlacklistRemovedSeenTwice",  "typesGQ5BlacklistRemovedSeenTwice"]
+##IDS_VARTYPES="GTEX-111CU_SNPs"
+
 rule all:
 	input:
-		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_{this_type}.txt.gz",this_type=filter_version)
+		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_{this_type}.txt.gz",this_type=filter_version)
+		expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/x_{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz",
+			chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
 		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_typesSeenTwice{sexdiff_val}_linc_prot.txt.gz",  sexdiff_val=SEXDIFF_VAL)
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq_blacklisted.bed.gz",
 		#		chrN=CHRNUM,sample_vartype=IDS_VARTYPES),
@@ -190,6 +193,18 @@ rule vcf_add_genes_x:
 		cp {output.sample_anno_genes} {output.sample_anno_genes_all}
 		bedtools window -a {input.sample_anno} -b {input.genes} -w 10000 -v  | awk -F"\t" '{{printf $0"\t"; for (i=1;i<19; i++){{printf "\tNA"}}; print ""}}'>> {output.sample_anno_genes_all}
 
+		"""
+
+rule cadd_anno:
+	input:
+		sample=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/x_{sample_vartype}_chr{chrN}_anno_genes.bed.gz",
+		this_script=config["SCRIPTSDIR"]+"/Features/vcf2bedfiles_compile_CADD_scores_rau.py"
+	output:
+		cadd=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/x_{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz"
+	shell:
+		"""
+		echo "{input.this_script} "
+		cat {input.sample} | python {input.this_script}  > {output}
 		"""
 
 rule remove_vars_in_blacklist:
