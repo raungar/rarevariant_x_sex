@@ -17,8 +17,10 @@ option_list = list(
                 make_option(c("--gtf_code_file"), type = 'character', default = NULL, help = "gtf_code_file preprocessing"),
                 make_option(c("--min_maf"), type = 'character', default = NULL, help = "path of x inactivation file"),
 
-                make_option(c("--sex"), type = 'character', default = NULL, help = "ind sex"),                make_option(c("--out_rdata_relative"), type = 'character', default = NULL, help = "path of output file (RDATA) relative risk"),
-                make_option(c("--zscore"), type = 'numeric', default = NULL, help = "min z score")
+                make_option(c("--sex"), type = 'character', default = NULL, help = "ind sex"),             
+                make_option(c("--out_rdata_relative"), type = 'character', default = NULL, help = "path of output file (RDATA) relative risk"),
+                make_option(c("--zscore"), type = 'numeric', default = NULL, help = "min z score"),
+                make_option(c("--cadd_min"), type = 'numeric', default = NULL, help = "min cadd score")
         )
 
 
@@ -28,6 +30,7 @@ infile <- as.character(opt$infile)
 xinact_file <- as.character(opt$xinact_file)
 out_rdata_relative <- as.character(opt$out_rdata_relative)
 zscore <- as.numeric(opt$zscore)
+cadd_min <- as.numeric(opt$cadd_min)
 min_maf<-as.numeric(opt$min_maf)
 max_maf <- as.numeric(opt$max_maf)
 sex <- as.character(opt$sex)
@@ -50,7 +53,7 @@ print(paste0("reading in: ",infile))
 
 exp_data = fread(infile,data.table=F)
 colnames(exp_data)<-c("ind","ensg","N","Df","MedZ","Y","chr","start","end","vartype","sex",
-                     "gtex_maf","gnomad_maf","use_maf","genetype","numrv")
+                     "gtex_maf","gnomad_maf","use_maf","genetype","numrv","cadd_raw","cadd_phred")
 
 exp_data$gene_id_red<-sapply(strsplit(exp_data$ensg,"\\."), "[[",1)
 exp_data$OutlierValue = -log10(2*pnorm(-abs(exp_data$MedZ)))
@@ -95,10 +98,10 @@ xci_status = unique(exp_data_xci$XCI_STATUS)
 for (xci in na.omit(xci_status)) {
    print(xci)
 
-    exp_nn = nrow(exp_controls %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter( has_variant != "rare"))
-    exp_ny = nrow(exp_controls %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter(has_variant == "rare"))
-    exp_yn = nrow(exp_outliers %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter(has_variant != "rare"))
-    exp_yy = nrow(exp_outliers %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter(has_variant == "rare"))
+    exp_nn = nrow(exp_controls %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter( has_variant != "rare") %>% dplyr:filter(cadd_phred>cadd_min))
+    exp_ny = nrow(exp_controls %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter(has_variant == "rare")%>% dplyr:filter(cadd_phred>cadd_min))
+    exp_yn = nrow(exp_outliers %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter(has_variant != "rare")%>% dplyr:filter(cadd_phred>cadd_min))
+    exp_yy = nrow(exp_outliers %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter(has_variant == "rare")%>% dplyr:filter(cadd_phred>cadd_min))
 
    exptable = rbind(c(exp_nn,exp_ny),c(exp_yn,exp_yy))
    err = epitab(exptable, method = 'riskratio')
@@ -122,7 +125,7 @@ risks$XCI_STATUS = factor(risks$XCI_STATUS, levels=unique(risks$XCI_STATUS))
 
 
 
-write.csv(risks,  file=out_rdata_relative)
+write.csv(risks,  file=out_rdata_relative,quote=F,sep="\t")
 print(paste0("COMPLETE: ",out_rdata_relative))
 # save(all_coefs, file=out_rdata_continuous)
 

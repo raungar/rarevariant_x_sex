@@ -18,8 +18,9 @@ option_list = list(
                 make_option(c("--max_maf"), type = 'character', default = NULL, help = "path of x inactivation file"),
                 make_option(c("--min_maf"), type = 'character', default = NULL, help = "path of x inactivation file"),
                 make_option(c("--out_rdata_relative"), type = 'character', default = NULL, help = "path of output file (RDATA) relative risk"),
-                make_option(c("--zscore"), type = 'numeric', default = NULL, help = "min z score")
-        )
+                make_option(c("--zscore"), type = 'numeric', default = NULL, help = "min z score"),
+                make_option(c("--cadd_min"), type = 'numeric', default = NULL, help = "min cadd score")
+)
 
 
 opt_parser = OptionParser(option_list = option_list)
@@ -28,6 +29,7 @@ infile <- as.character(opt$infile)
 par_file <- as.character(opt$par_file)
 out_rdata_relative <- as.character(opt$out_rdata_relative)
 zscore <- as.numeric(opt$zscore)
+cadd_min <- as.numeric(opt$cadd_min)
 max_maf <- as.numeric(opt$max_maf)
 min_maf <- as.numeric(opt$min_maf)
 sex <- as.character(opt$sex)
@@ -47,6 +49,8 @@ if(file.exists(out_rdata_relative)){stop("outfile - relative exists")}
 print('Reading expression')
 print(paste0("reading in: ",infile))
 exp_data = fread(infile,data.table=F)
+colnames(exp_data)<-c("ind","ensg","N","Df","MedZ","Y","chr","start","end","vartype","sex",
+                      "gtex_maf","gnomad_maf","use_maf","genetype","numrv","cadd_raw","cadd_phred")
 #exp_data = exp_data %>% select(indiv_id,gene_id,MedZ.x,Y,tier2,af_gtex,categoryOutlier,variant_cat,sv_v7,af_gnomad,medz_bin,color_R,color_G,color_B)
 # exp_data = exp_data %>% dplyr::select(indiv_id,gene_id,MedZ.x,Y,af,isOutlier,variant_cat,sv_v7,af_gnomad,variant_color1,variant_color2,variant_color3)
 # exp_data_final = dplyr::filter(exp_data,sv_v7==1)
@@ -92,10 +96,10 @@ for (par in par_status) {
   this_par_subregion<-par_df%>%dplyr::filter(subregion==par)
    print(par)
 
-   exp_nn = nrow(exp_controls %>% dplyr::filter(ensg %in% this_par_subregion$ensg) %>% dplyr::filter( has_variant != "rare"))
-    exp_ny = nrow(exp_controls %>% dplyr::filter(ensg %in% this_par_subregion$ensg) %>% dplyr::filter(has_variant == "rare"))
-    exp_yn = nrow(exp_outliers %>% dplyr::filter(ensg %in% this_par_subregion$ensg) %>% dplyr::filter(has_variant != "rare"))
-    exp_yy = nrow(exp_outliers %>% dplyr::filter(ensg %in% this_par_subregion$ensg) %>% dplyr::filter(has_variant == "rare"))
+   exp_nn = nrow(exp_controls %>% dplyr::filter(ensg %in% this_par_subregion$ensg) %>% dplyr::filter( has_variant != "rare")%>% dplyr:filter(cadd_phred>cadd_min))
+    exp_ny = nrow(exp_controls %>% dplyr::filter(ensg %in% this_par_subregion$ensg) %>% dplyr::filter(has_variant == "rare")%>% dplyr:filter(cadd_phred>cadd_min))
+    exp_yn = nrow(exp_outliers %>% dplyr::filter(ensg %in% this_par_subregion$ensg) %>% dplyr::filter(has_variant != "rare")%>% dplyr:filter(cadd_phred>cadd_min))
+    exp_yy = nrow(exp_outliers %>% dplyr::filter(ensg %in% this_par_subregion$ensg) %>% dplyr::filter(has_variant == "rare")%>% dplyr:filter(cadd_phred>cadd_min))
     
    # exp_nn = nrow(dplyr::filter(exp_controls, PAR_BINARY != par))
    # exp_ny = nrow(dplyr::filter(exp_controls, PAR_BINARY == par))
@@ -159,7 +163,7 @@ risks$Subregion = factor(risks$Subregion, levels=unique(risks$Subregion))
 #names(plot_cols) = unique(pcols$variant_cat)
 
 
-write.csv(risks,  file=out_rdata_relative)
+write.csv(risks,  file=out_rdata_relative,quote=F,sep="\t")
 print(paste0("COMPLETE: ",out_rdata_relative))
 # save(all_coefs, file=out_rdata_continuous)
 
