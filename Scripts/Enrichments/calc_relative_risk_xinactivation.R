@@ -107,6 +107,12 @@ for (xci in na.omit(xci_status)) {
                                    Upper = err$tab[2,7],
                                    Pval = err$tab[2,8],
                                    XCI_STATUS = xci,
+                                   exp_nn=exp_nn,
+                                   exp_ny=exp_ny,
+                                   exp_yn=exp_yn,
+                                   exp_yy=exp_yy,
+                                   num_outliers=nrow(exp_outliers%>% dplyr::filter(variant_cat == vcat)),
+                                   sex=sex,z=zscore,nphen=nphen,
                                    Type = 'Total expression'))   
 }
  
