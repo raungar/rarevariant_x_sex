@@ -23,7 +23,7 @@ print("arguments parsed.")
 
 
 
-colnames_combined=["chr","start","end","maf_gtex","maf_gnomad","maf_use","ind","vartype","ensg","genetype","sex"]
+colnames_combined=["chr","start","end","maf_gtex","maf_gnomad","maf_use","ind","vartype","ensg","genetype","sex","cadd_raw","cadd_phred"]
 
 out=gzip.open(outfile,"wb")
 
@@ -50,8 +50,10 @@ with gzip.open(combined_file,"r") as f_read:
 		vartype=line_split[7]
 		ensg=line_split[8]
 		genetype=line_split[9]
-		sex=line_split[10].strip()
-		store_line=[chrom,start,end,ensg, vartype,ind,sex, maf_gtex, maf_gnomad,maf_use,genetype]
+		sex=line_split[10]
+		cadd_raw=line_split[11]
+		cadd_phred=line_split[12].strip()
+		store_line=[chrom,start,end,ensg, vartype,ind,sex, maf_gtex, maf_gnomad,maf_use,genetype,cadd_raw,cadd_phred]
 		#if there is already a RV recorded for this gene
 		if ind not in this_inds_dic:
 			this_inds_dic[ind]=dict()
