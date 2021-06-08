@@ -18,6 +18,7 @@ rule all:
 		config["RAREDIR"]+"/preprocessing_v8/peer_correct_sex_log.log",
 		config["RAREDIR"]+"/preprocessing_v8/regress_sex.txt.log",
 		config["RAREDIR"]+"/preprocessing_v8/get_resids_ztrans.f.log",
+		config["RAREDIR"]+"/preprocessing_v8/get_resids_NOztrans.f.log",
 		expand(config["RAREDIR"]+"/preprocessing_v8/gather_filter_norm_expr_{this_group}.log",this_group=SEX_GROUPS),
 		expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subsetted_aut_{this_group}.txt.gz",this_group=SEX_GROUPS)
 
@@ -143,6 +144,32 @@ rule get_resids_ztrans:
 		do
 			echo $file > {output.log}
 			sbatch /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER_residuals.sh \
+			{input.peerdir} {input.scriptdir} {input.RAREDIR} {input.covs} \
+			{input.metadata_file} {params.factors_type} {params.logfile} {params.inclsex} $file
+			#break
+		done
+		""")
+rule get_resids_NOztrans:
+	input:
+		log=config["RAREDIR"]+"/preprocessing_v8/get_peer_factors.log",
+		RAREDIR=config["RAREDIR"],
+		peerdir=config["RAREDIR"]+"/preprocessing_v8/PEER_v8",
+		scriptdir="/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing",
+		covs="/oak/stanford/groups/smontgom/raungar/Sex/Files/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze_20genotPCs.txt",
+		metadata_file=config["GTEX_SUBJECTSv8"]
+	params:
+		factors_type="factors",
+		logfile="log.residuals.tsv",
+		inclsex="F"
+	output:
+           	log=config["RAREDIR"]+"/preprocessing_v8/get_resids_NOztrans.f.log"
+
+	run:
+		shell("""
+		for file in `ls {input.peerdir}/*log2.ztrans*.f.txt`
+		do
+			echo $file > {output.log}
+			sbatch /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER_residuals_NOTRANSFORM.sh \
 			{input.peerdir} {input.scriptdir} {input.RAREDIR} {input.covs} \
 			{input.metadata_file} {params.factors_type} {params.logfile} {params.inclsex} $file
 			#break
