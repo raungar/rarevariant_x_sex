@@ -41,15 +41,24 @@ SEXDIFF_VAL=["5","10"]
 filter_version=["typesSeenTwice","typesALL","typesBlacklistRemovedALL","typesBlacklistRemovedSeenTwice",
                 "typesGQ10BlacklistRemovedALL","typesGQ5BlacklistRemovedALL",
                 "typesGQ10BlacklistRemovedSeenTwice",  "typesGQ5BlacklistRemovedSeenTwice"]
-filter_version=["typesALL"]
-##IDS_VARTYPES="GTEX-111CU_SNPs"
+#filter_version=["typesALL"]
+filter_version=["typesGQ5BlacklistRemovedALL"]
+##IDS_VARTYPES="GTEX-X4EO_SNPs"
+
+CADD=["0","15"] #,"15","25"]
 
 rule all:
 	input:
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/CADD/{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
-		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrN}_CADD{this_type}.txt.gz",
-				chrN=CHRNUM,this_type=filter_version)
+		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_aut.tsv.gz",
+		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_aut_cadd{cadd_min}.txt.gz",cadd_min=CADD),
+		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_all_cadd{cadd_min}.txt.gz",cadd_min=CADD),
+		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADD{this_type}_cadd{cadd_min}.txt.gz",cadd_min=CADD,this_type=filter_version)
+		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_aut.txt.gz",
+		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_all.txt.gz"
+		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrN}_CADD{this_type}.txt.gz",
+		#		chrN=CHRNUM,this_type=filter_version)
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_{this_type}.txt.gz",this_type=filter_version)
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/x_{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz",
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/x_{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz",
@@ -305,25 +314,56 @@ rule remove_sexdiffvars_in_blacklist:
 #		"""
 rule collapse_combined_x:
 	input:
-		myscript=config["SCRIPTSDIR"]+"/Features/collapsed_combined_variants_genes.py",
-		combined=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADD{this_type}_linc_prot.txt.gz"		
+		myscript=ancient(config["SCRIPTSDIR"]+"/Features/collapsed_combined_variants_genes.py"),
+		combined=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADD{this_type}_linc_prot.txt.gz"
+	params:
+		cadd_min="{cadd_min}"
 	output:
-		outfile=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADD{this_type}.txt.gz"
+		outfile=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADD{this_type}_cadd{cadd_min}.txt.gz"
 	shell:
 		"""
 		module load python3
-		python3 {input.myscript} --combined_file {input.combined} --out {output.outfile}
+		python3 {input.myscript} --combined_file {input.combined} --out {output.outfile} --cadd_min {params.cadd_min}
 		"""
 rule collapse_combined_aut:
 	input:
-		myscript=config["SCRIPTSDIR"]+"/Features/collapsed_combined_variants_genes.py",
+		myscript=ancient(config["SCRIPTSDIR"]+"/Features/collapsed_combined_variants_genes.py"),
 		combined=config["RAREDIR"]+"/features_v8/Combined/chr{chrN}_all_rvs_inds_CADD{this_type}_linc_prot.txt.gz"
+	params:
+		cadd_min="{cadd_min}"
 	output:
-		outfile=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrN}_CADD{this_type}.txt.gz"
+		outfile=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrN}_CADD{this_type}_cadd{cadd_min}.txt.gz"
 	shell:
 		"""
 		module load python3
-		python3 {input.myscript} --combined_file {input.combined} --out {output.outfile}
+		python3 {input.myscript} --combined_file {input.combined} --out {output.outfile} --cadd_min {params.cadd_min}
+		"""
+rule collapse_combined_aut_all:
+	input:
+		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrom}_CADDtypesALL_cadd{{cadd_min}}.txt.gz",chrom=CHROMOSOMES)
+		#	collapsed_maf_f_aut_chr19_linc_prot.tsv.gz
+	params:
+		cadd_min="{cadd_min}"
+		
+	output:
+		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_aut_cadd{cadd_min}.txt.gz"
+	shell:
+		"""
+		zcat {input.aut} | gzip > {output}
+
+		"""
+rule collapse_combined_aut_x_all:
+	input:
+		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrom}_CADDtypesALL_cadd{{cadd_min}}.txt.gz",chrom=CHROMOSOMES),
+		x=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADDtypesGQ5BlacklistRemovedALL_cadd{cadd_min}.txt.gz"
+	params:
+		cadd_min="{cadd_min}"
+	output:
+		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_all_cadd{cadd_min}.txt.gz"
+	shell:
+		"""
+		zcat {input.aut} {input.x} | gzip > {output}
+
 		"""
 rule collapse_vars_to_genes_x:
 	input:
@@ -387,10 +427,10 @@ rule collapse_snps_only:
 		"""
 rule combine_aut_collapse_vars_to_genes:
 	input:
-		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_m_aut_chr{chrom}_linc_prot.tsv.gz",chrom=CHROMOSOMES)
+		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_aut_chr{chrom}_linc_prot.tsv.gz",chrom=CHROMOSOMES)
 		#	collapsed_maf_f_aut_chr19_linc_prot.tsv.gz
 	output:
-		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_m_linc_prot_aut.tsv.gz"
+		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_aut.tsv.gz"
 	shell:
 		"""
 		zcat {input.aut} | gzip > {output}
@@ -460,9 +500,9 @@ rule combine_x_rvs_sexdiff10_blcklst_removed_and_seentwice:
 		"""	
 rule combine_x_rvs_sexdiff5_blcklst_removed_and_seentwice:
 	input:
-		sexfile=config["GTEX_SUBJECTSv8"],
-		indir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ5",
-		this_script=config["SCRIPTSDIR"]+"/Features/combine_x_gz.py"
+		sexfile=ancient(config["GTEX_SUBJECTSv8"]),
+		indir=ancient(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ5"),
+		this_script=ancient(config["SCRIPTSDIR"]+"/Features/combine_x_gz.py")
 	params:
 		file_glob_this="blacklisted.bed.gz"
 	output:

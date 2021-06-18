@@ -14,11 +14,13 @@ import gzip
 
 parser = argparse.ArgumentParser(description='argparser')
 parser.add_argument('--combined_file', type=str, help='directory to read file from')
+parser.add_argument('--cadd_min', type=str, help='directory to read file from')
 parser.add_argument('--out', type=str, help='outfile collaped ')
 args = parser.parse_args()
 
 combined_file=args.combined_file
 outfile=args.out
+cadd_min=float(args.cadd_min)
 print("arguments parsed.")
 
 
@@ -60,11 +62,19 @@ with gzip.open(combined_file,"r") as f_read:
 		if ensg in this_inds_dic[ind]:
 			#get current min MAF
 			dic_current_min_maf=float((this_inds_dic[ind][ensg])[9])
-			#if this is more rare, store this instead
-			if float(maf_use) < dic_current_min_maf:
-				this_count=this_inds_dic[ind][ensg][-1]+1
-				store_line.append(this_count)
-				this_inds_dic[ind][ensg]=store_line
+			dic_current_min_cadd_phred=(this_inds_dic[ind][ensg])[12]
+			print(dic_current_min_cadd_phred)
+
+			if(dic_current_min_cadd_phred=="NA"):
+				dic_current_min_cadd_phred=0
+			#check first that this line passes the min cadd threshold (since will be sent to common eventually anyway)
+			#and make sure th
+			if(float(dic_current_min_cadd_phred)>=cadd_min):
+				#if this is more rare, store this instead
+				if float(maf_use) < dic_current_min_maf:
+					this_count=this_inds_dic[ind][ensg][-1]+1
+					store_line.append(this_count)
+					this_inds_dic[ind][ensg]=store_line
 			else:
 				# if this is not more rare, just inc the count of numRVs for this gene
 				this_inds_dic[ind][ensg][-1]+=1
