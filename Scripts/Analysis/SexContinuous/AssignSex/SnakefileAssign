@@ -1,0 +1,56 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+import os, glob
+
+FILES = [ os.path.basename(x) for x in glob.glob(config["FILESDIR"]+"/SexDEGs/*csv") ]
+TISSUES=  sorted(list(set([ "".join(((x.split("-")[1]).split("."))[0]) for x in FILES])))
+files_other_tissues = [ os.path.basename(x) for x in glob.glob(config["RAREDIR"]+"/preprocessing_v8/PEER_v8/*both*.peer.ztrans.txt") ]
+tissues_expression=  sorted(list(set([x.split(".")[0] for x in files_other_tissues])))
+#be able to convert between full tissue name, and gtex shortened tissue name
+#since this is sexdegs, only looks at tissues in both groups :) 
+tissue_dic={}
+for i in range(len(TISSUES)):
+	tissue_dic[TISSUES[i]]=tissues_expression[i]
+SUBGROUP=["x","both","aut"]
+
+
+rule all:
+	input: 
+		expand(config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111_{tissue}_{group}_linc_prot_summary.txt",
+			group=GROUPS,tissue=TISSUES),
+		config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111.all.txt",
+		config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111_all_summary.txt"
+
+rule separate_test_train:
+	input:
+		config["RAREDIR"]+"/nullshuffled_v8/sex_scrambled_key.txt",
+	output:
+		config["RAREDIR"]+"/analysis_v8/continuous/Assignments/test_train.txt"
+	shell:
+		"""
+
+		"""
+rule run_model:
+	input:
+		sex_key=config["RAREDIR"]+"/nullshuffled_v8/sex_scrambled_key.txt",
+		myscript=config["SCRIPTSDIR"]+"/Analysis/SexContinuous/AssignSex/train_model.R",
+		outdir=ancient(config["RAREDIR"]+"/analysis_v8/continuous/Assignments"),
+		genes_to_chrtype_file=config["RAREDIR"]+"/preprocessing_v8/gtf_padded10kb.bed",
+		counts_file=config["RAREDIR"]+"/preprocessing_v8/PEER_v8/{tissue}.log2.ztrans.both.txt"
+	params:
+		tissue="{tissue}",
+		subgroup="{subgroup}"
+	output:
+		outfile_preds=config["RAREDIR"]+"/analysis_v8/continuous/Assignments/{tissue}-preds-{subgroup}.txt"
+		outfile_accuracy=config["RAREDIR"]+"/analysis_v8/continuous/Assignments/{tissue}-accuracy-{subgroup}.txt"
+	shell:
+		"""
+		module load R
+		Rscript {input.myscript} \
+			--filter {params.subgroup} \
+			--tissue {params.tissue} \
+			--outfile_preds {output.outfile_preds} \
+			--outfile_accuracy {output.outfile_accuracy} \
+			--outdir {input.outdir} \
+			--genes_to_chrtype_file {input.genes_to_chrtype_file} \
+			--counts_file {input.counts_file}
+		"""
