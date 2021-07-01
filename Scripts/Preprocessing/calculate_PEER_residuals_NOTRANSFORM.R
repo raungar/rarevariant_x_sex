@@ -23,7 +23,6 @@ out_file = args[4]
 metadata_file=args[5]
 factors_type=args[6] #either factors or factors_sexregress
 incl_sex=args[7]
-sex_continuous=args[8]
 
 print(out_file)
 
@@ -48,26 +47,24 @@ peer = peer[rownames(expr), ]
 covs = cbind(covs, peer)
 
 if(incl_sex == "T"){
-	if(sex_continuous=="F"){
-		print("INCLUDING SEX")
-		md_sex<-fread(metadata_file,sep="\t",header=T)
-		print(head(md_sex[,c("SEX","SUBJID")]))
-		ind_dic<-as.numeric(md_sex$SEX)-1
-		names(ind_dic)<-md_sex$SUBJID
-		print(head(ind_dic))
+	print("INCLUDING SEX")
+	md_sex<-fread(metadata_file,sep="\t",header=T)
+	print(head(md_sex[,c("SEX","SUBJID")]))
+	ind_dic<-as.numeric(md_sex$SEX)-1
+	names(ind_dic)<-md_sex$SUBJID
+	print(head(ind_dic))
 
-		before_rn_split<-strsplit(rownames(covs),"-")
-		new_rn<-paste0(sapply(before_rn_split,"[[",1),"-",sapply(before_rn_split,"[[",2))
-		print("NEW RN")
-		print(head(new_rn))
+	before_rn_split<-strsplit(rownames(covs),"-")
+	new_rn<-paste0(sapply(before_rn_split,"[[",1),"-",sapply(before_rn_split,"[[",2))
+	print("NEW RN")
+	print(head(new_rn))
 
 	
-		sex_vals=ind_dic[new_rn]
-		print(sex_vals)
-		print("sex_vals")	
-		covs=cbind(covs,"SEX"=sex_vals)
-		print(head(covs,1))
-	}
+	sex_vals=ind_dic[new_rn]
+	print(sex_vals)
+	print("sex_vals")	
+	covs=cbind(covs,"SEX"=sex_vals)
+	print(head(covs,1))
 }
 
 ## Remove individuals with missing covariates
@@ -92,7 +89,8 @@ for(i in 1:ncol(expr)){
 
 print("center and scale")
 # Center and scale, then transpose
-resids = t(scale(resids))
+#resids = t(scale(resids))
+resids = t((resids))
 
 print("write")
 # Write out the residuals

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-RAREDIR=$1
+dir=$1
 # Go though GTEx data to figure out which individuals have data for which tissues.
 # Create a file that has 2 columns:
 # one column with the individual id and one column with the tissue name.
@@ -9,10 +9,10 @@ RAREDIR=$1
 
 set -o nounset -o errexit -o pipefail
 
-dir=${RAREDIR}/preprocessing_v8
+#dir=${RAREDIR}/preprocessing_v8
 
 #group=("m" "f" "both" "both.sex" "both.regress" "both_half" "both_half.sex" "both_half.regress" )
-group=("m" "f" "both_half.regress" )
+group=("m" "f" "both_half" "both")
 
 for group in ${group[@]}
 do
@@ -28,10 +28,10 @@ do
 	echo -e "Tissue\tId" > $out
 
 
-	for f in ${dir}/PEER_v8/*.${group}.peer.v8ciseQTLs.ztrans.txt
+	for f in ${dir}/PEER_v8/*.${group}.peer.ztrans.txt
 	do
 	    fname=`basename $f`
-	    tissue=${fname%.${group}.peer.v8ciseQTLs.ztrans.txt}
+	    tissue=${fname%.${group}.peer.ztrans.txt}
 	    head -n1 $f | awk -v tissue=$tissue '{for(i=2; i<=NF; i++){print tissue"\t"$i}}' >> $out
 	done
 

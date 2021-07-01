@@ -280,7 +280,7 @@ pcs = read.table(pc.file, header = T, stringsAsFactors = F)
 ## shorten names: e.g., only keep GTEX-1117F of GTEX-1117F-0003-SM-6WBT7
 pcs$SUBJID = apply(str_split_fixed(pcs$IID, '-', 5)[, c(1,2)], 1, paste, collapse = '-')
 pcs = pcs[, -c(1,2)]
-sex = read.csv(subject.file, header = T, stringsAsFactors = F, sep = '\t')[, c(1,3)]
+sex = read.csv(subject.file, header = T, stringsAsFactors = F, sep = '\t')[,c("SUBJID","SEX")]
 covariates = merge(pcs, sex, by = 'SUBJID')
 
 

@@ -28,7 +28,7 @@ args = parser.parse_args()
 
 
 dir = args.RAREDIR #os.environ["RAREDIR"]
-dir = dir + '/preprocessing_v8/'
+#dir = dir + '/preprocessing_v8/'
 #tissueNamesFile = dir + 'gtex_2017-06-05_tissues_all_normalized_samples.txt'
 #individualsFile = dir + 'gtex_2017-06-05_individuals_all_normalized_samples.txt'
 #outfile = dir + 'gtex_2017-06-05_normalized_expression.txt'
@@ -39,7 +39,7 @@ my_group=args.group
 #a_gtf_file=args.a_gtf_file
 #x_gtf_file=args.x_gtf_file
 
-exprdir = dir + 'PEER_v8/'
+exprdir = dir + '/PEER_v8/'
 
 
 print("GATHERING:"+my_group)

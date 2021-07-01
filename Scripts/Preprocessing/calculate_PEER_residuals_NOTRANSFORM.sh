@@ -28,8 +28,7 @@ md=${5}
 factors_type=${6} #factors or factors prefix for when transform by sex
 logfile=${7} #log file change
 incl_sex=${8}  # T or F
-sex_contin=${9}
-traitsFileName=${10}
+traitsFileName=${9}
 
 echo "${traitsFileName}"
 #for traitsFileName in `ls ${peerdir}/*log2.ztrans*.txt`
@@ -70,19 +69,19 @@ echo "${traitsFileName}"
         sex="${sex}_regress"
     fi
 
-    outfile=${prefix}.${sex}.peer.ztrans.txt
+    outfile=${prefix}.${sex}.peer.NOztrans.txt
 
-   echo $outfile
+
 
     # computing residuals
-    echo "${scriptdir}/calculate_PEER_residuals.R $traitsFileName ${pcs} \
-            ${indir}/factors.tsv  \
-        ${prefix}.${sex}.peer.ztrans.txt &> ${outdir}/log.residuals.txt  "
+#    echo "${scriptdir}/calculate_PEER_residuals.R $traitsFileName ${pcs} \
+ #           ${indir}/factors.tsv  \
+  #      ${prefix}.${sex}.peer.ztrans.txt &> ${outdir}/log.residuals.txt  "
 
 	#3 and 4 removed
-    Rscript ${scriptdir}/calculate_PEER_residuals.R $traitsFileName ${pcs} \
+    Rscript ${scriptdir}/calculate_PEER_residuals_NOTRANSFORM.R $traitsFileName ${pcs} \
             ${indir} \
-        ${outfile} ${md} ${factors_type} ${incl_sex} ${sex_contin} &> ${outdir}/${logfile}
+        ${outfile} ${md} ${factors_type} ${incl_sex} &> ${outdir}/${logfile}
 
     #break
 #done

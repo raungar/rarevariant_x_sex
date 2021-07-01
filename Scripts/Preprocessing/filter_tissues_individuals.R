@@ -30,7 +30,7 @@ get_opt_parser<-function(){
 
 opt_parser<-get_opt_parser()
 args<-parse_args(opt_parser)
-baseDir<-as.character(args$RAREDIR)
+dir<-as.character(args$RAREDIR)
 outfile_x<-as.character(args$outfile_x)
 outfile_a<-as.character(args$outfile_a)
 my_group<-as.character(args$group)
@@ -56,7 +56,7 @@ print(norm_expr_file)
 #baseDir = Sys.getenv('RAREDIR')
 #filesDir = Sys.getenv('FILESDIR')
 
-dir = paste0(baseDir, '/preprocessing_v8')
+#dir = paste0(baseDir, '/preprocessing_v8')
 
 ##---------------- FUNCTIONS
 plot.ind.miss <- function(design, title = '', thresh = NULL) {
@@ -107,8 +107,8 @@ meta$Id = apply(str_split_fixed(meta$Sample, '-', 6)[, c(1:2)], 1, paste, collap
 ## (this is a subset because it only includes individuals that were genotyped)
 #expr = read.table(gzfile(paste0(dir,'/gtex_2017-06-05_normalized_expression_v8ciseQTLs_removed.txt.gz')), header=T)
 #expr = read.table(gzfile(norm_expr_file), header=T)
-expr = fread(paste0("zcat -f ",norm_expr_file), header=T)
-expr2 = fread(norm_expr_file, header=T)
+expr = fread(norm_expr_file, header=T)
+#expr2 = fread(norm_expr_file, header=T)
 print("EXPR") #Adipose_Subcu
 #print(head(expr))
 tissue_dic<-sort(unique(meta$Tissue))
