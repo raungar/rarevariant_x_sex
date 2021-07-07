@@ -1,56 +1,294 @@
 configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
 import os, glob
 
-FILES = [ os.path.basename(x) for x in glob.glob(config["FILESDIR"]+"/SexDEGs/*csv") ]
-TISSUES=  sorted(list(set([ "".join(((x.split("-")[1]).split("."))[0]) for x in FILES])))
-files_other_tissues = [ os.path.basename(x) for x in glob.glob(config["RAREDIR"]+"/preprocessing_v8/PEER_v8/*both*.peer.ztrans.txt") ]
-tissues_expression=  sorted(list(set([x.split(".")[0] for x in files_other_tissues])))
+#FILES = [ os.path.basename(x) for x in glob.glob(config["FILESDIR"]+"/SexDEGs/*csv") ]
+#TISSUES=  sorted(list(set([ "".join(((x.split("-")[1]).split("."))[0]) for x in FILES])))
+FILES = [ os.path.basename(x) for x in glob.glob(config["RAREDIR"]+"/preprocessing_v8/PEER_v8/*both*.peer.ztrans.txt") ]
+TISSUES=  sorted(list(set([x.split(".")[0] for x in FILES])))
 #be able to convert between full tissue name, and gtex shortened tissue name
 #since this is sexdegs, only looks at tissues in both groups :) 
-tissue_dic={}
-for i in range(len(TISSUES)):
-	tissue_dic[TISSUES[i]]=tissues_expression[i]
+#tissue_dic={}
+#for i in range(len(TISSUES)):
+#	tissue_dic[TISSUES[i]]=tissues_expression[i]
 SUBGROUP=["x","both","aut"]
+SEX=["m","f","both","both_half"]
+DIR_FOR_COUNTS=["preprocessing_v8","nullshuffled_v8"]
+#DIR_FOR_COUNTS=["nullshuffled_v8"]
+INCLSEX=["incl_sex","protect_sex","no_sex"]
+#INCLSEX=["protect_sex"]
+ALPHA=["0.5"]
 
+def get_sextype(wildcards):
+	x=wildcards.actual_or_null
+	#preprocessing_v8
+	if(x=="preprocessing_v8"):
+		return "SEX"
+	elif(x=="nullshuffled_v8"):
+		return "SexScrambled"
+	else:
+		return "ERROR"
+def get_md(wildcards):
+	x=wildcards.actual_or_null
+	#preprocessing_v8
+	if(x=="preprocessing_v8"):
+		return config["GTEX_SUBJECTSv8"]
+	elif(x=="nullshuffled_v8"):
+		return config["RAREDIR"]+"/analysis_v8/continuous/Assignments/test_train.txt"
+	else:
+		return "ERROR"
+
+#since i dont know how many factors, this will get it for me!
+def get_peer(wildcards):
+	counts_dir=wildcards.actual_or_null
+	this_sex=wildcards.this_sex
+	this_tissue=wildcards.tissue
+	this_file=glob.glob(config["RAREDIR"]+"/"+counts_dir+"/PEER_v8/*"+this_tissue+"_Factors*"+"_"+this_sex+"/factors.tsv")
+	return this_file
 
 rule all:
 	input: 
-		expand(config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111_{tissue}_{group}_linc_prot_summary.txt",
-			group=GROUPS,tissue=TISSUES),
-		config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111.all.txt",
-		config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111_all_summary.txt"
+		#	group=GROUPS,tissue=TISSUES),
+		#config["RAREDIR"]+"/analysis_v8/continuous/Assignments/test_train.txt",
+		expand(config["RAREDIR"]+"/analysis_v8/continuous/Assignments/{tissue}-{actual_or_null}-accuracy-{subgroup}.txt",
+			tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS),
+		expand(config["RAREDIR"]+"/analysis_v8/continuous/Regressions/md_{tissue}-{actual_or_null}-{alpha}-{subgroup}.txt",
+			tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,alpha=ALPHA),
+		#expand(config["RAREDIR"]+"/expression_v8/Counts/counts-{tissue}-{this_sex}-{inclsex}-{actual_or_null}-{alpha}-{subgroup}-continuous_alpha{alpha}.txt",
+		#	tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,alpha=ALPHA,this_sex=SEX,inclsex=INCLSEX),
+		expand(config["RAREDIR"]+"/expression_v8/Counts/counts-{tissue}-{this_sex}-{inclsex}-{actual_or_null}-both-binary.txt",
+			tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX),
+		expand(config["RAREDIR"]+"/expression_v8/Counts/tissues-{this_sex}-{inclsex}-{actual_or_null}-both-binary.txt",
+			tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX),
+		expand(config["RAREDIR"]+"/expression_v8/Counts/normalized_expression_gathered-{this_sex}-{inclsex}-{actual_or_null}-both-binary.txt.gz",
+			tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX),
+		expand(config["RAREDIR"]+"/expression_v8/Counts/normalized_expression_gathered-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz",
+			tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX,alpha=ALPHA),
+		expand(config["RAREDIR"]+"/expression_v8/Counts/normalized_expression_subsetted-{this_sex}-{inclsex}-{actual_or_null}-x-binary.txt.gz",
+			tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX,alpha=ALPHA)
+		expand(config["RAREDIR"] + "/outliers_v8/Current/outliersTOP_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
+			tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX)
+
+
+
 
 rule separate_test_train:
 	input:
-		config["RAREDIR"]+"/nullshuffled_v8/sex_scrambled_key.txt",
+		key=config["RAREDIR"]+"/nullshuffled_v8/sex_scrambled_key.txt",
+		myscript=config["SCRIPTSDIR"]+"/Analysis/SexContinuous/AssignSex/assign_test_train.R"
 	output:
 		config["RAREDIR"]+"/analysis_v8/continuous/Assignments/test_train.txt"
 	shell:
 		"""
-
+		module load R
+		Rscript {input.myscript} --sex_key {input.key} --outfile {output}
 		"""
 rule run_model:
 	input:
-		sex_key=config["RAREDIR"]+"/nullshuffled_v8/sex_scrambled_key.txt",
-		myscript=config["SCRIPTSDIR"]+"/Analysis/SexContinuous/AssignSex/train_model.R",
+		#sex_key=config["RAREDIR"]+"/analysis_v8/continuous/Assignments/test_train.txt",
+		sex_key=get_md,
+		myscript=ancient(config["SCRIPTSDIR"]+"/Analysis/SexContinuous/AssignSex/train_model.R"),
 		outdir=ancient(config["RAREDIR"]+"/analysis_v8/continuous/Assignments"),
 		genes_to_chrtype_file=config["RAREDIR"]+"/preprocessing_v8/gtf_padded10kb.bed",
-		counts_file=config["RAREDIR"]+"/preprocessing_v8/PEER_v8/{tissue}.log2.ztrans.both.txt"
+		counts_file=config["RAREDIR"]+"/{actual_or_null}/PEER_v8/{tissue}.log2.ztrans.both.txt"
 	params:
 		tissue="{tissue}",
-		subgroup="{subgroup}"
+		subgroup="{subgroup}",
+		sextype=get_sextype #({actual_or_null})
 	output:
-		outfile_preds=config["RAREDIR"]+"/analysis_v8/continuous/Assignments/{tissue}-preds-{subgroup}.txt"
-		outfile_accuracy=config["RAREDIR"]+"/analysis_v8/continuous/Assignments/{tissue}-accuracy-{subgroup}.txt"
+		outfile_preds=config["RAREDIR"]+"/analysis_v8/continuous/Assignments/{tissue}-{actual_or_null}-preds-{subgroup}.txt",
+		outfile_accuracy=config["RAREDIR"]+"/analysis_v8/continuous/Assignments/{tissue}-{actual_or_null}-accuracy-{subgroup}.txt"
 	shell:
 		"""
 		module load R
 		Rscript {input.myscript} \
 			--filter {params.subgroup} \
 			--tissue {params.tissue} \
+			--sex_key {input.sex_key} \
 			--outfile_preds {output.outfile_preds} \
 			--outfile_accuracy {output.outfile_accuracy} \
 			--outdir {input.outdir} \
 			--genes_to_chrtype_file {input.genes_to_chrtype_file} \
+			--sextype {params.sextype} \
 			--counts_file {input.counts_file}
 		"""
+
+#hasnt beent tested!!!!!
+#splits into SUBJID/SEX for a gievn alpha for use for md
+rule prepare_md:
+	input:
+		preds=config["RAREDIR"]+"/analysis_v8/continuous/Assignments/{tissue}-{actual_or_null}-preds-{subgroup}.txt"
+	params:
+		alpha="{alpha}"
+	output:
+		outfile=config["RAREDIR"]+"/analysis_v8/continuous/Regressions/md_{tissue}-{actual_or_null}-{alpha}-{subgroup}.txt"
+	shell:
+		"""
+		col=`echo "{params.alpha} * 10 +2" | bc -l  | awk -F"\." '{{print $1}}'`
+		cat <(echo -e "SUBJID\tSEX") <(cat {input.preds} | tail -n +2 | awk -F"\t" -v col=$col '{{print $1"\t"$col}}' ) > {output}
+		"""
+
+rule regress_counts_continuous:
+	input:
+		myscript=ancient(config["SCRIPTSDIR"]+"/Analysis/SexContinuous/Counts/calculate_PEER_residuals.R"),
+		md=config["RAREDIR"]+"/analysis_v8/continuous/Regressions/md_{tissue}-{actual_or_null}-{alpha}-{subgroup}.txt",
+		counts=config["RAREDIR"]+"/{actual_or_null}/PEER_v8/{tissue}.log2.ztrans.{this_sex}.txt",
+		peer=get_peer,
+		pcs=config["GTEX_PCv8"]
+	params:
+		inclsex="{inclsex}",
+		sex_continuous="T",
+		is_null=get_sextype, #get proper sex definition to filter on
+		this_sex="{this_sex}"
+	output:
+		outfile=config["RAREDIR"]+"/expression_v8/Counts/counts-{tissue}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt"
+	shell:
+		"""
+		module load R
+		Rscript {input.myscript} \
+			--counts_f {input.counts} \
+			--pc_file {input.pcs} \
+			--factors_file={input.peer} \
+			--incl_sex {params.inclsex} \
+			--is_null={params.is_null} \
+			--out_file {output.outfile} \
+			--metadata_file {input.md} \
+			--sex_continuous {params.sex_continuous}
+		"""
+rule regress_counts_binary:
+	input:
+		myscript=ancient(config["SCRIPTSDIR"]+"/Analysis/SexContinuous/Counts/calculate_PEER_residuals.R"),
+		md=config["GTEX_SUBJECTSv8"],
+		counts=config["RAREDIR"]+"/{actual_or_null}/PEER_v8/{tissue}.log2.ztrans.{this_sex}.txt",
+		peer=get_peer,
+		pcs=config["GTEX_PCv8"]
+	params:
+		inclsex="{inclsex}",
+		sex_continuous="F",
+		is_null=get_sextype, #get proper sex definition to filter on
+		this_sex="{this_sex}"
+	output:
+		outfile=config["RAREDIR"]+"/expression_v8/Counts/counts-{tissue}-{this_sex}-{inclsex}-{actual_or_null}-both-binary.txt"
+	shell:
+		"""
+		module load R
+		Rscript {input.myscript} \
+			--counts_f {input.counts} \
+			--pc_file {input.pcs} \
+			--factors_file {input.peer} \
+			--incl_sex {params.inclsex} \
+			--is_null {params.is_null} \
+			--out_file {output.outfile} \
+			--metadata_file {input.md} \
+			--sex_continuous {params.sex_continuous}
+		"""
+
+rule gather_tissues_inds_binary:
+	input:
+		expand(config["RAREDIR"]+"/expression_v8/Counts/counts-{tissue}-{{this_sex}}-{{inclsex}}-{{actual_or_null}}-both-binary.txt",
+			tissue=TISSUES)
+	params:
+		tissues=TISSUES
+	output:
+		inds=config["RAREDIR"]+"/expression_v8/Counts/inds-{this_sex}-{inclsex}-{actual_or_null}-both-binary.txt",
+		tissues=config["RAREDIR"]+"/expression_v8/Counts/tissues-{this_sex}-{inclsex}-{actual_or_null}-both-binary.txt"
+	shell:
+		"""
+		echo {params.tissues} | tr ' ' '\n'  > {output.tissues} #check to make sure newline delimeted
+		TAB=$'\t'
+		sed -sn '1p' {input} | tr '\t' '\n'  | grep -v "Id" | sort | uniq > {output.inds}
+		"""
+rule gather_tissues_inds_continuous:
+	input:
+		expand(config["RAREDIR"]+"/expression_v8/Counts/counts-{tissue}-{{this_sex}}-{{inclsex}}-{{actual_or_null}}-{{subgroup}}-continuous_alpha{{alpha}}.txt",
+			tissue=TISSUES)
+	params:
+		tissues=TISSUES
+	output:
+		inds=config["RAREDIR"]+"/expression_v8/Counts/inds-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt",
+		tissues=config["RAREDIR"]+"/expression_v8/Counts/tissues-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt"
+	shell:
+		"""
+		echo {params.tissues} | tr ' ' '\n'  > {output.tissues} #check to make sure newline delimeted
+		TAB=$'\t'
+		sed -sn '1p' {input} | tr '\t' '\n'  | grep -v "Id" | sort | uniq > {output.inds}
+		"""
+	
+rule gather_expr_norm_binary:
+	input:
+		gtf=ancient(config["RAREDIR"]+"/preprocessing_v8/both_proteincoding_lncrna.gtf"),
+		scripts=ancient(config["SCRIPTSDIR"]+"/Preprocessing/gather_filter_normalized_expression.py"),
+		dir=ancient(config["RAREDIR"]+"/{actual_or_null}"),
+		inds=config["RAREDIR"]+"/expression_v8/Counts/inds-{this_sex}-{inclsex}-{actual_or_null}-both-binary.txt",
+		tissues=config["RAREDIR"]+"/expression_v8/Counts/tissues-{this_sex}-{inclsex}-{actual_or_null}-both-binary.txt"
+	params:
+		mygroup="{this_sex}"
+	output:
+		outpath=config["RAREDIR"]+"/expression_v8/Counts/normalized_expression_gathered-{this_sex}-{inclsex}-{actual_or_null}-both-binary.txt.gz"
+	shell:
+		"""
+		module  load python numpy
+		python {input.scripts} --RAREDIR {input.dir} --outpath {output.outpath} \
+			--ind_file {input.inds} --tissue_file {input.tissues} --group {params.mygroup}
+		"""
+rule gather_expr_norm_continuous:
+	input:
+		gtf=ancient(config["RAREDIR"]+"/preprocessing_v8/both_proteincoding_lncrna.gtf"),
+		scripts=ancient(config["SCRIPTSDIR"]+"/Preprocessing/gather_filter_normalized_expression.py"),
+		dir=ancient(config["RAREDIR"]+"/{actual_or_null}"),
+		inds=config["RAREDIR"]+"/expression_v8/Counts/inds-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt",
+		tissues=config["RAREDIR"]+"/expression_v8/Counts/tissues-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt"
+	params:
+		mygroup="{this_sex}"
+	output:
+		outpath=config["RAREDIR"]+"/expression_v8/Counts/normalized_expression_gathered-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz"
+	shell:
+		"""
+		module  load python numpy
+		python {input.scripts} --RAREDIR {input.dir} --outpath {output.outpath} \
+			--ind_file {input.inds} --tissue_file {input.tissues} --group {params.mygroup}
+		"""
+
+rule split_tiss_inds_binary:
+	input:
+		RAREDIR=ancient(config["RAREDIR"]+"/{actual_or_null}"),
+		sample_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_samples_tissues.txt",
+		norm_expr_file=config["RAREDIR"]+"/expression_v8/Counts/normalized_expression_gathered-{this_sex}-{inclsex}-{actual_or_null}-both-binary.txt.gz",
+		x_gtf_file=config["RAREDIR"]+"/preprocessing_v8/x_proteincoding_lncrna.gtf",
+		a_gtf_file=config["RAREDIR"]+"/preprocessing_v8/autosomal_proteincoding_lncrna.gtf",
+		myscript=config["SCRIPTSDIR"]+"/Preprocessing/filter_tissues_individuals.R"
+	params:
+		mygroup="{this_sex}"
+	output:
+		x_file=config["RAREDIR"]+"/expression_v8/Counts/normalized_expression_subsetted-{this_sex}-{inclsex}-{actual_or_null}-x-binary.txt.gz",
+		aut_file=config["RAREDIR"]+"/expression_v8/Counts/normalized_expression_subsetted-{this_sex}-{inclsex}-{actual_or_null}-aut-binary.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript {input.myscript} \ 
+			--RAREDIR {input.RAREDIR} --sample_file {input.sample_file} --norm_expr_file {input.norm_expr_file} \
+			--x_gtf_file {input.x_gtf_file} --a_gtf_file {input.a_gtf_file} \
+			--outfile_x {output.x_file} --outfile_a {output.aut_file} --group {params.my_group}
+		"""
+
+#gets outliers, removes those that are global outliers
+rule get_outliers_binary:
+	input:
+		normed_file=config["RAREDIR"]+"/expression_v8/Counts/normalized_expression_subsetted-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
+		genes_w_chrs=config["RAREDIR"]+"/preprocessing_v8/{subgroup}_gtf_protclinc_wchr.txt"
+	params:
+		ZTHRESH="{z_min}",
+		NPHEN="{nphen_min}",
+		CHRTYPES="{type}"
+	output:
+		all=config["RAREDIR"] + "/outliers_v8/Current/outliers_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
+		top=config["RAREDIR"] + "/outliers_v8/Current/outliersTOP_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz"
+	
+	shell:
+		"""
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers_mostextreme.R \
+                    --Z.SCORES {input.ZSCORES}  --outfile_top {output.top} --outfile {output.all} \
+	              --ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} \
+	              --gene_chr_table {input.genes_w_chrs} --chrtype {params.CHRTYPES}
+		"""
+
