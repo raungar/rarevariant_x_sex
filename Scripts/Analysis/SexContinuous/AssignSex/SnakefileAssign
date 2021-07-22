@@ -11,18 +11,26 @@ TISSUES=  sorted(list(set([x.split(".")[0] for x in FILES])))
 #for i in range(len(TISSUES)):
 #	tissue_dic[TISSUES[i]]=tissues_expression[i]
 SUBGROUP=["x","both","aut"]
-SEX=["m","f","both","both_half"]
+SEX=["m","f","both_half"]
 DIR_FOR_COUNTS=["preprocessing_v8","nullshuffled_v8"]
 INCLSEX=["incl_sex","protect_sex","no_sex"]
 ALPHA=["0.5"]
 DIR_FOR_COUNTS=["nullshuffled_v8"]
+#DIR_FOR_COUNTS=["preprocessing_v8"]
 INCLSEX=["protect_sex"]
 ZMIN=["2","2.5","3"]
 NPHEN=["3"]
 OUTLIERTYPE=["outliers","outliersTOP"]
-CHRS="x" #range(1,23)
+CHRS=list(range(1,23))+["x"]
+SUBGROUP_REPS=["aut"]*22+["x"]
+CHRNUM="aut"
+SUBGROUP_REPS=["aut"]*22+["x"]
+CHRS=["7","x","aut"]
+SUBGROUP_REPS=["aut","x","aut"]
+#CHRS="x"
 CADD=["0","15"]
-
+MAF_MIN="0"
+MAF_MAX=["0.0001","0.001","0.01"]
 
 def get_sextype(wildcards):
 	x=wildcards.actual_or_null
@@ -53,6 +61,14 @@ def get_peer(wildcards):
 
 rule all:
 	input: 
+		#expand(config["RAREDIR"] + "/outliers_v8/Current/outliersTOP_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz",
+		#expand(config["RAREDIR"] + "/enrichments_v8/OutliersAndRVs/x_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz",
+		expand(expand(config["RAREDIR"] + "/enrichments_v8/RR/relative_risk_min{{maf_min}}max{{maf_max}}_{chrNUM}_{{outlierType}}_cadd{{cadd}}_noglobal_medz-zthresh{{z_min}}-nphen{{nphen_min}}-{{this_sex}}-{{inclsex}}-{{actual_or_null}}-{subgroup}-binary.txt.gz",
+			 zip,chrNUM=CHRS,subgroup=SUBGROUP_REPS),
+			 outlierType=OUTLIERTYPE,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd=CADD,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX, z_min=ZMIN,nphen_min=NPHEN,alpha=ALPHA),
+		#expand(expand(config["RAREDIR"] + "/enrichments_v8/RR/relative_risk_min{{maf_min}}max{{maf_max}}_{chrNUM}_{{outlierType}}_cadd{{cadd}}_noglobal_medz-zthresh{{z_min}}-nphen{{nphen_min}}-{{this_sex}}-{{inclsex}}-{{actual_or_null}}-{subgroup}-continuous_alpha{{alpha}}.txt.gz",
+		#	 zip,chrNUM=CHRS,subgroup=SUBGROUP_REPS),
+		#	 outlierType=OUTLIERTYPE,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd=CADD,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX, z_min=ZMIN,nphen_min=NPHEN,alpha=ALPHA)
 		#	group=GROUPS,tissue=TISSUES),
 		#config["RAREDIR"]+"/analysis_v8/continuous/Assignments/test_train.txt",
 		###expand(config["RAREDIR"]+"/analysis_v8/continuous/Assignments/{tissue}-{actual_or_null}-accuracy-{subgroup}.txt",
@@ -72,14 +88,12 @@ rule all:
 		#	tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX,alpha=ALPHA),
 		#expand(config["RAREDIR"]+"/expression_v8/Counts/normalized_expression_gathered-{this_sex}-{inclsex}-{actual_or_null}-x-binary.txt.gz",
 		#	tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX,alpha=ALPHA),
-		expand(config["RAREDIR"] + "/outliers_v8/Current/outliersTOP_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
-			tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX, z_min=ZMIN,nphen_min=NPHEN),
-		expand(config["RAREDIR"] + "/enrichments_v8/OutliersAndRVs/{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
-			cadd=CADD,chrNUM=CHRS,outlierType=OUTLIERTYPE,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX, z_min=ZMIN,nphen_min=NPHEN),
-
-
-		#expand(config["RAREDIR"] + "/outliers_v8/Current/outliersTOP_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz",
-		#	tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX, z_min=ZMIN,nphen_min=NPHEN,alpha=ALPHA)
+		#expand(config["RAREDIR"] + "/outliers_v8/Current/outliersTOP_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
+		#	tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX, z_min=ZMIN,nphen_min=NPHEN),
+		#expand(config["RAREDIR"] + "/enrichments_v8/OutliersAndRVs/{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
+		#	cadd=CADD,chrNUM=CHRS,outlierType=OUTLIERTYPE,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX, z_min=ZMIN,nphen_min=NPHEN),
+		#expand(config["RAREDIR"] + "/enrichments_v8/RR/relative_risk_min{maf_min}max{maf_max}_{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
+		#	maf_min=MAF_MIN,maf_max=MAF_MAX,cadd=CADD,chrNUM=CHRS,outlierType=OUTLIERTYPE,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX, z_min=ZMIN,nphen_min=NPHEN)
 		#expand(config["RAREDIR"]+"/expression_v8/Counts/counts_melted-{tissue}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
 		#	tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX),
 		#expand(config["RAREDIR"]+"/expression_v8/Counts/counts_melted-{tissue}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz",
@@ -349,7 +363,7 @@ rule melt_for_plotting_binary:
 rule get_outliers_binary:
 	input:
 		normed_file=config["RAREDIR"]+"/expression_v8/Counts/normalized_expression_gathered-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
-		genes_w_chrs=config["RAREDIR"]+"/preprocessing_v8/autosomal_gtf_protclinc_wchr.txt"
+		genes_w_chrs=config["RAREDIR"]+"/preprocessing_v8/both_gtf_protclinc_wchr.txt"
 	params:
 		ZTHRESH="{z_min}",
 		NPHEN="{nphen_min}",
@@ -370,7 +384,7 @@ rule get_outliers_binary:
 rule get_outliers_continuous:
 	input:
 		normed_file=config["RAREDIR"]+"/expression_v8/Counts/normalized_expression_gathered-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz",
-		genes_w_chrs=config["RAREDIR"]+"/preprocessing_v8/autosomal_gtf_protclinc_wchr.txt"
+		genes_w_chrs=config["RAREDIR"]+"/preprocessing_v8/both_gtf_protclinc_wchr.txt"
 	params:
 		ZTHRESH="{z_min}",
 		NPHEN="{nphen_min}",
@@ -388,6 +402,118 @@ rule get_outliers_continuous:
 	              --gene_chr_table {input.genes_w_chrs} --chrtype {params.CHRTYPES}
 		"""
 
+rule join_variant_annotations_x_continuous:
+	input:
+		outlier_file=config["RAREDIR"] + "/outliers_v8/Current/{outlierType}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz",
+		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_x.tsv.gz"
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADDtypesGQ5BlacklistRemovedALL_cadd{cadd}.txt.gz"
+	wildcard_constraints:
+		chrNUM="x",
+		subgroup="x"
+	params:
+		chr="chrX",
+		method="medz" #medz or splicing or ase
+	output:
+		#outfile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz"
+		outfile=config["RAREDIR"] + "/enrichments_v8/OutliersAndRVs/x_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/join_variant_annotations.R \
+			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+			--outfile {output.outfile} --chr {params.chr}
+
+		"""
+
+rule join_variant_annotations_bychr_continuous:
+	input:
+		#variant_file=config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_linc_prot.tsv.gz"
+		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrNUM}_linc_prot.tsv.gz"
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrNUM}_CADDtypesALL_cadd{cadd}.txt.gz",
+		outlier_file=config["RAREDIR"] + "/outliers_v8/Current/{outlierType}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz",
+	wildcard_constraints:
+		chrNUM="\d+",
+		subgroup="aut"
+	params:
+		#outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_aut_{group}.txt",
+		chr="{chrNUM}",
+		method="medz" #medz or splicing or ase
+	output:
+		outfile=config["RAREDIR"] + "/enrichments_v8/OutliersAndRVs/{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/join_variant_annotations.R \
+			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+			--outfile {output.outfile} --chr {params.chr}
+
+		"""
+rule calculate_risks_continuous_single:
+	input:
+		#infile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/chr{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
+		infile=config["RAREDIR"] + "/enrichments_v8/OutliersAndRVs/{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8/{subgroup}_proteincoding_lncrna.gtf"
+	wildcard_constraints:
+		chrNUM="x",
+		subgroup="x"
+	params:
+		zscore="{z_min}",
+		min_maf="{maf_min}",
+		max_maf="{maf_max}",
+		nphen="{nphen_min}",
+		sex="{this_sex}",
+                cadd_min="{cadd}"
+		#continuous=config["RAREDIR"]+"/enrichments_v8/RR/{chrNUM}_continuous_risk_z{zmin}_nphen{nphen}_{type}_{group}_{filt}_CADD{cadd_min}_linc_prot.txt"
+	output:
+		#relative=config["RAREDIR"]+"/enrichments_v8/relative_risk_z{zmin}_nphen{nphen}_{type}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
+		#relative=config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt"
+		relative=config["RAREDIR"] + "/enrichments_v8/RR/relative_risk_min{maf_min}max{maf_max}_{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz"
+		#relative=config["RAREDIR"]+"/enrichments_v8/{chrNUM}_relative_risk_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
+	shell:
+		"""
+		module load R
+		if [ ! -f {output.relative} ]
+		then
+			Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_across_types.R \
+				--infile {input.infile} --zscore {params.zscore}  --cadd_min {params.cadd_min} \
+				--min_maf {params.min_maf} --max_maf {params.max_maf} --nphen {params.nphen}  \
+				--out_rdata_relative {output.relative} --gtf_code_file {input.gtf_file}  --sex {params.sex}
+		fi
+		"""
+
+rule calculate_risks_continuous_byCHR:
+	input:
+		#infile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/chr{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
+		infile=config["RAREDIR"] + "/enrichments_v8/OutliersAndRVs/{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8/{subgroup}_proteincoding_lncrna.gtf"
+	wildcard_constraints:
+		chrNUM="\d+",
+		subgroup="aut"
+	params:
+		zscore="{z_min}",
+		min_maf="{maf_min}",
+		max_maf="{maf_max}",
+		nphen="{nphen_min}",
+		sex="{this_sex}",
+                cadd_min="{cadd}"
+		#continuous=config["RAREDIR"]+"/enrichments_v8/RR/{chrNUM}_continuous_risk_z{zmin}_nphen{nphen}_{type}_{group}_{filt}_CADD{cadd_min}_linc_prot.txt"
+	output:
+		#relative=config["RAREDIR"]+"/enrichments_v8/relative_risk_z{zmin}_nphen{nphen}_{type}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
+		#relative=config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt"
+		relative=config["RAREDIR"] + "/enrichments_v8/RR/relative_risk_min{maf_min}max{maf_max}_{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz"
+		#relative=config["RAREDIR"]+"/enrichments_v8/{chrNUM}_relative_risk_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
+	shell:
+		"""
+		module load R
+		if [ ! -f {output.relative} ]
+		then
+			Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_across_types.R \
+				--infile {input.infile} --zscore {params.zscore}  --cadd_min {params.cadd_min} \
+				--min_maf {params.min_maf} --max_maf {params.max_maf} --nphen {params.nphen}  \
+				--out_rdata_relative {output.relative} --gtf_code_file {input.gtf_file}  --sex {params.sex}
+		fi
+		"""
+
 rule join_variant_annotations_x_binary:
 	input:
 		outlier_file=config["RAREDIR"] + "/outliers_v8/Current/{outlierType}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
@@ -399,6 +525,26 @@ rule join_variant_annotations_x_binary:
 	output:
 		#outfile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz"
 		outfile=config["RAREDIR"] + "/enrichments_v8/OutliersAndRVs/x_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/join_variant_annotations.R \
+			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+			--outfile {output.outfile} --chr {params.chr}
+
+		"""
+
+rule join_variant_annotations_aut_binary:
+	input:
+		outlier_file=config["RAREDIR"] + "/outliers_v8/Current/{outlierType}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
+		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_x.tsv.gz"
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADDtypesGQ5BlacklistRemovedALL_cadd{cadd}.txt.gz"
+	params:
+		chr="aut",
+		method="medz" #medz or splicing or ase
+	output:
+		#outfile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz"
+		outfile=config["RAREDIR"] + "/enrichments_v8/OutliersAndRVs/aut_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz"
 	shell:
 		"""
 		module load R
@@ -427,4 +573,100 @@ rule join_variant_annotations_bychr_binary:
 			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
 			--outfile {output.outfile} --chr {params.chr}
 
+		"""
+rule calculate_risks_binary_byCHR:
+	input:
+		#infile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/chr{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
+		infile=config["RAREDIR"] + "/enrichments_v8/OutliersAndRVs/{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8/{subgroup}_proteincoding_lncrna.gtf"
+	wildcard_constraints:
+		chrNUM="\d+",
+		subgroup="aut"
+	params:
+		zscore="{z_min}",
+		min_maf="{maf_min}",
+		max_maf="{maf_max}",
+		nphen="{nphen_min}",
+		sex="{this_sex}",
+                cadd_min="{cadd}"
+		#continuous=config["RAREDIR"]+"/enrichments_v8/RR/{chrNUM}_continuous_risk_z{zmin}_nphen{nphen}_{type}_{group}_{filt}_CADD{cadd_min}_linc_prot.txt"
+	output:
+		#relative=config["RAREDIR"]+"/enrichments_v8/relative_risk_z{zmin}_nphen{nphen}_{type}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
+		#relative=config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt"
+		relative=config["RAREDIR"] + "/enrichments_v8/RR/relative_risk_min{maf_min}max{maf_max}_{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz"
+		#relative=config["RAREDIR"]+"/enrichments_v8/{chrNUM}_relative_risk_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
+	shell:
+		"""
+		module load R
+		if [ ! -f {output.relative} ]
+		then
+			Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_across_types.R \
+				--infile {input.infile} --zscore {params.zscore}  --cadd_min {params.cadd_min} \
+				--min_maf {params.min_maf} --max_maf {params.max_maf} --nphen {params.nphen}  \
+				--out_rdata_relative {output.relative} --gtf_code_file {input.gtf_file}  --sex {params.sex}
+		fi
+		"""
+rule calculate_risks_binary_bysingle:
+	input:
+		#infile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/chr{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
+		infile=config["RAREDIR"] + "/enrichments_v8/OutliersAndRVs/{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8/{subgroup}_proteincoding_lncrna.gtf"
+	wildcard_constraints:
+		chrNUM="x",
+		subgroup="x"
+	params:
+		zscore="{z_min}",
+		min_maf="{maf_min}",
+		max_maf="{maf_max}",
+		nphen="{nphen_min}",
+		sex="{this_sex}",
+                cadd_min="{cadd}"
+		#continuous=config["RAREDIR"]+"/enrichments_v8/RR/{chrNUM}_continuous_risk_z{zmin}_nphen{nphen}_{type}_{group}_{filt}_CADD{cadd_min}_linc_prot.txt"
+	output:
+		#relative=config["RAREDIR"]+"/enrichments_v8/relative_risk_z{zmin}_nphen{nphen}_{type}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
+		#relative=config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt"
+		relative=config["RAREDIR"] + "/enrichments_v8/RR/relative_risk_min{maf_min}max{maf_max}_{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz"
+		#relative=config["RAREDIR"]+"/enrichments_v8/{chrNUM}_relative_risk_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
+	shell:
+		"""
+		module load R
+		if [ ! -f {output.relative} ]
+		then
+			Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_across_types.R \
+				--infile {input.infile} --zscore {params.zscore}  --cadd_min {params.cadd_min} \
+				--min_maf {params.min_maf} --max_maf {params.max_maf} --nphen {params.nphen}  \
+				--out_rdata_relative {output.relative} --gtf_code_file {input.gtf_file}  --sex {params.sex}
+		fi
+		"""
+rule calculate_risks_binary_bysingle_AUT:
+	input:
+		#infile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/chr{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
+		infile=config["RAREDIR"] + "/enrichments_v8/OutliersAndRVs/{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8/{subgroup}_proteincoding_lncrna.gtf"
+	wildcard_constraints:
+		chrNUM="aut",
+		subgroup="aut"
+	params:
+		zscore="{z_min}",
+		min_maf="{maf_min}",
+		max_maf="{maf_max}",
+		nphen="{nphen_min}",
+		sex="{this_sex}",
+                cadd_min="{cadd}"
+		#continuous=config["RAREDIR"]+"/enrichments_v8/RR/{chrNUM}_continuous_risk_z{zmin}_nphen{nphen}_{type}_{group}_{filt}_CADD{cadd_min}_linc_prot.txt"
+	output:
+		#relative=config["RAREDIR"]+"/enrichments_v8/relative_risk_z{zmin}_nphen{nphen}_{type}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
+		#relative=config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt"
+		relative=config["RAREDIR"] + "/enrichments_v8/RR/relative_risk_min{maf_min}max{maf_max}_{chrNUM}_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz"
+		#relative=config["RAREDIR"]+"/enrichments_v8/{chrNUM}_relative_risk_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
+	shell:
+		"""
+		module load R
+		if [ ! -f {output.relative} ]
+		then
+			Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_across_types.R \
+				--infile {input.infile} --zscore {params.zscore}  --cadd_min {params.cadd_min} \
+				--min_maf {params.min_maf} --max_maf {params.max_maf} --nphen {params.nphen}  \
+				--out_rdata_relative {output.relative} --gtf_code_file {input.gtf_file}  --sex {params.sex}
+		fi
 		"""
