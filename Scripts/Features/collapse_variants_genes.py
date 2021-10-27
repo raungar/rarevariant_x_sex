@@ -112,6 +112,9 @@ for vartype in ["SNP","indel","SV"]:
 				chr=line_split[0] #chr
 				pos=line_split[1] #pos
 				gtex_maf=line_split[3] #GTEx MAF
+				geno=line_split[4]
+				if(geno==0):
+					continue
 				ref=line_split[5] #reference allele
 				alt=line_split[6] #alternate allele
 				if(line_split[42] == "NA"):

@@ -25,7 +25,7 @@ print("arguments parsed.")
 
 
 
-colnames_combined=["chr","start","end","maf_gtex","maf_gnomad","maf_use","ind","vartype","ensg","genetype","sex","cadd_raw","cadd_phred"]
+colnames_combined=["chr","start","end","maf_gtex","maf_gnomad","maf_use","ind","vartype","ensg","genetype","sex","cadd_raw","cadd_phred","geno"]
 
 out=gzip.open(outfile,"wb")
 
@@ -55,7 +55,15 @@ with gzip.open(combined_file,"r") as f_read:
 		sex=line_split[10]
 		cadd_raw=line_split[11]
 		cadd_phred=line_split[12].strip()
-		store_line=[chrom,start,end,ensg, vartype,ind,sex, maf_gtex, maf_gnomad,maf_use,genetype,cadd_raw,cadd_phred]
+		geno=line_split[13].strip()
+		if(cadd_phred=="NA"):
+			cadd_phred=0
+		#if homo dom, dont consider
+		print(geno)
+		print(int(geno) ==0)
+		if(int(geno) == 0):
+			continue
+		store_line=[chrom,start,end,ensg, vartype,ind,sex, maf_gtex, maf_gnomad,maf_use,genetype,cadd_raw,cadd_phred,geno]
 		#if there is already a RV recorded for this gene
 		if ind not in this_inds_dic:
 			this_inds_dic[ind]=dict()
@@ -63,18 +71,23 @@ with gzip.open(combined_file,"r") as f_read:
 			#get current min MAF
 			dic_current_min_maf=float((this_inds_dic[ind][ensg])[9])
 			dic_current_min_cadd_phred=(this_inds_dic[ind][ensg])[12]
-			print(dic_current_min_cadd_phred)
 
-			if(dic_current_min_cadd_phred=="NA"):
-				dic_current_min_cadd_phred=0
+			print("this/min maf: ",maf_use,"/",dic_current_min_maf, "   and this/mincadd ",cadd_phred,"/",dic_current_min_cadd_phred)
 			#check first that this line passes the min cadd threshold (since will be sent to common eventually anyway)
 			#and make sure th
-			if(float(dic_current_min_cadd_phred)>=cadd_min):
+			if(float(cadd_phred)>=cadd_min):
 				#if this is more rare, store this instead
 				if float(maf_use) < dic_current_min_maf:
 					this_count=this_inds_dic[ind][ensg][-1]+1
 					store_line.append(this_count)
 					this_inds_dic[ind][ensg]=store_line
+					continue
+				#store highest cadd
+				if (float(dic_current_min_cadd_phred)<cadd_min):
+					this_count=this_inds_dic[ind][ensg][-1]+1
+					store_line.append(this_count)
+					this_inds_dic[ind][ensg]=store_line
+					continue # next if statement doesn't even matter, since needs to be stored regardless
 			else:
 				# if this is not more rare, just inc the count of numRVs for this gene
 				this_inds_dic[ind][ensg][-1]+=1

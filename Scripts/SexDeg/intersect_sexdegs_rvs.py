@@ -34,6 +34,7 @@ j=1
 with open (sexdegs_file, "r") as f_degs:
 	for line in f_degs.readlines():
 		line_spl=line.strip().split("\t")
+		print(line_spl)
 		chr=line_spl[0]
 		ensg=line_spl[1]
 		beta=line_spl[2]
@@ -55,7 +56,7 @@ with gzip.open(rv_file,"rb") as f_read:
 		except:
 			print("Key error thrown: "+ensg+" -- RV recorded but gene not included")
 			logfile_write.write(ensg+"\n")
-			next 
+			continue
 		gene_match_beta=float(gene_match[0])
 		gene_match_ind=int(gene_match[1])
 		gene_match_mafmin=float(gene_match[2])
@@ -63,6 +64,10 @@ with gzip.open(rv_file,"rb") as f_read:
 
 		print("maf: "+str(maf)+" , minmaf: "+str(minmaf))
 		#SET MAF TO 1 if not within "RARE" def
+		if (str(maf) == "gnomad_maf_both"):
+			#THIS IS A HEADER -- SKIP
+			print("THIS IS GNOMAD_MAF_BOTH")
+			continue
 		if not (float(maf) >= float(minmaf) and float(maf)<float(maxmaf)):
 			maf=1
 		print("i have: " +ensg+","+sex+","+str(maf)+" --- then.... "+str(gene_match_beta)+","+str(gene_match_sex)+","+str(gene_match_mafmin))

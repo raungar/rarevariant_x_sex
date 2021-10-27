@@ -1,79 +1,95 @@
-
 configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
 
 GROUPS=["m","f","both"] #, "both_half_regress"]
-TYPES=["aut"] #["x","aut"]
-CADD=["0","15"] #[0,5,15,25]
-ZMIN=["3"] #,"2","3"] # 2,2.5,3
-NPHEN=["5"] #,"3","4","5"]
+TYPES=["x","aut"]
+CADD=["0","15"] #,"15","25"] #[0,5,15,25]
+ZMIN=["2","2.5","3"] # 2,2.5,3
+NPHEN=["3","4","5"]
+NPHEN=["3"] #,"5"]
+ZMIN="2.5"
 MAF_MIN="0"
-MAF_MAX=["0.01","0.001","0.0001"] #,"0.001","0.0001"]
+MAF_MIN=["0","0.0001","0.001","0.01","0.05"]
+MAF_MIN=["0","0","0","0","0"]
+MAF_MAX=["0.0001","0.001","0.01","0.05","0.1"]
+#MAF_MAX=["0.1","0.05","0.01","0.001","0.0001"] #,"0.001","0.0001"]
 #CHRNUM=range(1,23) #
-CHRNUM="x"
+CHRNUM=["7"]
 # filter_version=["typesSeenTwice","typesALL","typesBlacklistRemovedALL","typesBlacklistRemovedSeenTwice",
 #                 "typesGQ10BlacklistRemovedALL","typesGQ5BlacklistRemovedALL",
 #                 "typesGQ10BlacklistRemovedSeenTwice",  "typesGQ5BlacklistRemovedSeenTwice"]
 # filter_version=["CADDtypesBlacklistRemovedALL","CADDtypesBlacklistRemovedSeenTwice",
 #                 "CADDtypesGQ10BlacklistRemovedALL","CADDtypesGQ5BlacklistRemovedALL",
 #                 "CADDtypesGQ10BlacklistRemovedSeenTwice",  "CADDtypesGQ5BlacklistRemovedSeenTwice"]
-#filter_version=["CADDtypesALL"] #,"CADDtypesSeenTwice"]
-filter_version="CADDtypesGQ5BlacklistRemovedALL"
-filter_version=["CADDtypesALL"]
+filter_version=["CADDtypesALL"] #,"CADDtypesSeenTwice"]
+#filter_version="CADDtypesGQ5BlacklistRemovedALL"
+#filter_version=["CADDtypesALL"]
 #SUBANALYSES=["strata","par","xci"]
 OUTLIER_TYPES=["outliers","outliersTOP"]
 CONGLOMERATE=["AllAut","All"]
 rule all:
 	input: 
-		#expand(config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_x_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{this_filt}_CADD{cadd_min}_linc_prot.csv",
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES)
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
 		#				group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
 		#	cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
-		#expand(config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt",
-		#expand(config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_CADD{cadd_min}_linc_prot.csv",
-		expand(config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/aut_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.txt.gz",
-			group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt",
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt",
+		expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_AllAut_min{maf_min}max{maf_max}_{{filt}}_CADD{{cadd_min}}_linc_prot.txt",
+			zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+			group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,
 			cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
-		expand(config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/all_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.txt.gz",
-			group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
+		expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_{{chrNUM}}_min{maf_min}max{maf_max}_{{filt}}_CADD{{cadd_min}}_linc_prot.txt",
+			zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+			group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,
 			cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
-		expand(config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{congl}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt",
-			group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
-			cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,congl=CONGLOMERATE)
-
-
-		#expand(config["RAREDIR"]+"/enrichments_v8/{chrNUM}_outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
+		expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_x_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{type}}_{{group}}_min{maf_min}max{maf_max}_{{this_filt}}_CADD{{cadd_min}}_linc_prot.csv",
+			zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+			group=GROUPS,zmin=ZMIN,nphen=NPHEN,chrNUM=CHRNUM,
+			cadd_min=CADD,type=TYPES,this_filt=["CADDtypesGQ5BlacklistRemovedALL"],outlierType=OUTLIER_TYPES)
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}_CADD{cadd_min}.txt.gz",
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
+		#	cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/aut_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.txt.gz",
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
+		#	cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/all_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.txt.gz",
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
+		#	cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{congl}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt",
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
+		#	cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,congl=CONGLOMERATE)
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/{chrNUM}_outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
 		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM)
-		#expand(config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
-		#expand(config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt",
-		#expand(config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_x_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{this_filt}_CADD{cadd_min}_linc_prot.csv",
-		###expand(config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_x_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{this_filt}_CADD{cadd_min}_linc_prot.csv",
-		#expand(config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
-		#expand(config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{this_filt}_CADD{cadd_min}_linc_prot.csv",
-		#expand(config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_x_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{this_filt}_CADD{cadd_min}_linc_prot.csv",
-		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
-		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES)
-		###expand(config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_x_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_CADD{this_filt}_CADD{cadd_min}_linc_prot.csv",
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt",
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_x_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{this_filt}_CADD{cadd_min}_linc_prot.csv",
+		###expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_x_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{this_filt}_CADD{cadd_min}_linc_prot.csv",
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
+		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{this_filt}_CADD{cadd_min}_linc_prot.csv",
+		###expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_x_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_CADD{this_filt}_CADD{cadd_min}_linc_prot.csv",
 		###	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,this_filt=filter_version,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,outlierType=OUTLIER_TYPES)
-		 ###expand(config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{min_maf}max{max_maf}_{group}_CADD{this_filt}_CADD{cadd_min}_linc_prot.{subanalysis}.csv",
+		 ###expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{min_maf}max{max_maf}_{group}_CADD{this_filt}_CADD{cadd_min}_linc_prot.{subanalysis}.csv",
 		### 	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,this_filt=filter_version,min_maf=MAF_MIN,max_maf=MAF_MAX,cadd_min=CADD,subanalysis=SUBANALYSES)
-		# expand(config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.strata.csv",
+		# expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.strata.csv",
 		 #	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,this_filt=filter_version,min_maf=MAF_MIN,max_maf=MAF_MAX,cadd_min=CADD),
-		 #expand(config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.xci.csv",
+		 #expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.xci.csv",
 		 #	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,this_filt=filter_version,max_maf=MAF_MAX,min_maf=MAF_MIN,cadd_min=CADD),
-		 #expand(config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.par.csv",
+		 #expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.par.csv",
 		 #	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,this_filt=filter_version,max_maf=MAF_MAX,min_maf=MAF_MIN,cadd_min=CADD)
 
 
 
 rule join_variant_annotations_x:
 	input:
-		outlier_file=config["RAREDIR"]+"/outliers_v8/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_{group}.txt.gz",
+		outlier_file=config["RAREDIR"]+"/outliers_v8redo/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_{group}.txt.gz",
 		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_x.tsv.gz"
-		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_{this_filt}.txt.gz"
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_{this_filt}_cadd{cadd_min}.txt.gz"
 	params:
 		chr="chrX",
 		method="medz" #medz or splicing or ase
 	output:
-		outfile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz"
+		outfile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.txt.gz"
 	shell:
 		"""
 		module load R
@@ -84,15 +100,15 @@ rule join_variant_annotations_x:
 		"""
 rule join_variant_annotations_aut:
 	input:
-		#outlier_file=config["RAREDIR"]+"/outliers_v8/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_{group}.txt.gz",
-		outlier_file=config["RAREDIR"]+"/outliers_v8/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_aut_{group}.txt.gz",
+		#outlier_file=config["RAREDIR"]+"/outliers_v8redo/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_{group}.txt.gz",
+		outlier_file=config["RAREDIR"]+"/outliers_v8redo/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_aut_{group}.txt.gz",
 		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_x.tsv.gz"
 		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_aut_cadd{cadd_min}.txt.gz"
 	params:
 		chr="aut",
 		method="medz" #medz or splicing or ase
 	output:
-		outfile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/aut_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.txt.gz"
+		outfile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/aut_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.txt.gz"
 	shell:
 		"""
 		module load R
@@ -103,16 +119,16 @@ rule join_variant_annotations_aut:
 		"""
 rule join_variant_annotations_all:
 	input:
-		outlier_file_aut=config["RAREDIR"]+"/outliers_v8/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_aut_{group}.txt.gz",
-		outlier_file_x=config["RAREDIR"]+"/outliers_v8/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_{group}.txt.gz",
+		outlier_file_aut=config["RAREDIR"]+"/outliers_v8redo/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_aut_{group}.txt.gz",
+		outlier_file_x=config["RAREDIR"]+"/outliers_v8redo/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_{group}.txt.gz",
 		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_x.tsv.gz"
 		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_all_cadd{cadd_min}.txt.gz"
 	params:
 		chr="all",
 		method="medz" #medz or splicing or ase
 	output:
-		outlier_all=config["RAREDIR"]+"/outliers_v8/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_all_{group}_{this_filt}_CADD{cadd_min}.txt",
-		outfile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/all_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.txt.gz"
+		outlier_all=config["RAREDIR"]+"/outliers_v8redo/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_all_{group}_{this_filt}_CADD{cadd_min}.txt",
+		outfile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/all_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.txt.gz"
 	shell:
 		"""
 		module load R
@@ -127,13 +143,13 @@ rule join_variant_annotations_all:
 #rule join_variant_annotations_aut:
 #	input:
 #		#variant_file=config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_linc_prot.tsv.gz"
-#		outlier_file=config["RAREDIR"]+"/outliers_v8/Current/outliers_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_aut_{group}.txt",
+#		outlier_file=config["RAREDIR"]+"/outliers_v8redo/Current/outliers_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_aut_{group}.txt",
 #		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_aut.tsv.gz"
 #	params:
 #		chr="NONE",
 #		method="medz" #medz or splicing or ase
 #	output:
-#		outfile=config["RAREDIR"]+"/enrichments_v8/outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot.txt.gz"
+#		outfile=config["RAREDIR"]+"/enrichments_v8redo/outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot.txt.gz"
 #	shell:
 #		"""
 #		module load R
@@ -147,14 +163,14 @@ rule join_variant_annotations_bychr:
 	input:
 		#variant_file=config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_linc_prot.tsv.gz"
 		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrNUM}_linc_prot.tsv.gz"
-		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_{chrNUM}_{filt}.txt.gz",
-		outlier_file=config["RAREDIR"]+"/outliers_v8/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_aut_{group}.txt.gz",
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrNUM}_{filt}_cadd{cadd_min}.txt.gz",
+		outlier_file=config["RAREDIR"]+"/outliers_v8redo/Current/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_aut_{group}.txt.gz",
 	params:
-		#outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_aut_{group}.txt",
+		#outlier_file=config["RAREDIR"]+"/outliers_v8redo/outliers_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_aut_{group}.txt",
 		chr="{chrNUM}",
 		method="medz" #medz or splicing or ase
 	output:
-		outfile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz"
+		outfile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}_CADD{cadd_min}.txt.gz"
 	shell:
 		"""
 		module load R
@@ -167,8 +183,8 @@ rule join_variant_annotations_bychr:
 
 rule calculate_risks_byCHR:
 	input:
-		infile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/chr{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
-		gtf_file=config["RAREDIR"]+"/preprocessing_v8/autosomal_proteincoding_lncrna.gtf"
+		infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}_CADD{cadd_min}.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8redo/autosomal_proteincoding_lncrna.gtf"
 	params:
 		zscore="{zmin}",
 		min_maf="{maf_min}",
@@ -176,11 +192,11 @@ rule calculate_risks_byCHR:
 		nphen="{nphen}",
 		sex="{group}",
                 cadd_min="{cadd_min}"
-		#continuous=config["RAREDIR"]+"/enrichments_v8/RR/{chrNUM}_continuous_risk_z{zmin}_nphen{nphen}_{type}_{group}_{filt}_CADD{cadd_min}_linc_prot.txt"
+		#continuous=config["RAREDIR"]+"/enrichments_v8redo/RR/{chrNUM}_continuous_risk_z{zmin}_nphen{nphen}_{type}_{group}_{filt}_CADD{cadd_min}_linc_prot.txt"
 	output:
-		#relative=config["RAREDIR"]+"/enrichments_v8/relative_risk_z{zmin}_nphen{nphen}_{type}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
-		relative=config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt"
-		#relative=config["RAREDIR"]+"/enrichments_v8/{chrNUM}_relative_risk_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
+		#relative=config["RAREDIR"]+"/enrichments_v8redo/relative_risk_z{zmin}_nphen{nphen}_{type}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
+		relative=config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt"
+		#relative=config["RAREDIR"]+"/enrichments_v8redo/{chrNUM}_relative_risk_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{filt}_linc_prot.txt"
 	shell:
 		"""
 		module load R
@@ -194,9 +210,9 @@ rule calculate_risks_byCHR:
 		"""
 rule calculate_risks_conglomerate:
 	input:
-		infile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/all_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{filt}_CADD{cadd_min}_linc_prot.txt.gz",
-		#infile=config["RAREDIR"]+"/enrichments_v8/{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{type}_{group}_linc_prot.txt.gz",
-		gtf_file=config["RAREDIR"]+"/preprocessing_v8/all_proteincoding_lncrna.gtf"
+		infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/all_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{filt}_CADD{cadd_min}_linc_prot.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_v8redo/{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{type}_{group}_linc_prot.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8redo/all_proteincoding_lncrna.gtf"
 	params:
 		zscore="{zmin}",
 		min_maf="{maf_min}",
@@ -205,7 +221,7 @@ rule calculate_risks_conglomerate:
 		sex="{group}",
                 cadd_min="{cadd_min}"
 	output:
-		relative=config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_All_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt"
+		relative=config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_All_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt"
 	shell:
 		"""
 		module load R
@@ -220,9 +236,9 @@ rule calculate_risks_conglomerate:
 		"""
 rule calculate_risks_conglomerate_aut:
 	input:
-		infile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/aut_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{filt}_CADD{cadd_min}_linc_prot.txt.gz",
-		#infile=config["RAREDIR"]+"/enrichments_v8/{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{type}_{group}_linc_prot.txt.gz",
-		gtf_file=config["RAREDIR"]+"/preprocessing_v8/autosomal_proteincoding_lncrna.gtf"
+		infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/aut_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{filt}_CADD{cadd_min}_linc_prot.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_v8redo/{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{type}_{group}_linc_prot.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8redo/autosomal_proteincoding_lncrna.gtf"
 	params:
 		zscore="{zmin}",
 		min_maf="{maf_min}",
@@ -231,7 +247,7 @@ rule calculate_risks_conglomerate_aut:
 		sex="{group}",
                 cadd_min="{cadd_min}"
 	output:
-		relative=config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_AllAut_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt"
+		relative=config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_AllAut_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt"
 	shell:
 		"""
 		module load R
@@ -246,9 +262,9 @@ rule calculate_risks_conglomerate_aut:
 		"""
 rule calculate_risks_x:
 	input:
-		#infile=config["RAREDIR"]+"/enrichments_v8/{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{type}_{group}_{this_filt}_linc_prot.txt.gz",
-		infile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
-		gtf_file=config["RAREDIR"]+"/preprocessing_v8/x_proteincoding_lncrna.gtf"
+		#infile=config["RAREDIR"]+"/enrichments_v8redo/{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{type}_{group}_{this_filt}_linc_prot.txt.gz",
+		infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8redo/x_proteincoding_lncrna.gtf"
 	params:
 		zscore="{zmin}",
 		min_maf="{maf_min}",
@@ -257,7 +273,7 @@ rule calculate_risks_x:
 		nphen="{nphen}",
 		cadd_min="{cadd_min}"
 	output:
-		relative=config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_x_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{this_filt}_CADD{cadd_min}_linc_prot.csv"
+		relative=config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_x_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{this_filt}_CADD{cadd_min}_linc_prot.csv"
 	shell:
 		"""
 		module load R
@@ -272,10 +288,10 @@ rule calculate_risks_x:
 
 #rule collapse_genes_single_rv:
 #	input:
-#		infile=config["RAREDIR"]+"/enrichments_v8/outliers_zthresh{zmin}_nphen{nphen}_noglobal_medz_varAnnot_x_{group}.txt",
+#		infile=config["RAREDIR"]+"/enrichments_v8redo/outliers_zthresh{zmin}_nphen{nphen}_noglobal_medz_varAnnot_x_{group}.txt",
 #		myscript=config["SCRIPTSDIR"]+"/Enrichments/collapse_genes_single_rv.R"
 #	output:
-#		outfile=config["RAREDIR"]+"/enrichments_v8/collapsed_outliers_rvs_zthresh{zmin}_nphen{nphen}_x_{group}.RData"
+#		outfile=config["RAREDIR"]+"/enrichments_v8redo/collapsed_outliers_rvs_zthresh{zmin}_nphen{nphen}_x_{group}.RData"
 #	shell:
 #		"""
 #		module load R
@@ -284,8 +300,8 @@ rule calculate_risks_x:
 #	
 rule get_risk_xci:
 	input:
-		infile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
-		gtf_file=config["RAREDIR"]+"/preprocessing_v8/x_proteincoding_lncrna.gtf",
+		infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8redo/x_proteincoding_lncrna.gtf",
 		xci_file=config["xci_file"]
 	params:
 		zscore="{zmin}",
@@ -295,7 +311,7 @@ rule get_risk_xci:
 		nphen="{nphen}",
 		cadd_min="{cadd_min}"
 	output:
-		out_rdata_relative=config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.xci.csv"
+		out_rdata_relative=config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.xci.csv"
 	shell:
 		"""
 		module load R
@@ -307,11 +323,11 @@ rule get_risk_xci:
 
 rule get_risk_par:
 	input:
-		#infile=config["RAREDIR"]+"/enrichments_v8/outliers_zthresh{zmin}_nphen{nphen}_noglobal_medz_varAnnot_x_{group}.txt",
-		#infile=config["RAREDIR"]+"/enrichments_v8/outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
-		infile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
-		par_file=config["RAREDIR"]+"/preprocessing_v8/par_table.txt" ,
-		gtf_file=config["RAREDIR"]+"/preprocessing_v8/x_proteincoding_lncrna.gtf"
+		#infile=config["RAREDIR"]+"/enrichments_v8redo/outliers_zthresh{zmin}_nphen{nphen}_noglobal_medz_varAnnot_x_{group}.txt",
+		#infile=config["RAREDIR"]+"/enrichments_v8redo/outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
+		infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
+		par_file=config["RAREDIR"]+"/preprocessing_v8redo/par_table.txt" ,
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8redo/x_proteincoding_lncrna.gtf"
 	params:
 		zscore="{zmin}",
 		sex="{group}",
@@ -320,7 +336,7 @@ rule get_risk_par:
 		max_maf="{max_maf}",
               	cadd_min="{cadd_min}"
 	output:
-		out_rdata_relative=config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.par.csv"
+		out_rdata_relative=config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.par.csv"
 	shell:
 		"""
 		module load R
@@ -333,11 +349,11 @@ rule get_risk_par:
 
 rule get_risk_strata:
 	input:
-		#infile=config["RAREDIR"]+"/enrichments_v8/outliers_zthresh{zmin}_nphen{nphen}_noglobal_medz_varAnnot_x_{group}.txt",
-		#infile=config["RAREDIR"]+"/enrichments_v8/outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
-		infile=config["RAREDIR"]+"/enrichments_v8/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
-		par_file=config["RAREDIR"]+"/preprocessing_v8/strata_table.txt" ,
-		gtf_file=config["RAREDIR"]+"/preprocessing_v8/x_proteincoding_lncrna.gtf"
+		#infile=config["RAREDIR"]+"/enrichments_v8redo/outliers_zthresh{zmin}_nphen{nphen}_noglobal_medz_varAnnot_x_{group}.txt",
+		#infile=config["RAREDIR"]+"/enrichments_v8redo/outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
+		infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
+		par_file=config["RAREDIR"]+"/preprocessing_v8redo/strata_table.txt" ,
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8redo/x_proteincoding_lncrna.gtf"
 	params:
 		zscore="{zmin}",
 		nphen="{nphen}",
@@ -346,7 +362,7 @@ rule get_risk_strata:
 		max_maf="{max_maf}",
               	cadd_min="{cadd_min}"
 	output:
-		out_rdata_relative=config["RAREDIR"]+"/enrichments_v8/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.strata.csv"
+		out_rdata_relative=config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.strata.csv"
 	shell:
 		"""
 		module load R
@@ -364,13 +380,13 @@ rule compute_enrichments_medz:
 	input:
 		scriptdir="/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/",
 		RAREDIR=config["RAREDIR"],
-		outlier_file=config["RAREDIR"]+"/outliers_v8/Current/{outlierType}_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_{type}_{group}.txt"
+		outlier_file=config["RAREDIR"]+"/outliers_v8redo/Current/{outlierType}_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_{type}_{group}.txt"
 	params:
 		window="10kb_genebody",
 		z_thresh="3",
 		outsuffix="enrich_{type}_{group}"
 	output:
-		outfile=config["RAREDIR"]+"/enrichments_v8/enrichments_10kb_z{zmin}_nphen{nphen}_{type}_{group}.RData"
+		outfile=config["RAREDIR"]+"/enrichments_v8redo/enrichments_10kb_z{zmin}_nphen{nphen}_{type}_{group}.RData"
 	shell:
 		"""
 		module load R

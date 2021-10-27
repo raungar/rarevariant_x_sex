@@ -1,5 +1,6 @@
 ####Taken from Nicole Ferraro, reformatted for snakemake -RAU
 GTEXv8: "/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8"
+GTEX_WGSv8_full: "/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/genotypes/WGS/variant_calls/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.vcf.gz"
 GTEX_WGSv8: "/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/genotypes/WGS/variant_calls/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz"
 GTEX_WGSv8_flagged: "/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/genotypes/WGS/variant_calls/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_support_files/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_flagged_donors.txt"
 GTEX_RNAv8: "/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/rna_seq"
@@ -9,23 +10,36 @@ GTEX_SUBJECTSv8: "/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analys
 GTEX_PCv8: "/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/genotypes/WGS/variant_calls/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_support_files/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze_20genotPCs.txt"
 GTEX_GENES: "/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/references/gencode.v26.GRCh38.genes.gtf"
 
+
 ## Supporting data paths
 KGDIR: "/oak/stanford/groups/smontgom/shared/1KG"
 CADD: "/oak/stanford/groups/smontgom/shared/CADD/whole_genome_SNVs.tsv.gz" #not sure if works
-GNOMAD: "/oak/stanford/groups/smontgom/shared/datasets/gnomad"
+GNOMAD: "/oak/stanford/groups/smontgom/shared/gnomadv3"
 
 ## Results paths
 #export FILESDIR=/srv/scratch/restricted/GOATs
-##FILESDIR=/srv/scratch/restricted/GOATs
+FILESDIR: "/oak/stanford/groups/smontgom/raungar/Sex/Files"
 RAREDIR: "/oak/stanford/groups/smontgom/raungar/Sex/Output"
+SCRIPTSDIR: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts"
+
+
+KG_AF_SNPS: "/oak/stanford/groups/smontgom/raungar/Sex/Files/SNPs.1kg.AF.bed.gz"
+KG_AF_INDELS: "/oak/stanford/groups/smontgom/raungar/Sex/Files/indels.1kg.AF.bed.gz"
+GNOMAD_SNPS: "/oak/stanford/groups/smontgom/raungar/Sex/Files/SNPs.sorted.all.INFO.gz"
+GNOMAD_INDELS: "/oak/stanford/groups/smontgom/raungar/Sex/Files/indels.sorted.all.INFO.gz"
+AF_SVs: "/oak/stanford/groups/smontgom/raungar/Sex/Files/AF_HallLabSV.bed"
+CONSOLIDATED: "/oak/stanford/groups/smontgom/raungar/Sex/Files/sorted.consolidated.annotations.bed.gz"
+STATEDIR: "/oak/stanford/groups/smontgom/raungar/Sex/Files/annotations/epigenomicsRoadmap"
+TFDIR: "/oak/stanford/groups/smontgom/raungar/Sex/Files/annotations/TFBS_Pouya"
+ANNODIR: "/oak/stanford/groups/smontgom/raungar/Sex/Files/annotations"
+
 
 ## Paths to annotation files used in the feature creation pipeline
 #export ANNODIR=/srv/scratch/restricted/goats/features/annotations # maybe change this for future version
 #export TFDIR=${ANNODIR}/TFBS_Pouya
 #export STATEDIR=${ANNODIR}/epigenomicsRoadmap/hg38
-#export CONSOLIDATED=/mnt/lab_data/montgomery/shared/conservation/consolidated/sorted.consolidated.annotations.bed.gz
-KG_AF_SNPS: "/srv/scratch/restricted/goats/features/variantBeds/1KG/SNPs.1kg.AF.bed.gz "
-KG_AF_INDELS: "/srv/scratch/restricted/goats/features/variantBeds/1KG/indels.1kg.AF.bed.gz"
-GNOMAD_SNPS: "/oak/stanford/groups/smontgom/raungar/Sex/Files/SNPs.sorted.all.INFO.gz"
-GNOMAD_INDELS: "/oak/stanford/groups/smontgom/raungar/Sex/Files/indels.sorted.all.INFO.gz"
-AF_SVs: "/oak/stanford/groups/smontgom/raungar/Sex/Files/AF_HallLabSV.bed"
+
+###More
+xci_file: "/oak/stanford/groups/smontgom/raungar/Sex/Files/Tukiainen_xinact_par.tsv"
+chrlen_file: "/oak/stanford/groups/smontgom/raungar/Sex/Files/GRCh38.p13_assembly_report.txt"
+cadd_dir: "/oak/stanford/groups/smontgom/shared/UDN/ReferenceFiles/CADDv1.6"

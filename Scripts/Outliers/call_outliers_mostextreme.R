@@ -45,13 +45,19 @@ pick.outliers <- function(test.stats, nphen, zthresh,medz){
 ## Input: Normalized data in bed format with the final N columns representing the N samples
 ## Output: Assignments of outliers and controls for genes with outliers
 call.outliers <- function(data, nphen, zthresh,metric) {
-    data.melted = melt(data, id.vars = names(data)[1:2], variable.name = 'Ind', value.name = 'Z')
+    # data.melted = melt(data, id.vars = names(data)[1:2], variable.name = 'Ind', value.name = 'Z')
+    data.melted<-melt.data.table(data,id.vars = names(data)[1:2], variable.name = 'Ind', value.name = 'Z')
     colnames(data.melted)[3:4] = c('Ind', 'Z')
     head(data.melted)
+    # summ_z<-as.data.table(data.melted)[,Z:=.(median(Z,na.rm=T)),by=list(Ind,Gene)]
+    # summ_df<-as.data.table(data.melted)[,Df:=.(sum(!is.na(Z))),by=list(Ind,Gene)]
+    # test.stats<-cbind(summ_z,summ_df$Df)
+    
+    # my.summs=function(x) list(MedZ=median(x,na.rm=T))
     test.stats = data.melted %>% group_by(Ind, Gene) %>%
         summarise(MedZ = median(Z, na.rm = T),
                   Df = sum(!is.na(Z)))
-    head(test.stats)
+    # head(test.stats)
     outliers = pick.outliers(test.stats, nphen, zthresh, medz = T)
     return(outliers)
 }
@@ -92,6 +98,8 @@ remove_global_outliers<-function(medz_data){
 option_list = list(
 	make_option(c('--Z.SCORES'), type = 'character', default = NULL, help = 'path to the Z-score data'), 
 	make_option(c('--N.PHEN'), type = 'numeric', default = 5, help = 'number of observed phenotypes required to test for outlier [num tissue]'),
+	make_option(c('--chrtype'), type = 'character', help = 'either aut or x'),
+	make_option(c("--gene_chr_table"),type="character", default=NULL, help= "gtf with just ensg and chr"),
 	make_option(c("--outfile"),type="character", default=NULL, help= "output file path"),
 	make_option(c("--outfile_top"),type="character", default=NULL, help= "output file path"),
 	make_option(c('--ZTHRESH'), type = 'numeric', default = 2, help = 'threshold for abs(MedZ) outliers')
@@ -102,18 +110,31 @@ opt = parse_args(opt_parser)
 
 nphen = opt$N.PHEN
 zthresh = opt$ZTHRESH
-outfile=opt$outfile
+outfile_any=opt$outfile
 outfile_top=opt$outfile_top
+chrtype=opt$chrtype
+chr_file=opt$gene_chr_table
 zscore=opt$Z.SCORES
+# 
+# zscore="/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_normalized_expression_subsetted_x_f.txt.gz"
+# globalFile="/Volumes/groups/smontgom/raungar/Sex/Output/outliers_v8/outliers_zthresh2_nphen5_globalOutliersRemoved_x_f.txt"
+# # chr_file="/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/autosomal_gtf_protclinc_wchr.txt"
+#  chr_file="/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/x_proteincoding_lncrna.gtf"
+# chrtype="x"
+# nphen=3
+# z=2.5
 
-#zscore="/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_normalized_expression_subsetted_x_f.txt.gz"
-#globalFile="/Volumes/groups/smontgom/raungar/Sex/Output/outliers_v8/outliers_zthresh2_nphen5_globalOutliersRemoved_x_f.txt"
+if(chrtype!="x"){
+  chrs_table=fread(chr_file,header = F)
+  chrs_dic<-as.character(chrs_table$V2)
+  names(chrs_dic)<-as.character(chrs_table$V1)
+}
 print(paste0("ZSCORES: ", zscore))
 ##-- Analysis
 
 
 ## Read in the normalized data
-data = as.data.frame(fread( zscore))
+data = (fread( zscore))
 outliers_medz = call.outliers(data, nphen, zthresh,metric = 'medz')
 #outliers_medz_top = pick.outliers(outliers_medz, nphen, zthresh)
 outliers<-outliers_medz[[1]]
@@ -124,7 +145,17 @@ outliers_noglobal<-remove_global_outliers(outliers)
 outliers_top_noglobal<-remove_global_outliers(outliers_top)
 ## Median Z-score
 print('MEDZ')
-
+if(chrtype!="x"){
+  chrs_table=fread(chr_file,header = F)
+  chrs_dic<-chrs_table$V2
+  names(chrs_dic)<-chrs_table$V1
+  outliers_noglobal$chr<-chrs_dic[outliers_noglobal$Gene]
+  outliers_top_noglobal$chr<-chrs_dic[outliers_top_noglobal$Gene]
+}
+if(chrtype=="x"){
+  outliers_noglobal$chr<-"x"
+  outliers_top_noglobal$chr<-"x"
+}
 #write.outliers(outliers.medz, paste0(dir, prefix, '.medz.txt'))
-write.outliers(outliers_top_noglobal, outfile_top)
 write.outliers(outliers_noglobal, outfile_any)
+write.outliers(outliers_top_noglobal, outfile_top)

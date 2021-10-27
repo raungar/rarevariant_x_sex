@@ -23,11 +23,13 @@ chrlens <- as.character(opt$chrlen_infile)
 out_numrvs <- as.character(opt$out_numrvs)
 out_sigdif <- as.character(opt$out_sigdif)
 chrtype <- as.character(opt$chrtype)
+print(paste0("chrtype is ",chrtype))
 # summary_stat <- as.character(opt$summary_stat)
 # 
 # print(paste0("my chr is : ",chrtype))
 # # if(chrtype != "aut" & chrtype != "x"){stop("ERROR: chrtype must be aut or x")}
-# infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/Combined/21_all_rvs_inds_types_linc_prot.txt.gz"
+# infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/Combined/x_all_rvs_inds_typesALL_linc_prot.txt.gz"
+# infile="/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/Combined/chr7_all_rvs_inds_CADDtypesSeenTwice_linc_prot.txt.gz"
 # euro_file<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt"
 # sex_file<-"/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/sample_annotations/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS_v2_downloaded_april2020.txt"
 # #out_numrvs<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/17_all_numrv.txt.gz"
@@ -36,14 +38,23 @@ chrtype <- as.character(opt$chrtype)
 # chrtype="21"
 
 
-wrong_self_reported_ancestry<-c("GTEX-11TT1", "GTEX-12ZZX", "GTEX-131XF", "GTEX-147F3","GTEX-15SZO","GTEX-16XZY","GTEX-17EUY","GTEX-17HHE", 
+wrong_self_reported_ancestry<-c("GTEX-11TT1", "GTEX-12ZZX", "GTEX-131XF", "GTEX-147F3","GTEX-15SZO","GTEX-16XZY","GTEX-17EUY","GTEX-17HHE",
                                 "GTEX-18D9U", "GTEX-1C4CL", "GTEX-1IDJC", "GTEX-1RMOY", "GTEX-R53T", "GTEX-R55D", "GTEX-WHPG", "GTEX-XMD3","GTEX-YB5E")
 
 #Read everything in and make proper hashes 
 exp_data = fread(infile,data.table=F)
 #exp_data=fread(cmd = paste("head -n 501 | tail -500", infile),data.table=F)
-colnames(exp_data)<-c("chr","start","end","maf","gtex_sample","vartype","ensg","genetype")
-exp_data<-exp_data %>% dplyr::filter(chr == paste0("chr",toupper(chrtype)))
+#if(chrtype=="x"){
+  colnames(exp_data)<-c("chr","start","end","gtex_maf","gnomad_maf","maf","gtex_sample","vartype","ensg", "genetype","sex","cadd_raw","cadd_phred")
+  head(exp_data)
+  
+#}else{
+ # colnames(exp_data)<-c("chr","start","end","gtex_maf","gnomad_maf","maf","gtex_sample","vartype","ensg","genetype","ensg","genetype","sex","cadd_raw","cadd_phred")
+#}
+# # print("filter by: ","chr",toupper(chrtype))
+# # exp_data<-exp_data %>% dplyr::filter(chr == paste0("chr",toupper(chrtype)))
+# print("filtered chrtype")
+head(exp_data)
 euro<-fread(euro_file)
 euro_vec_unchecked<-as.character(data.frame(euro)[,1])
 euro_vec<-euro_vec_unchecked[!(euro_vec_unchecked %in% wrong_self_reported_ancestry )]
@@ -111,9 +122,9 @@ get_mww_test_m_f<-function(maf_m,maf_f,this_var,mult_test_type){
 
 #uses mltools package to calculate the cumulative number of RVs at each MAF for
 #each individual x vartype x chr x maf level, going from 0 to .5 in 0.001 intervals
-cum_maf_0<-as.data.table(exp_data_euro %>% dplyr::filter(maf==0))[,
-                                            Reduce(c,lapply(.SD, function(x) as.list(empirical_cdf(x,ubounds=0)))),
-                                            by=.(gtex_sample,vartype,chr,ensg),.SDcols="maf"] %>% mutate(range_min=0,range_max=0)
+# cum_maf_0<-as.data.table(exp_data_euro %>% dplyr::filter(maf==0))[,
+#                                             Reduce(c,lapply(.SD, function(x) as.list(empirical_cdf(x,ubounds=0)))),
+#                                             by=.(gtex_sample,vartype,chr,ensg),.SDcols="maf"] %>% mutate(range_min=0,range_max=0)
 cum_maf_0_0.001<-as.data.table(exp_data_euro %>% dplyr::filter(maf > 0 & maf <= 0.005))[,
                                                                                                 Reduce(c,lapply(.SD, function(x) 
                                                                                                   as.list(empirical_cdf(x,ubounds=0.005)))),
@@ -143,7 +154,7 @@ cum_maf_0.1_0.25<-as.data.table(exp_data_euro %>% dplyr::filter(maf > 0.1 & maf 
 print("Head chr hash")
 # print(head(chr_hash[cum_maf$chr]))
 
-cum_maf_list<-list("cum_maf_0"=cum_maf_0,"cum_maf_0_0.001"=cum_maf_0_0.001,"cum_maf_0.001_0.005"=cum_maf_0.001_0.005,"cum_maf_0.005_0.01"=cum_maf_0.005_0.01,
+cum_maf_list<-list("cum_maf_0_0.001"=cum_maf_0_0.001,"cum_maf_0.001_0.005"=cum_maf_0.001_0.005,"cum_maf_0.005_0.01"=cum_maf_0.005_0.01,
                    "cum_maf_0.01_0.05"=cum_maf_0.01_0.05,"cum_maf_0.05_0.1"=cum_maf_0.05_0.1,"cum_maf_0.1_0.25"=cum_maf_0.1_0.25)
 print("adjusted by length")
 cum_maf_summ_combined_all<-data.frame(matrix(ncol = 15, nrow = 0))

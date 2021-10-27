@@ -117,6 +117,9 @@ for vartype in ["SNP","indel","SV"]:
 				chr=line_split[0] #chr
 				pos=line_split[1] #pos
 				gtex_maf=line_split[3] #GTEx MAF
+				geno=line_split[4] #genotype
+				if(geno==0):
+					next
 				ref=line_split[5] #reference allele
 				alt=line_split[6] #alternate allele
 				##print(line_split[50])
@@ -195,7 +198,7 @@ for vartype in ["SNP","indel","SV"]:
 				if 1 == 1:
 					store_line=[chr,pos,ensg, vartype,ind,sex,ref,alt,varswitch,
 						gtex_maf, gnomad_maf_both,gnomad_maf_m,gnomad_maf_f,
-						genetype,gnomad_maf_diff]
+						genetype,gnomad_maf_diff,geno]
 					#if there is already a RV recorded for this gene
 					if ensg in dic_both:
 						#get current min MAF
@@ -222,7 +225,7 @@ for vartype in ["SNP","indel","SV"]:
 				if gnomad_sex < min_maf:
 					store_line=[chr,pos,ensg, vartype,ind,sex,ref,alt,varswitch,
 						gtex_maf, gnomad_maf_both,gnomad_maf_m,gnomad_maf_f,
-						genetype,gnomad_maf_diff]
+						genetype,gnomad_maf_diff,geno]
 					if ensg in dic_sex:
 						dic_current_min_maf=float((dic_sex[ensg])[9])
 						if float(gnomad_maf_both) < float(dic_current_min_maf):

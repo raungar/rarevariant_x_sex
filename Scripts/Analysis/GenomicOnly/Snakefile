@@ -1,19 +1,24 @@
 configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
 
 GROUPS=["m","f"]
-TYPES=["x"]
-#TYPES=range(1,23)
-print(TYPES)
-#TYPES.extend(range(1,23))
+CHRS=["x"]
+CHRS=["7"]
+#CHRS=range(1,23)
+print(CHRS)
+#CHRS.extend(range(1,23))
 #MAFS=[0.001,0.005,0.01]
 X_SUBTYPES=["PAR","PAR1","PAR2","NONPAR", "XCR1","XCR2","XTR","XAR"]
-filter_version=["typesFiltsexdiff","types"]
+#filter_version=["typesFiltsexdiff","types","typesFiltsexdiff5"]
+filter_version=["typesSeenTwice","typesALL","typesBlacklistRemovedALL","typesBlacklistRemovedSeenTwice",
+		"typesGQ10BlacklistRemovedALL","typesGQ5BlacklistRemovedALL",
+		"typesGQ10BlacklistRemovedSeenTwice",  "typesGQ5BlacklistRemovedSeenTwice"]
+filter_version=["CADDtypesSeenTwice","CADDtypesALL"]
 
 rule all:
 	input: 
 		#config["RAREDIR"]+"/analysis_v8/genomic_only/effective_chr_len_prot_linc_xsubtype.txt"
-		expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_{version}_sigdif_bins_linc_prot.txt.gz",type=TYPES,version=filter_version),
-		expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_{version}_numrv_bins_linc_prot.txt.gz", subtype=X_SUBTYPES,version=filter_version)
+		expand(config["RAREDIR"]+"/analysis_v8/genomic_only/chr{chr}_{version}_sigdif_bins_linc_prot.txt.gz",chr=CHRS,version=filter_version)
+		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_{version}_numrv_bins_linc_prot.txt.gz", subtype=X_SUBTYPES,version=filter_version)
 		#config["RAREDIR"]+"/analysis_v8/genomic_only/effective_chr_len_prot_linc.txt"
 		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_all_numrv.txt.gz", type=TYPES),
 		#expand(config["RAREDIR"]+"/analysis_v8/genomic_only/x_subtypes_all_numrv_linc_prot.txt.gz", subtype=X_SUBTYPES)
@@ -25,15 +30,15 @@ rule all:
 
 rule get_chr_rvs:
 	input:
-		infile=config["RAREDIR"]+"/features_v8/Combined/{type}_all_rvs_inds_{version}_linc_prot.txt.gz",
+		infile=config["RAREDIR"]+"/features_v8/Combined/chr{chr}_all_rvs_inds_{version}_linc_prot.txt.gz",
 		euro_file=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt",
 		sex_file=config["GTEX_SUBJECTSv8"], 
 		chrlen_file=config["chrlen_file"]
 	params:
-		chrtype="{type}"
+		chrtype="{chr}"
 	output:
-		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_{version}_numrv_linc_prot.txt.gz",
-		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/{type}_{version}_sigdif_linc_prot.txt.gz"
+		num_rvs=config["RAREDIR"]+"/analysis_v8/genomic_only/chr{chr}_{version}_numrv_linc_prot.txt.gz",
+		sig_dif=config["RAREDIR"]+"/analysis_v8/genomic_only/chr{chr}_{version}_sigdif_linc_prot.txt.gz"
 		
 	shell:
 		"""

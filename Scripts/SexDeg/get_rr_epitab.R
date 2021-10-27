@@ -19,6 +19,8 @@ option_list = list(
                 make_option(c("--min_maf"), type = 'numeric', default = NULL, help = "min MAF"),
                 make_option(c("--max_maf"), type = 'numeric', default = NULL, help = "max MAF"),
                 make_option(c("--beta_min"), type = 'numeric', default = NULL, help = "beta_min"),
+                make_option(c("--gtf_code_file"), type = 'character', default = NULL, help = "gtf_code_file preprocessing"),
+                
                 make_option(c("--tissue"), type = 'character', default = NULL, help = "tissue")
 )
 
@@ -34,8 +36,13 @@ sex <- as.numeric(opt$sex)
 min_maf<-as.numeric(opt$min_maf)
 max_maf<-as.numeric(opt$max_maf)
 beta_min<-as.numeric(opt$beta_min)
+gtf_code_file<-as.character(opt$gtf_code_file)
 
+gtf_code<-fread(gtf_code_file,header=F)
+genetype_dic=gtf_code$V2
+names(genetype_dic)<-gtf_code$V1
 #infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/sexdeg_v8/Combined/aut_beta0.111_SKINS_z3_nphen5_f_linc_prot.txt.gz"
+# infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/sexdeg_v8/CombinedSingleTissue/aut_beta0.111_ADPVSC_f_linc_prot.txt.gz"
 # #infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/outliers_zthresh3_nphen4_noglobal_medz_varAnnot_x_m.txt"
 # zscore<-3
 # min_maf<-0
@@ -67,7 +74,7 @@ has_variant<-apply((exp_data),1,function(x){
 print("filter for z score")
 ### get relative risk per category
 exp_data$has_variant<-has_variant
-exp_data$variant_cat<-exp_data$genetype ##########CHANGE THIS LINE FOR WHAT U WANT THE RR TO BE....
+exp_data$variant_cat<-genetype_dic[exp_data$ensg] 
 
 exp_outliers = dplyr::filter(exp_data, abs(MedZ) >= zscore)
 exp_controls = dplyr::filter(exp_data, abs(MedZ) < zscore)
@@ -80,7 +87,8 @@ print("relative risk  all sexdegs")
 #    -------------------------
 #     N-nonoutliers-nonsexDEG-rv/NsexDEG-nonoutlier
 risks = data.frame(Risk = numeric(), Lower = numeric(), Upper = numeric(), Pval = numeric(), Cat = character(),
-                   sexdeg=character(),tissue=character(),num_outliers=character(),sex=character(),z=numeric(),nphen=numeric(),Type=character())
+                   sexdeg=character(),exp_nn=numeric(),exp_ny=numeric(),exp_yn=numeric(),exp_yy=numeric(),
+                   tissue=character(),num_outliers=character(),sex=character(),z=numeric(),nphen=numeric(),Type=character())
 vcats = na.omit(unique(exp_data$variant_cat))
 sexdeg_types<-c("all","male_biased","female_biased")
 for (this_sexdeg in sexdeg_types){
@@ -112,6 +120,10 @@ for (this_sexdeg in sexdeg_types){
                                          Pval = err$tab[2,8],
                                          Cat = vcat,
                                          sexdeg=this_sexdeg,
+                                         exp_nn=exp_nn,
+                                         exp_ny=exp_ny,
+                                         exp_yn=exp_yn,
+                                         exp_yy=exp_yy,
                                          tissue=tissue,
                                          num_outliers=nrow(this_outlierset%>% dplyr::filter(variant_cat == vcat)),
                                          sex=sex,z=zscore,nphen=nphen,
@@ -131,6 +143,10 @@ for (this_sexdeg in sexdeg_types){
                                       Pval = err_all$tab[2,8],
                                       Cat = "all",
                                       sexdeg=this_sexdeg,
+                                      exp_nn=exp_nn_all,
+                                      exp_ny=exp_ny_all,
+                                      exp_yn=exp_yn_all,
+                                      exp_yy=exp_yy_all,
                                       tissue=tissue,
                                       num_outliers=nrow(this_outlierset),
                                       sex=sex,z=zscore,nphen=nphen,
@@ -173,6 +189,11 @@ for (this_sexdeg in sexdeg_types){
                                     Pval = err$tab[2,8],
                                     Cat = vcat,
                                     sexdeg=this_sexdeg,
+                                    
+                                    exp_nn=exp_nn,
+                                    exp_ny=exp_ny,
+                                    exp_yn=exp_yn,
+                                    exp_yy=exp_yy,
                                     tissue=tissue,
                                     num_outliers=nrow(sexdeg),
                                     sex=sex,z=zscore,nphen=nphen,
@@ -192,6 +213,11 @@ for (this_sexdeg in sexdeg_types){
                                   Pval = err_all$tab[2,8],
                                   Cat = "all",
                                   sexdeg=this_sexdeg,
+                                  
+                                  exp_nn=exp_nn_all,
+                                  exp_ny=exp_ny_all,
+                                  exp_yn=exp_yn_all,
+                                  exp_yy=exp_yy_all,
                                   tissue=tissue,
                                   num_outliers=nrow((sexdeg)),
                                    sex=sex,z=zscore,nphen=nphen,
@@ -241,6 +267,10 @@ for(this_sexdeg in sexdeg_types){
                                      Pval = err$tab[2,8],
                                      Cat=vcat,
                                      sexdeg=this_sexdeg,
+                                     exp_nn=exp_data_sexdeg_outlier,
+                                     exp_ny=exp_data_sexdeg_nonoutlier,
+                                     exp_yn=exp_data_nonsexdegoutlier,
+                                     exp_yy=exp_data_nonsexdeg_nonoutlier,
                                      tissue=tissue,
                                      num_outliers=exp_data_nonsexdegoutlier+exp_data_sexdeg_outlier,
                                      sex=sex,z=zscore,nphen=nphen,
@@ -259,6 +289,10 @@ for(this_sexdeg in sexdeg_types){
                                  Pval = err$tab[2,8],
                                  Cat="all",
                                  sexdeg=this_sexdeg,
+                                 exp_nn=exp_data_sexdeg_outlier,
+                                 exp_ny=exp_data_sexdeg_nonoutlier,
+                                 exp_yn=exp_data_nonsexdegoutlier,
+                                 exp_yy=exp_data_nonsexdeg_nonoutlier,
                                  tissue=tissue,
                                  num_outliers=exp_data_nonsexdegoutlier+exp_data_sexdeg_outlier,
                                  sex=sex,z=zscore,nphen=nphen,

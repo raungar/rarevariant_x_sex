@@ -2,38 +2,43 @@ configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths
 
 #GROUPS=["both.sex","both.regress","both","m","f","both_half.sex","both_half.regress","both_half"]
 TYPES=["x","aut"]
-GROUPS=["both","m","f"]
+GROUPS=["both_half","m","f"]
+GROUPS=["m","f"]
+GROUPS="both"
 #TYPES=["x"]
-
+#CHRS=range(1,23)
 ZMIN=["2","2.5","3"]
 NPHEN_MIN=["2","3","4","5"]
 
 #rule all:#
-#	output: expand(config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh"+z_min+"_nphen5_noglobal_medz.{type}.{group}.txt.gz", type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=NPHEN_MIN)
-#	input: expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.{type}.{group}.txt.gz", type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=NPHEN_MIN)
+#	output: expand(config["RAREDIR"]+"/outliers_v8redo/outliers_both_zthresh"+z_min+"_nphen5_noglobal_medz.{type}.{group}.txt.gz", type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=NPHEN_MIN)
+#	input: expand(config["RAREDIR"]+"/preprocessing_v8redo/gtex_2017-06-05_normalized_expression_subset.{type}.{group}.txt.gz", type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=NPHEN_MIN)
 
 rule all:
 	input: 
-		#expand(config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh{z_min}_nphen{nphen_min}_noglobal_medz_{type}_{group}.txt.gz", type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=NPHEN_MIN),
-		#expand(config["RAREDIR"]+"/outliers_v8/outliers_zthresh{z_min}_nphen{nphen_min}_globalOutliersRemoved_{type}_{group}.txt", 
-		expand(config["RAREDIR"]+"/outliers_v8/Current/outliersTOP_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz",
+		#expand(config["RAREDIR"]+"/outliers_v8redo/outliers_both_zthresh{z_min}_nphen{nphen_min}_noglobal_medz_{type}_{group}.txt.gz", type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=NPHEN_MIN),
+		#expand(config["RAREDIR"]+"/outliers_v8redo/outliers_zthresh{z_min}_nphen{nphen_min}_globalOutliersRemoved_{type}_{group}.txt", 
+		expand(config["RAREDIR"]+"/outliers_v8redo/Current/outliersTOP_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz",
 			type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=NPHEN_MIN)
 
 
 rule get_outliers:
 	input:
-		ZSCORES=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subsetted_{type}_{group}.txt.gz"
+		ZSCORES=config["RAREDIR"]+"/preprocessing_v8redo/gtex_2017-06-05_normalized_expression_subsetted_{type}_{group}.txt.gz",
+		genes_w_chrs=config["RAREDIR"]+"/preprocessing_v8redo/autosomal_gtf_protclinc_wchr.txt"
 	params:
 		ZTHRESH="{z_min}",
-		NPHEN="{nphen_min}"
+		NPHEN="{nphen_min}",
+		TYPES="{type}"
 	output:
-		all=config["RAREDIR"] + "/outliers_v8/Current/outliers_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz",
-		top=config["RAREDIR"] + "/outliers_v8/Current/outliersTOP_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz"
+		all=config["RAREDIR"] + "/outliers_v8redo/Current/outliers_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz",
+		top=config["RAREDIR"] + "/outliers_v8redo/Current/outliersTOP_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz"
 	
 	shell:
 		"""
 		module load R
 		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers_mostextreme.R \
                     --Z.SCORES {input.ZSCORES}  --outfile_top {output.top} --outfile {output.all} \
-	              --ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} 
+	              --ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} \
+	              --gene_chr_table {input.genes_w_chrs} --chrtype {params.TYPES}
 		"""

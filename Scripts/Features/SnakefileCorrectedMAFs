@@ -28,7 +28,6 @@ for splitf in split_files:
 	#break
 #CHRNUM="X"
 #print(IDS_VARTYPES)
-CHRNUM=range(1,23) #16
 #CHRNUM=["13","18"]
 #CHRNUM="13"
 #CHRNUM="7"
@@ -41,24 +40,27 @@ SEXDIFF_VAL=["5","10"]
 filter_version=["typesSeenTwice","typesALL","typesBlacklistRemovedALL","typesBlacklistRemovedSeenTwice",
                 "typesGQ10BlacklistRemovedALL","typesGQ5BlacklistRemovedALL",
                 "typesGQ10BlacklistRemovedSeenTwice",  "typesGQ5BlacklistRemovedSeenTwice"]
-#filter_version=["typesALL"]
-filter_version=["typesGQ5BlacklistRemovedALL"]
+filter_version=["typesALL"]
+#filter_version=["typesGQ5BlacklistRemovedALL"]
 ##IDS_VARTYPES="GTEX-X4EO_SNPs"
 
-CADD=["0","15"] #,"15","25"]
+CADD=["0","15"]
+CHRNUM=range(1,23) #16
 
 rule all:
 	input:
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/CADD/{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
 		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_aut.tsv.gz",
-		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_aut_cadd{cadd_min}.txt.gz",cadd_min=CADD),
+		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_aut_cadd{cadd_min}.txt.gz",cadd_min=CADD),
 		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_all_cadd{cadd_min}.txt.gz",cadd_min=CADD),
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADD{this_type}_cadd{cadd_min}.txt.gz",cadd_min=CADD,this_type=filter_version)
 		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_aut.txt.gz",
 		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_all.txt.gz"
-		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrN}_CADD{this_type}.txt.gz",
-		#		chrN=CHRNUM,this_type=filter_version)
+		expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_redGQ_blacklisted_filt.bed.gz",
+			chrN="X",sample_vartype=IDS_VARTYPES,  sexdiff_val=SEXDIFF_VAL),
+		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrN}_CADD{this_type}_cadd{cadd_min}.txt.gz",
+		#		chrN=CHRNUM,this_type=filter_version,cadd_min=CADD)
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_{this_type}.txt.gz",this_type=filter_version)
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/x_{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz",
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/x_{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz",
@@ -71,8 +73,8 @@ rule all:
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_blacklisted.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADD{this_type}.txt.gz",this_type=filter_version)
-		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_redGQ_blacklisted.bed.gz",
-		#	chrN="X",sample_vartype=IDS_VARTYPES,  sexdiff_val=SEXDIFF_VAL)
+		expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_redGQ_blacklisted_filt.bed.gz",
+			chrN="X",sample_vartype=IDS_VARTYPES,  sexdiff_val=SEXDIFF_VAL)
 #first run to prepare files
 rule vcf2bed:
 	input:
@@ -301,6 +303,15 @@ rule remove_sexdiffvars_in_blacklist:
 		module load bedtools
 		bedtools subtract -a {input.gtex_file} -b {input.blacklist} -A | gzip -c > {output}
 		"""
+rule filt_mismatched_vars:
+	input:
+		config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_redGQ_blacklisted.bed.gz"
+	output:
+		config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_redGQ_blacklisted_filt.bed.gz"
+	shell:
+		"""
+		zcat {input} | awk -F"\t" '{if($2==$29){print $0}}'| grep -v "variant_type=indel" | gzip -c > {output}
+		"""		
 #rule remove_sexdiff5vars_in_blacklist:
 #	input:
 #		gtex_file=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ5/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq.bed", #only within 10kb of a gene		
@@ -470,7 +481,7 @@ rule combine_x_rvs_blcklst_removed_and_seentwice:
 		indir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD",
 		this_script=config["SCRIPTSDIR"]+"/Features/combine_x_gz.py"
 	params:
-		file_glob_this="blacklisted.bed.gz"
+		file_glob_this="blacklisted_filt.bed.gz"
 	output:
 		outfile_all=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADDtypesBlacklistRemovedALL_linc_prot.txt.gz",
 		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADDtypesBlacklistRemovedSeenTwice_linc_prot.txt.gz"
@@ -487,7 +498,7 @@ rule combine_x_rvs_sexdiff10_blcklst_removed_and_seentwice:
 		indir=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ10",
 		this_script=config["SCRIPTSDIR"]+"/Features/combine_x_gz.py"
 	params:
-		file_glob_this="blacklisted.bed.gz"
+		file_glob_this="blacklisted_filt.bed.gz"
 	output:
 		outfile_all=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADDtypesGQ10BlacklistRemovedALL_linc_prot.txt.gz",
 		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADDtypesGQ10BlacklistRemovedSeenTwice_linc_prot.txt.gz"
@@ -504,7 +515,7 @@ rule combine_x_rvs_sexdiff5_blcklst_removed_and_seentwice:
 		indir=ancient(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ5"),
 		this_script=ancient(config["SCRIPTSDIR"]+"/Features/combine_x_gz.py")
 	params:
-		file_glob_this="blacklisted.bed.gz"
+		file_glob_this="blacklisted_filt.bed.gz"
 	output:
 		outfile_all=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADDtypesGQ5BlacklistRemovedALL_linc_prot.txt.gz",
 		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADDtypesGQ5BlacklistRemovedSeenTwice_linc_prot.txt.gz"

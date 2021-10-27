@@ -11,13 +11,13 @@ TISSUES=  sorted(list(set([x.split(".")[0] for x in FILES])))
 #for i in range(len(TISSUES)):
 #	tissue_dic[TISSUES[i]]=tissues_expression[i]
 SUBGROUP=["x","both","aut"]
-SEX=["m","f","both_half"]
+SEX=["m","f","both_half","both"]
 DIR_FOR_COUNTS=["preprocessing_v8","nullshuffled_v8"]
 INCLSEX=["incl_sex","protect_sex","no_sex"]
 ALPHA=["0.5"]
-DIR_FOR_COUNTS=["nullshuffled_v8"]
-#DIR_FOR_COUNTS=["preprocessing_v8"]
-INCLSEX=["protect_sex"]
+#DIR_FOR_COUNTS=["nullshuffled_v8"]
+DIR_FOR_COUNTS=["preprocessing_v8"]
+INCLSEX=["incl_sex"]
 ZMIN=["2","2.5","3"]
 NPHEN=["3"]
 OUTLIERTYPE=["outliers","outliersTOP"]
@@ -31,6 +31,9 @@ SUBGROUP_REPS=["aut","x","aut"]
 CADD=["0","15"]
 MAF_MIN="0"
 MAF_MAX=["0.0001","0.001","0.01"]
+
+#MAF_MAX="0.001"
+ZMIN="2.5"
 
 def get_sextype(wildcards):
 	x=wildcards.actual_or_null
@@ -63,13 +66,13 @@ rule all:
 	input: 
 		#expand(config["RAREDIR"] + "/outliers_v8/Current/outliersTOP_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz",
 		#expand(config["RAREDIR"] + "/enrichments_v8/OutliersAndRVs/x_{outlierType}_cadd{cadd}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-continuous_alpha{alpha}.txt.gz",
-		expand(expand(config["RAREDIR"] + "/enrichments_v8/RR/relative_risk_min{{maf_min}}max{{maf_max}}_{chrNUM}_{{outlierType}}_cadd{{cadd}}_noglobal_medz-zthresh{{z_min}}-nphen{{nphen_min}}-{{this_sex}}-{{inclsex}}-{{actual_or_null}}-{subgroup}-binary.txt.gz",
-			 zip,chrNUM=CHRS,subgroup=SUBGROUP_REPS),
-			 outlierType=OUTLIERTYPE,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd=CADD,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX, z_min=ZMIN,nphen_min=NPHEN,alpha=ALPHA),
-		#expand(expand(config["RAREDIR"] + "/enrichments_v8/RR/relative_risk_min{{maf_min}}max{{maf_max}}_{chrNUM}_{{outlierType}}_cadd{{cadd}}_noglobal_medz-zthresh{{z_min}}-nphen{{nphen_min}}-{{this_sex}}-{{inclsex}}-{{actual_or_null}}-{subgroup}-continuous_alpha{{alpha}}.txt.gz",
+		#expand(expand(config["RAREDIR"] + "/enrichments_v8/RR/relative_risk_min{{maf_min}}max{{maf_max}}_{chrNUM}_{{outlierType}}_cadd{{cadd}}_noglobal_medz-zthresh{{z_min}}-nphen{{nphen_min}}-{{this_sex}}-{{inclsex}}-{{actual_or_null}}-{subgroup}-binary.txt.gz",
 		#	 zip,chrNUM=CHRS,subgroup=SUBGROUP_REPS),
-		#	 outlierType=OUTLIERTYPE,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd=CADD,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX, z_min=ZMIN,nphen_min=NPHEN,alpha=ALPHA)
-		#	group=GROUPS,tissue=TISSUES),
+		#	 outlierType=OUTLIERTYPE,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd=CADD,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX, z_min=ZMIN,nphen_min=NPHEN,alpha=ALPHA),
+		expand(expand(config["RAREDIR"] + "/enrichments_v8/RR/relative_risk_min{{maf_min}}max{{maf_max}}_{chrNUM}_{{outlierType}}_cadd{{cadd}}_noglobal_medz-zthresh{{z_min}}-nphen{{nphen_min}}-{{this_sex}}-{{inclsex}}-{{actual_or_null}}-{subgroup}-continuous_alpha{{alpha}}.txt.gz",
+			 zip,chrNUM=CHRS,subgroup=SUBGROUP_REPS),
+			 outlierType=OUTLIERTYPE,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd=CADD,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS,this_sex=SEX,inclsex=INCLSEX, z_min=ZMIN,nphen_min=NPHEN,alpha=ALPHA)
+		#	group=GROUPS,tissue=TISSUES)
 		#config["RAREDIR"]+"/analysis_v8/continuous/Assignments/test_train.txt",
 		###expand(config["RAREDIR"]+"/analysis_v8/continuous/Assignments/{tissue}-{actual_or_null}-accuracy-{subgroup}.txt",
 		###	tissue=TISSUES,subgroup=SUBGROUP,actual_or_null=DIR_FOR_COUNTS),
@@ -538,7 +541,7 @@ rule join_variant_annotations_aut_binary:
 	input:
 		outlier_file=config["RAREDIR"] + "/outliers_v8/Current/{outlierType}_noglobal_medz-zthresh{z_min}-nphen{nphen_min}-{this_sex}-{inclsex}-{actual_or_null}-{subgroup}-binary.txt.gz",
 		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_x.tsv.gz"
-		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADDtypesGQ5BlacklistRemovedALL_cadd{cadd}.txt.gz"
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_aut_cadd{cadd}.txt.gz"
 	params:
 		chr="aut",
 		method="medz" #medz or splicing or ase

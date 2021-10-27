@@ -53,11 +53,11 @@ bash ${scriptdir}/vcf2bedfiles_processVCFtoolsOutput.sh SNPs $prefix ${scriptdir
 ###sleep 5 # so they don't both create the outdir at the same time
 echo
 
-# process indels
-echo "Processing indels..."
-date
-bash ${scriptdir}/vcf2bedfiles_processVCFtoolsOutput.sh indels $prefix ${scriptdir}
-date
+## process indels
+#echo "Processing indels..."
+#date
+#bash ${scriptdir}/vcf2bedfiles_processVCFtoolsOutput.sh indels $prefix ${scriptdir}
+#date
 
 # add CADD scores to SNPs
 wait

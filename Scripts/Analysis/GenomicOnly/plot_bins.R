@@ -2,13 +2,13 @@ library("ggplot2")
 library("dplyr")
 library("mltools") #ecdf
 library("data.table")
-
-infile_x_numrv<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_all_numrv_bins_linc_prot.txt.gz"
-infile_x_sigdif<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_all_sigdif_bins_linc_prot.txt.gz"
-infile_aut_numrv<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/17_all_numrv_bins.txt.gz"
-infile_aut_sigdif<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/17_all_sigdif_bins.txt.gz"
-infile_x_subtypes_numrv<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_all_numrv_bins_linc_prot.txt.gz"
-infile_x_subtypes_sigdif<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_all_sigdif_bins_linc_prot.txt.gz"
+#x_subtypes_types_numrv_bins_linc_prot.txt.gz
+infile_x_numrv<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_typesGQ5BlacklistRemovedALL_numrv_bins_linc_prot.txt.gz"
+infile_x_sigdif<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_typesGQ5BlacklistRemovedALL_sigdif_bins_linc_prot.txt.gz"
+infile_aut_numrv<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/chr7_CADDtypesSeenTwice_numrv_bins_linc_prot.txt.gz"
+infile_aut_sigdif<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/chr7_CADDtypesSeenTwice_sigdif_bins_linc_prot.txt.gz"
+infile_x_subtypes_numrv<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_typesALL_numrv_bins_linc_prot.txt.gz"
+infile_x_subtypes_sigdif<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_typesALL_sigdif_bins_linc_prot.txt.gz"
 
 x_numrv<-fread(infile_x_numrv,data.table=F, header=T)
 x_sigdif<-fread(infile_x_sigdif,data.table=F)
@@ -73,11 +73,11 @@ chrtype<-"chrX"
 ggplot(to_plot,aes(x=paste0(range_min, "-",range_max), y=this_median,fill=sex))+
   geom_bar(stat="identity", color="black",  position=position_dodge()) +
   geom_errorbar(aes(ymin=IQR1,ymax=IQR3),width=.2,position=position_dodge(.9))+
-  scale_fill_manual(values=c("#F0CE22","#7CCBEA"))  + ylim(c(0,0.00015))+
+  scale_fill_manual(values=c("#F0CE22","#7CCBEA")) + # ylim(c(0,0.3))+
   ggtitle(paste0("Number of RVs per 10kb on the ",chrtype,  ": ", vartype))+xlab("MAF Bin")+ylab("RVs per 10kb")
 ggplot(to_plot,aes(x=paste0(range_min, "-",range_max), y=this_sd,color=sex))+
   geom_point(size=5,shape=18)+
-  scale_color_manual(values=c("#F0CE22","#7CCBEA"))+
+  scale_color_manual(values=c("#F0CE22","#7CCBEA"))+ylim(c(0,0.16))+
   ggtitle(paste0("SD on the ",chrtype,  ": ", vartype))+xlab("RVs per 10kb")+ylab("SD")
 
 
@@ -88,7 +88,8 @@ x_numrv_subtypes_snps_wzeros<-rbind(x_numrv_subtypes_snps,
                                     c("SNPs",0.001,"chrX","XCR2",0,0,0,0,0,0,0,0,0,"male",0,0.001),
                                     c("SNPs",0.001,"chrX","XTR",0,0,0,0,0,0,0,0,0,"male",0,0.001))
 
-to_plot<-x_numrv_subtypes_snps
+to_plot<-x_numrv_subtypes_snps %>% dplyr::filter(par=="PAR1" | par=="PAR2" | par=="NONPAR" ) %>%
+  dplyr::filter(bin_max==0.001 | bin_max==0.25)
 vartype<-"SNPs"
 chrtype<-"X"
 ggplot(to_plot,aes(x=par, y=as.numeric(this_median),
@@ -99,6 +100,8 @@ ggplot(to_plot,aes(x=par, y=as.numeric(this_median),
   #                  #lower = IQR1, upper = IQR3, 
   #                  ymin=this_min, ymax=this_max),position="dodge")+
   facet_wrap(~paste0(bin_min, "-",bin_max),scales = "free_y")+
+  #facet_wrap(~bin_max,scales = "free_y")+
+  
   scale_fill_manual(values=c("#F0CE22","#7CCBEA"))+
   ggtitle(paste0(" Median Number of RVs per 10kb on the ",chrtype,  ": ", vartype))+
   xlab("Subregion")+ylab("Median Number of RVs per 10kb")
@@ -114,8 +117,9 @@ ggplot(to_plot,aes(x=par, y=as.numeric(this_sd),color=sex, group=interaction(sex
 
 
 
-chrs<-c(1:22) #x
-mydir<-c("/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only")
+# chrs<-c(1:22) #x
+chrs<-c("7","x")
+mydir<-c("/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only")
 suffix<-c("_all_numrv_bins_linc_prot.txt.gz")
 all_chrs<-data.frame() #data.frame(matrix(nrow = 0,ncol=15))
 for (this_chr in chrs){

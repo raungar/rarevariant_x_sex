@@ -1,54 +1,53 @@
 ## R script to pick tissues and individuals for imputation and outlier calling
 ## Run from upper level directory of the repo (or adjust path to tissue colors)
 print("RUN FILTER TISSUES")
-
-
-require(ggplot2)
-require(gplots)
-require(stringr)
-require(data.table)
+library(stringr)
+library(data.table)
 library(optparse)
 
-set.seed(12345)
+option_list = list(
+  make_option(c('--RAREDIR'), type='character', default=NULL, help='RAREDIR'),
+                  make_option(c("--outfile_x"), type="character", default=NULL, help="output file for x only"),
+                  make_option(c("--outfile_a"), type="character", default=NULL, help="output file for autosome only"),
+                  make_option(c("--x_gtf_file"), type="character", default=NULL, help="path for x gtf file"),
+                  make_option(c("--a_gtf_file"), type="character", default=NULL, help="path for autosomal gtf file"),
+                  make_option(c("--group"), type="character", default=NULL, help="group: both, m, f"),
+                  make_option(c("--sample_file"), type="character", default=NULL, help="sample file like gtex_2017-06-05_v8_samples_tissues.txt"),
+                  make_option(c("--norm_expr_file"), type="character", default=NULL, help="norm expr file like gtex normalized")
+)
 
-get_opt_parser<-function(){
-        option_list = list(
-                 make_option(c("-r", "--RAREDIR"), type="character", default=NULL, help="RAREDIR"),
-                 make_option(c("-y", "--outfile_x"), type="character", default=NULL, help="output file for x only"),
-                 make_option(c("-b", "--outfile_a"), type="character", default=NULL, help="output file for autosome only"),
-                 make_option(c("-x", "--x_gtf_file"), type="character", default=NULL, help="path for x gtf file"),
-                 make_option(c("-a", "--a_gtf_file"), type="character", default=NULL, help="path for autosomal gtf file"),
-                 make_option(c("-g", "--group"), type="character", default=NULL, help="group: both, m, f"),
-                 make_option(c("-s", "--sample_file"), type="character", default=NULL, help="sample file like gtex_2017-06-05_v8_samples_tissues.txt"),
-                 make_option(c("-n", "--norm_expr_file"), type="character", default=NULL, help="norm expr file like gtex_2017-06-05_normalized_expression.txt.gz")
-                 )
+# option_list = list(
+#   make_option(c('--RAREDIR'), type='character', default=NULL, help='RAREDIR')
+# )
 
-        opt_parser = OptionParser(option_list=option_list)
-        return(opt_parser)
-}
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
+print("NOW?")
+# print(opt_parser)
+print("PARSED")
+dir<-as.character(opt$RAREDIR)
+print(dir)
+outfile_x<-as.character(opt$outfile_x)
+outfile_a<-as.character(opt$outfile_a)
+my_group<-as.character(opt$group)
+print(my_group)
+sample_file<-as.character(opt$sample_file)
+print(paste0(sample_file,"IS THE SAMPLE FILE"))
+norm_expr_file<-as.character(opt$norm_expr_file)
+x_gtf_file<-as.character(opt$x_gtf_file)
+a_gtf_file<-as.character(opt$a_gtf_file)
 
-
-opt_parser<-get_opt_parser()
-args<-parse_args(opt_parser)
-dir<-as.character(args$RAREDIR)
-outfile_x<-as.character(args$outfile_x)
-outfile_a<-as.character(args$outfile_a)
-my_group<-as.character(args$group)
-sample_file<-as.character(args$sample_file)
-norm_expr_file<-as.character(args$norm_expr_file)
-x_gtf_file<-as.character(args$x_gtf_file)
-a_gtf_file<-as.character(args$a_gtf_file)
-
+# if(TRUE){stop("STOP ME")}
 
 print(norm_expr_file)
 
-# RAREDIR="/oak/stanford/groups/smontgom/raungar/Sex/Output"
-# sample_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_v8_samples_tissues.txt"
-# norm_expr_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_normalized_expression_aut_m.txt.gz"
-# x_gtf_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/x_proteincoding_lncrna.gtf"
-# a_gtf_file="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/autosomal_proteincoding_lncrna.gtf"
-# outfile_x="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.x.both.txt.gz"
-# outfile_a="/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.aut.both.txt.gz"
+# RAREDIR="/Volumes/groups/smontgom/raungar/Sex/Output"
+# sample_file="/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_v8_samples_tissues.txt"
+# norm_expr_file="/Volumes/groups/smontgom/raungar/Sex/Output/expression_v8/Counts/normalized_expression_gathered-f-protect_sex-nullshuffled_v8-both-binary.txt.gz"
+# x_gtf_file="/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/x_proteincoding_lncrna.gtf"
+# a_gtf_file="/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/autosomal_proteincoding_lncrna.gtf"
+# outfile_x="/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.x.both.txt.gz"
+# outfile_a="/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.aut.both.txt.gz"
 # my_group="m"
 # 
 
@@ -99,6 +98,8 @@ plot.tissue.miss <- function(design, title = '', thresh = NULL) {
 
 ## Read in sample to tissue correspondence and turn it into a individual to tissue correspondence
 #meta = read.table(sample_file, header = F,
+print("SAMPLE FILE")
+print(sample_file)
 meta = fread(sample_file, header = F,
                   stringsAsFactors = F, col.names = c('Sample', 'Tissue'))
 meta$Id = apply(str_split_fixed(meta$Sample, '-', 6)[, c(1:2)], 1, paste, collapse = '-')
@@ -107,17 +108,17 @@ meta$Id = apply(str_split_fixed(meta$Sample, '-', 6)[, c(1:2)], 1, paste, collap
 ## (this is a subset because it only includes individuals that were genotyped)
 #expr = read.table(gzfile(paste0(dir,'/gtex_2017-06-05_normalized_expression_v8ciseQTLs_removed.txt.gz')), header=T)
 #expr = read.table(gzfile(norm_expr_file), header=T)
-expr = fread(norm_expr_file, header=T)
+expr = fread(norm_expr_file, header=T,fill = TRUE)
 #expr2 = fread(norm_expr_file, header=T)
 print("EXPR") #Adipose_Subcu
 #print(head(expr))
-tissue_dic<-sort(unique(meta$Tissue))
+tissue_dic<-as.character(sort(unique(meta$Tissue)))
 print("tissue dic pre becoming a dictionary so it's just vals")
 print(tissue_dic)
 print("len meta than expr tissue")
 print(length(unique(meta$Tissue)))
 print(length(unique(expr$Tissue)))
-names(tissue_dic)<-sort(unique(expr$Tissue))
+names(tissue_dic)<-as.character(sort(unique(expr$Tissue)))
 print("tissue_dic!!")
 print(tissue_dic)
 print("now printing unique(meta$Tissue)")
@@ -202,7 +203,7 @@ expr.subset = expr[which(expr$Tissue %in% tissues.final),]
 print("expr subset tissue")
 print(unique(expr.subset$Tissue))
 #head(expr.subset)
-rm(expr)
+# rm(expr)
 #expr.subset = expr.subset[, c('Tissue', 'Gene', sort(get(inds.final)))]
 #print("EXPR>SUBSET")
 #print(head(expr.subset))
@@ -230,7 +231,7 @@ x.df = fread(x_gtf_file,
 colnames(x.df)<-c("gene","type")
 #print("x.df")
 #print(head(x.df))
-x.selected<-x.df
+x.selected<-unique(x.df)
 ####x.selected$gene<-sapply(strsplit(x.selected$gene,"\\."),"[[",1)
 print(head(x.selected))
 #x.selected = x.df[x.df[, 2] %in% c('lincRNA', 'protein_coding'), 1]
@@ -274,6 +275,7 @@ expr.subset.x = expr.subset[which(expr.subset$Gene %in% genes.keep.x), ]
 print("now subset")
 expr.subset.x = as.data.frame(expr.subset.x)
 print("3:ncol")
+head(expr.subset.x)
 expr.subset.x[, 3:ncol(expr.subset.x)] = t(scale(t(expr.subset.x[, 3:ncol(expr.subset.x)])))
 
 

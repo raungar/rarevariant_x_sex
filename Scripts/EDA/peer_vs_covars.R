@@ -9,11 +9,13 @@ library(reshape2) #melt
 setwd("/oak/stanford/groups/smontgom/raungar/Sex")
 covariate_file<-"/oak/stanford/groups/smontgom/raungar/Sex/Files/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS_v2_downloaded_april2020.txt"
 pca_file<-"Files/covariates_pcs.txt"
-peer_file_blood<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/whole_bload_factors_60.tsv"
-peer_file_liver<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/liver_factors_30.tsv"
-peer_file_lung<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/lung_factors_60.tsv"
+# peer_file_blood<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/whole_bload_factors_60.tsv"
+# peer_file_liver<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/liver_factors_30.tsv"
+# peer_file_lung<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/lung_factors_60.tsv"
+peer_file_lung<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/PEER_v8/Lung_Factors45_both/factors.tsv"
 # x_ref_file<-"Files/gencode.v26.GRCh38.genes.Xonly.bed"
 # output_file<-"Plots/peer_covar_correlations_xonly_r2_20.png"
+
 
 
 eigen_cor_pcs<-function(done_pca,md,metavars,pcs=1:10,
@@ -240,7 +242,8 @@ rownames(peer_res_liver)<-peer_res_liver[,1]
 colnames(peer_res_liver)<-str_replace(colnames(peer_res_liver),"\\.","-") 
 peer_res_lung<-read.csv(peer_file_lung,header=T,sep="\t")
 rownames(peer_res_lung)<-peer_res_lung[,1]
-colnames(peer_res_lung)<-str_replace(colnames(peer_res_lung),"\\.","-") 
+peer_res_lung<-peer_res_lung[,-1]
+colnames(peer_res_lung)<-str_replace(colnames(peer_res_lung),"\\.","-")
 #change col names to match covariates
 #x_ref<-read.csv(x_ref_file,header = F,sep = "\t")
 #rownames(x_ref)<-x_ref[,4]
@@ -323,8 +326,8 @@ reduced_covars<-function(covariates){
 }
 covariates_red<-reduced_covars(covariates)
 covariates_red_pcrows<-covariates_red[rownames(pca_res),]
-
-metavars_to_use<-c("AGE","SEX","TRISCHD") #,"DTHRFGD","DTHVNTD", "HGHT","WGHT","BMI",
+metavars_to_use<-c("SEX")
+# metavars_to_use<-c("AGE","SEX","TRISCHD") #,"DTHRFGD","DTHVNTD", "HGHT","WGHT","BMI",
                   # "MHCOPD","MHBCTINF","MHNPHYS4W","MHSMKYRS","MHDRNKYRS" ) #,
                  #  "DTHPLCE","DTHMNNR","DTHSEASON","RACE","COHORT",
                  #  "dth_time_10_14","dth_time_14_18","dth_time_18_22","dth_time_22_2","dth_time_2_6","dth_time_6_10")
@@ -376,9 +379,10 @@ peer_cov_corr_blood<-cor(covariates_red_blood[,metavars_added],t(peer_res_blood[
 peer_cov_corr_blood_pairwise<-cor(covariates_red_blood[,metavars_added],t(peer_res_blood[,-1]),method = "spearman",use = "pairwise.complete.obs")
 peer_cov_corr_liver<-cor(covariates_red_liver[,metavars_added],t(peer_res_liver[,-1]),method = "spearman",use = "everything")
 peer_cov_corr_liver_pairwise<-cor(covariates_red_liver[,metavars_added],t(peer_res_liver[,-1]),method = "spearman",use = "pairwise.complete.obs")
-peer_cov_corr_lung<-cor(covariates_red_lung[,metavars_added],t(peer_res_lung[,-1]),method = "spearman",use = "everything")
+peer_cov_corr_lung<-cor(covariates_red_lung[,metavars_added],t(peer_res_lung),method = "spearman",use = "everything")
 peer_cov_corr_lung_pairwise<-cor(covariates_red_lung[,metavars_added],t(peer_res_lung[,-1]),method = "spearman",use = "pairwise.complete.obs")
 
+rownames(peer_cov_corr_lung)<-"SEX"
 corr_df<-melt(peer_cov_corr_lung)
 # corr_df$r<-as.numeric(as.character(corr_df$r))
 
@@ -394,7 +398,7 @@ my_hmp<-ggplot(corr_df, aes(Var1, Var2)) +
         axis.text.y = element_text( hjust = 1,size=6),
         axis.title.x=element_blank(), axis.title.y=element_blank())+
   labs(fill="R^2") +
-  ggtitle("Lung Peer vs. Covariates")
+  ggtitle("Lung Peer vs. Sex")
 
 ggsave("Plots/peer_lung_covars_cor.png",my_hmp,dpi=300)  
 

@@ -44,6 +44,7 @@ get_individuals<-function(tissue_path,md_dic,used_inds, fileout){
 		lm_matrix<-cbind.data.frame(t(factors_b_forlm),ind_sex)
 		#print(head(lm_matrix))
 		#formula where it is essentially factors ~ sex, specifically cbind(Factor1, Factor2, ..., FactorN) ~ Sex
+		##THIS IS THE KEY PART THAT "PROTECTS" SEX BY REGRESSION FROM PEER FACTORS
 		lm_form<-as.formula(paste0("cbind(",paste0(rownames(factors_b_forlm),collapse=","),") ~ ind_sex"))
 		#calculate the lm fit and residuals
 		#print(lm_form)

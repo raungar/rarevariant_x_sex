@@ -3,6 +3,7 @@
 all_genes_file=$1
 sexdegs_file=$2
 outfile=$3
+beta_abs_min=$4
 
 #all_genes_file="Output/sexdeg_v8/all_genes.txt"
 #sexdegs_file="Files/SexDEGs/sexDEGS-BREAST.csv"
@@ -34,6 +35,14 @@ do
 	#echo $l
 	ensg=`echo $l | awk -F"," '{print $1}'` #get teh gene name
 	beta=`echo $l | awk -F"," '{print $4}'` #get the beta (effect size of sexDEG)
+
+	beta_abs=${beta#-}
+
+	if [[ $beta_abs < $beta_abs_min ]]
+	then
+		beta=0
+	fi
+
 	genes_dic["${ensg}"]=$beta
 	#echo ${genes_dic["${ensg}"]}
 

@@ -1,0 +1,46 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+#GROUPS=["both.sex","both.regress","both","m","f","both_half.sex","both_half.regress","both_half"]
+#TYPES=["x","aut"]
+GROUPS=["both_half.regress","m","f"]
+TYPES=["x"]
+
+z_min=3
+nphen_min=5
+
+#rule all:#
+#	output: expand(config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh3_nphen5_noglobal_medz.{type}.{group}.txt.gz", type=TYPES, group=GROUPS)
+#	input: expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.{type}.{group}.txt.gz", type=TYPES, group=GROUPS)
+
+rule all:
+	input: 
+		expand(config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh"+z_min+"_nphen"+nphen_min+"_noglobal_medz_{type}_{group}.txt.gz", type=TYPES, group=GROUPS),
+		expand(config["RAREDIR"]+"/outliers_v8/outliers_zthresh"+z_min+"_nphen"+nphen_min+"_globalOutliersRemoved_{type}_{group}.txt", type=TYPES, group=GROUPS)
+
+rule call_outliers:
+	input:
+		ZSCORES=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset_{type}_{group}.txt.gz"
+	params:
+		ZTHRESH=z_min,
+		NPHEN=nphen_min,
+		outdir=config["RAREDIR"]+"/outliers_v8/"
+	output:
+		config["RAREDIR"] + "/outliers_v8/outliers_both_zthresh"++"_nphen"+nphen_min+"_noglobal_medz_{type}_{group}.txt.gz"
+	shell:
+		"""
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers.R \
+                    --Z.SCORES {input.ZSCORES}  --outfile {output} \
+	              --ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} --outdir {params.outdir}
+		"""
+rule identify_global_outliers:
+	input:
+		outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh3_nphen1_noglobal_medz_{type}_{group}.txt.gz"
+	params:
+		method="proportion"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_zthresh3_nphen1_globalOutliersRemoved_{type}_{group}.txt"
+	shell:
+		"""
+		Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/identify_global_outliers.R \
+			--OUTLIERS {input.outlier_file} --METHOD {params.method} --outfile {output.outfile}
+		"""

@@ -36,7 +36,7 @@ get_opt_parser<-function(){
 get_ind<-function(tissues, dir,euro){
   ind_list<-c()
   for(tissue in tissues){
-    this_header = fread(paste0(dir, tissue, '.tpm.txt'),nrows=1,header=F,sep="\t")
+    this_header = fread(paste0(dir,"/", tissue, '.tpm.txt'),nrows=1,header=F,sep="\t")
     ind_list<-c(ind_list,as.character(unlist(this_header)))
   }
   ind_table<-table(ind_list)
@@ -54,8 +54,8 @@ get_ind<-function(tissues, dir,euro){
 ## Finally, output the transformed matrix to a new file.
 ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_dif_file=F,inds) {
     print("in ztrans")
-    tpm = fread(paste0(dir, tissue, '.tpm.txt'))
-    reads = fread(paste0(dir, tissue, '.reads.txt'))
+    tpm = fread(paste0(dir,"/", tissue, '.tpm.txt'))
+    reads = fread(paste0(dir,"/", tissue, '.reads.txt'))
     
     ## sanity checks
     stopifnot(sum(colnames(tpm) != colnames(reads)) == 0)
@@ -98,7 +98,7 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
           stop("ERROR, sex does not make sense (not 1/2)")
         }
         
-        write.table(tpm.out.single, paste0(dir, tissue, ".log2.ztrans.",this_sex,".txt"), quote = F, sep = '\t', row.names = T, col.names = T)
+        write.table(tpm.out.single, paste0(dir,"/", tissue, ".log2.ztrans.",this_sex,".txt"), quote = F, sep = '\t', row.names = T, col.names = T)
         
         ###DO SPECIAL THINGY HERE
         return()	
@@ -147,7 +147,7 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
       tpm.cut.m= tpm.m[indices.keep.m, -1]
       tpm.out.m = scale(t(log2(tpm.cut.m + 2))) #log and z transform
       colnames(tpm.out.m) = genes[indices.keep.m]
-      write.table(tpm.out.m, paste0(dir, tissue, '.log2.ztrans.m.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
+      write.table(tpm.out.m, paste0(dir,"/", tissue, '.log2.ztrans.m.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
       
       #F
       tpm.f = tpm[, c(covs.f), with = F]
@@ -158,7 +158,7 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
       tpm.cut.f = tpm.f[indices.keep.f, -1]
       tpm.out.f = scale(t(log2(tpm.cut.f + 2))) #log and z transform
       colnames(tpm.out.f) = genes[indices.keep.f]
-      write.table(tpm.out.f, paste0(dir, tissue, '.log2.ztrans.f.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
+      write.table(tpm.out.f, paste0(dir,"/", tissue, '.log2.ztrans.f.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
       
       #Both
       print(paste0("WRITING BOTH:",dir, tissue, '.log2.ztrans.both.txt'))
@@ -171,7 +171,7 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
       tpm.cut.both = tpm.both[indices.keep.both, -1]
       tpm.out.both = scale(t(log2(tpm.cut.both + 2))) #log and z transform
       colnames(tpm.out.both) = genes[indices.keep.both]
-      write.table(tpm.out.both, paste0(dir, tissue, '.log2.ztrans.both.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
+      write.table(tpm.out.both, paste0(dir,"/", tissue, '.log2.ztrans.both.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
 
 
       #Both half
@@ -191,7 +191,7 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
       tpm.cut.both.half = tpm.both.half[indices.keep.both.half, -1]
       tpm.out.both.half = scale(t(log2(tpm.cut.both.half + 2))) #log and z transform
       colnames(tpm.out.both.half) = genes[indices.keep.both.half]
-      write.table(tpm.out.both.half, paste0(dir, tissue, '.log2.ztrans.both_half.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
+      write.table(tpm.out.both.half, paste0(dir,"/", tissue, '.log2.ztrans.both_half.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
       
       ##OPTIONAL DEPENDING ON INPUT
       #write to a file if indicated how the tpm subsetting changed number of genes
@@ -229,8 +229,10 @@ ztrans.tissue = function(tissue, dir, covs, read.filt = 6, tpm.filt = 0.1,tpm_di
 opt_parser<-get_opt_parser()
 args<-parse_args(opt_parser)
 
-dir = as.character(args$RAREDIR) #Sys.getenv('RAREDIR')
-peer.dir = paste0(dir, '/preprocessing_v8/PEER_v8/')
+peer.dir = as.character(args$RAREDIR) #Sys.getenv('RAREDIR')
+print("PEER DIR")
+print(peer.dir)
+#peer.dir = paste0(dir, '/preprocessing_v8/PEER_v8/')
 pc.file = as.character(args$GTEX_PCv8) #Sys.getenv('GTEX_PCv8')
 subject.file = as.character(args$SUBJECTSv8) #Sys.getenv('GTEX_SUBJECTSv8')
 sample.file = as.character(args$SAMPLESv8) #Sys.getenv('GTEX_SUBJECTSv8')
@@ -259,7 +261,8 @@ system(paste('mkdir -p', peer.dir))
 
 ## Generate file mapping sample identifiers to tissues
 ## Restrict to samples that pass RNA-seq QC (marked as RNASEQ in column 28 of the sample file)
-map.file = paste0(dir, '/preprocessing_v8/',map_file_prefix) #gtex_2017-06-05_v8_samples_tissues.txt')
+#map.file = paste0(dir, '/preprocessing_v8/',map_file_prefix) #gtex_2017-06-05_v8_samples_tissues.txt')
+map.file=map_file_prefix
 #command = paste("cat $GTEX_SAMPLESv8 | tail -n+2",
 command = paste("cat ", sample.file ," | tail -n+2",
                 "| cut -f1,14,28 | sed 's/ - /_/' | sed 's/ /_/g'",

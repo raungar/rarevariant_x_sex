@@ -42,23 +42,41 @@ pick.outliers.old <- function(test.stats, nphen, zthresh,medz){
 call.outliers.old <- function(data, nphen=3, sexdeg,metric,zthresh=2) {
     data.melted = melt(data, id.vars = names(data)[1:2], variable.name = 'Ind', value.name = 'Z')
     colnames(data.melted)[3:4] = c('Ind', 'Z')
-    data.melted.wsexdegs<-as.data.table(data.melted)[sexdeg, on = c('Tissue','Gene'), BetaSex := beta_sex]
-    data.melted.wsexdegs<-data.melted.wsexdegs[,BetaSexOutlier:=ifelse(abs(Z)>zthresh,BetaSex,NA)]
-    
+    data.melted_NoNA<-data.melted %>% dplyr::filter(!is.na(Z))
+    data.melted.wsexdegs<-as.data.table(data.melted_NoNA)[sexdeg, on = c('Tissue','Gene'), BetaSex := beta_sex]
+    data.melted.wsexdegs.inout<-data.melted.wsexdegs[,BetaSexOutlier:=ifelse(abs(Z)>zthresh,BetaSex,NA)]
+    #filtering here will speed things up!
+    data.melted.wsexdegs.inout.withN<-data.melted.wsexdegs[,Df:=.N,by=.(Ind, Gene)] %>% dplyr::filter(Df>=nphen)
     # head(data.melted)
     # test.stats = data.melted.wsexdegs %>% group_by(Ind, Gene) %>%
     #     summarise(MedZ = median(Z, na.rm = T),
     #               MaxBeta=max(BetaSex,na.rm=T),MinBeta=max(BetaSex,na.rm=T),AbsBeta=max(abs(BetaSex),na.rm=T),
     #               Df = sum(!is.na(Z)))
-    no_na_data<-na.omit(data.melted.wsexdegs,cols="Z")
-    test.stats=no_na_data[, c("MedZ","Df","MaxBetaSex","MinBetaSex","AbsBetaSex"):=
-                                       list(median(Z, na.rm = T),
-                                            .N,
-                                            max(BetaSexOutlier,na.rm=T),
-                                            max(BetaSexOutlier,na.rm=T),
-                                            max(abs(BetaSexOutlier),na.rm=T)),
-                                     by=.(Ind, Gene)]
-    test.stats.noTiss<-unique(test.stats[,`:=`(Tissue=NULL,Z=NULL)] )
+    # no_na_data<-na.omit(data.melted.wsexdegs,cols="Z")
+    # test.stats=data.melted.wsexdegs.inout[, c("MedZ","Df","MaxBetaSex","MinBetaSex","AbsBetaSex"):=
+    #                                    list(median(Z, na.rm = T),
+    #                                         .N,
+    #                                         max(BetaSexOutlier,na.rm=T),
+    #                                         min(BetaSexOutlier,na.rm=T),
+    #                                         max(abs(BetaSexOutlier),na.rm=T)),
+    #                                  by=.(Ind, Gene)]
+    #dat[, .(count = .N, var = sum(VAR)), by = MNTH]
+    test.stats=(data.melted.wsexdegs.inout.withN)[,
+                                             .(MedZ=median(Z, na.rm = T),
+                                              Df=Df,
+                                              MaxAbsBetaSex=max(abs(BetaSex),na.rm=T),
+                                              MaxBetaSexOutlier=max(BetaSexOutlier,na.rm=T),
+                                              MinBetaSexOutlier=min(BetaSexOutlier,na.rm=T),
+                                              AbsBetaSexOutlier=max(abs(BetaSexOutlier),na.rm=T)),
+                                             by=.(Ind, Gene)]
+    # test.stats=data.melted.wsexdegs.inout[, .(MedZ=median(Z, na.rm = T),
+    #                                         Df=.N,
+    #                                         MaxBetaSexOutlier=max(BetaSexOutlier,na.rm=T),
+    #                                         MinBetaSex=min(BetaSexOutlier,na.rm=T),
+    #                                         AbsBetaSexmax(abs(BetaSexOutlier),na.rm=T)),
+    #                                  by=.(Ind, Gene)]
+    #don't report by tissue
+     test.stats.noTiss<-unique(test.stats)
     
     # test.stats2=data.melted.wsexdegs[, .(MedZ=median(Z, na.rm = T)),
     #                                   by=.(Ind, Gene)]
@@ -79,11 +97,11 @@ pick.outliers <- function(test.stats, nphen, zthresh,medz){
     mutate(N = n())
   out = this.test.stats %>% arrange(desc(abs(MedZ))) %>%
     mutate(Y = ifelse(abs(MedZ) > zthresh, 'outlier', 'control')) %>%
-    ungroup() %>% select(Ind, Gene, N, Df, MedZ, Y,MaxBetaSex,MinBetaSex,AbsBetaSex)
+    ungroup() %>% select(Ind, Gene, N, Df, MedZ, Y,AbsBetaSex,MaxOutlierBetaSex,MinOutlierBetaSex,AbsOutlierBetaSex)
   out_topgene <- out %>% 
     group_by(Gene) %>% mutate(maxMedZ = max(abs(MedZ))) %>% 
     mutate(topOutlier=ifelse(abs(MedZ)==maxMedZ & abs(MedZ)>zthresh,"outlier","control")) %>%ungroup()%>% 
-    select(Ind, Gene, N, Df, MedZ, topOutlier,MaxBetaSex,MinBetaSex,AbsBetaSex)
+    select(Ind, Gene, N, Df, MedZ, topOutlier,AbsBetaSex,MaxOutlierBetaSex,MinOutlierBetaSex,AbsOutlierBetaSex)
   colnames(out_topgene)[6]<-"Y"
   return(list(out,out_topgene))
 }
@@ -94,24 +112,41 @@ pick.outliers <- function(test.stats, nphen, zthresh,medz){
 call.outliers <- function(data, nphen=3, zthresh,metric,sexdeg) {
   data.melted = melt(data, id.vars = names(data)[1:2], variable.name = 'Ind', value.name = 'Z')
   colnames(data.melted)[3:4] = c('Ind', 'Z')
-  data.melted.wsexdegs<-as.data.table(data.melted)[sexdeg, on = c('Tissue','Gene'), BetaSex := beta_sex]
-  data.melted.wsexdegs<-data.melted.wsexdegs[,BetaSexOutlier:=ifelse(abs(Z)>zthresh,BetaSex,NA)]
+  data.melted_NoNA<-data.melted %>% dplyr::filter(!is.na(Z))
+
+  # data.melted.wsexdegs<-as.data.table(data.melted)[sexdeg, on = c('Tissue','Gene'), BetaSex := beta_sex]
+  # data.melted.wsexdegs<-data.melted.wsexdegs[,BetaSexOutlier:=ifelse(abs(Z)>zthresh,BetaSex,NA)]
+
+  data.melted.wsexdegs<-as.data.table(data.melted_NoNA)[sexdeg, on = c('Tissue','Gene'), BetaSex := beta_sex]
+  data.melted.wsexdegs.inout<-data.melted.wsexdegs[,BetaSexOutlier:=ifelse(abs(Z)>zthresh,BetaSex,NA)]
+  #filtering here will speed things up!
+  data.melted.wsexdegs.inout.withN<-data.melted.wsexdegs[,Df:=.N,by=.(Ind, Gene)] %>% dplyr::filter(Df>=nphen)
   
   # head(data.melted)
   # test.stats = data.melted.wsexdegs %>% group_by(Ind, Gene) %>%
   #     summarise(MedZ = median(Z, na.rm = T),
   #               MaxBeta=max(BetaSex,na.rm=T),MinBeta=max(BetaSex,na.rm=T),AbsBeta=max(abs(BetaSex),na.rm=T),
-  #               Df = sum(!is.na(Z)))
-  no_na_data<-na.omit(data.melted.wsexdegs,cols="Z")
-  test.stats=no_na_data[, c("MedZ","Df","MaxBetaSex","MinBetaSex","AbsBetaSex"):=
-                          list(median(Z, na.rm = T),
-                               .N,
-                               max(BetaSexOutlier,na.rm=T),
-                               max(BetaSexOutlier,na.rm=T),
-                               max(abs(BetaSexOutlier),na.rm=T)),
-                        by=.(Ind, Gene)]
-  test.stats.noTiss<-unique(test.stats[,`:=`(Tissue=NULL,Z=NULL)] )
-  outliers = pick.outliers(test.stats.noTiss, nphen, zthresh, medz = T)
+  # #               Df = sum(!is.na(Z)))
+  # no_na_data<-na.omit(data.melted.wsexdegs,cols="Z")
+  # test.stats=no_na_data[, c("MedZ","Df","AbsBetaSex","MaxOutlierBetaSex","MinOutlierBetaSex","AbsOutlierBetaSex"):=
+  #                         list(median(Z, na.rm = T),
+  #                              .N,
+  #                              max(abs(BetaSex),na.rm=T),
+  #                              max(BetaSexOutlier,na.rm=T),
+  #                              min(BetaSexOutlier,na.rm=T),
+  #                              max(abs(BetaSexOutlier),na.rm=T)),
+  #                       by=.(Ind, Gene)]
+  test.stats=(data.melted.wsexdegs.inout.withN)[,
+                                                .(MedZ=median(Z, na.rm = T),
+                                                  Df=Df,
+                                                  AbsBetaSex=max(abs(BetaSex),na.rm=T),
+                                                  MaxOutlierBetaSex=max(BetaSexOutlier,na.rm=T),
+                                                  MinOutlierBetaSex=min(BetaSexOutlier,na.rm=T),
+                                                  AbsOutlierBetaSex=max(abs(BetaSexOutlier),na.rm=T)),
+                                                by=.(Ind, Gene)]
+  # test.stats.noTiss<-unique(test.stats[,`:=`(Tissue=NULL,Z=NULL)] )
+   test.stats.uniq<-unique(test.stats)
+  outliers = pick.outliers(test.stats.uniq, nphen, zthresh, medz = T)
   return(outliers)
 }
 
@@ -175,10 +210,11 @@ sexdeg_file=opt$sexdeg_file
 # zscore="/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_normalized_expression_subsetted_x_f.txt.gz"
 # globalFile="/Volumes/groups/smontgom/raungar/Sex/Output/outliers_v8/outliers_zthresh2_nphen5_globalOutliersRemoved_x_f.txt"
 # # chr_file="/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/autosomal_gtf_protclinc_wchr.txt"
-#  chr_file="/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/x_proteincoding_lncrna.gtf"
-# chrtype="x"
-# nphen=3
-# z=2.5
+# sexdeg_file="/Volumes/groups/smontgom/raungar/Sex/Output/sexdeg_v8/alltissues_genes_sexDEGs_beta0.111.txt.gz"
+ #  chr_file="/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/both_gtf_protclinc_wchr.txt"
+ # chrtype="x"
+ # nphen=3
+ # zthresh=2.5
 
 
 ## Read in the normalized data
@@ -196,7 +232,7 @@ print(paste0("ZSCORES: ", zscore))
 
 
 ## Read in the normalized data
-data = (fread( zscore))
+# data = (fread( zscore))
 outliers_medz = call.outliers(data, nphen, zthresh,metric = 'medz',sexdeg)
 #outliers_medz_top = pick.outliers(outliers_medz, nphen, zthresh)
 outliers<-outliers_medz[[1]]

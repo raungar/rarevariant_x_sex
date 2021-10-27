@@ -1,6 +1,6 @@
 #!/bin/python
 
-import argparse, re, gzip,glob, numpy
+import argparse, re, gzip,glob, numpy, os
 #from collections import defaultdict
 
 
@@ -31,6 +31,7 @@ with open(args.sexfile,"r") as sex_f_read:
 
 #compile at the beginning for speed
 af_both=re.compile("AF_nfe=")
+variant_type=re.compile("variant_type=")
 
 #key is position, value(m,f) -- if set len ==2 then seen in both sexes
 seen_dic={}
@@ -39,13 +40,13 @@ seen_dic={}
 ####put positions into found dic
 for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 	print(this_f)
-	with open(this_f, 'r') as f:
+	with gzip.open(this_f, 'rb') as f:
 		f_split=this_f.split("/")[-1]
 		f_split_again=f_split.split("_")
 		ind=next(filter(lambda x: re.search('GTEX',x),f_split_again))
 		sex=sex_key[ind]
 		for line in f:
-			line_split=line.split("\t")
+			line_split=line.decode('utf-8').split("\t")
 			chr=line_split[0] #chr
 			pos=line_split[1] #pos
 			if pos in seen_dic:
@@ -56,7 +57,9 @@ print(seen_dic)
 
 for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 	print(this_f)
-	with gzip.open(this_f, 'r',encoding='utf-8') as f:
+	if (os.path.isdir(this_f)):
+		continue
+	with gzip.open(this_f, 'rb') as f:
 		f_split=this_f.split("/")[-1]
 		f_split_again=f_split.split("_")
 		ind=next(filter(lambda x: re.search('GTEX',x),f_split_again))
@@ -65,15 +68,18 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 		print(ind)
 		print(sex)
 		for line in f:
-			line_split=line.split("\t")
+			line_split=line.decode('utf-8').split("\t")
 			chr=line_split[0] #chr
 			pos=line_split[1] #pos
 			gtex_maf=line_split[3] #GTEx MAF
+			geno=line_split[4]
 			ref=line_split[5]
 			alt=line_split[6]
 			ensg=line_split[42]
 			genetype=line_split[46]
 			gnomad_split=(line_split[34]).split(';')
+			cadd_raw=line_split[len(line_split)-2]
+			cadd_phred=(line_split[len(line_split)-1]).strip()
 			if gnomad_split[0] == "NO_MATCH":
 				print("NO MATCH: ",ref,",",alt,",",gtex_maf)
 				#this prepares for cases where the reference allelse is actually teh minor allele
@@ -85,6 +91,9 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 					gnomad_maf_both=float(0)		
 				print("both: ",gnomad_maf_both)
 			else:
+				vartype=(([col for col in gnomad_split if variant_type.match(col)])[0].split("="))[1]
+				if(vartype!="snv"):
+					gnomad_maf_both=gtex_maf
 				gnomad_maf_both=float((([col for col in gnomad_split if af_both.match(col)])[0].split("="))[1])
 			#if gtex maf is large than 1% difference, use gtex maf
 			if(float(gtex_maf)-float(gnomad_maf_both)>0.01):
@@ -93,10 +102,10 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 				use_maf=str(gnomad_maf_both)
 			#if gnomad maf is zero, use gtex maf
 			#this is bc we will be filtering for being in 2 people, so def not a real maf of zero...
-			if(float(gnomad_maf)==0):
+			if(float(gnomad_maf_both)==0):
 				use_maf=gtex_maf
 			#print("\t".join([chr,pos,ensg, genetype,ind,sex,gtex_maf,str(gnomad_maf_both)]))
-			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex]
+			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex,str(cadd_raw),str(cadd_phred),str(geno)]
 			#must be seen in both
 			#length of dic will be two if has male and female!
 			if (len(seen_dic[pos])<2):

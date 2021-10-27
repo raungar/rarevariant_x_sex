@@ -3,7 +3,8 @@ configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths
 rule all:
 	input:
 		#config["RAREDIR"]+"/Features/run_features_variant_beds.log"
-		config["RAREDIR"]+"/Features/run_vcf2bed.log"
+		#config["RAREDIR"]+"/Features/run_vcf2bed.log"
+		config["RAREDIR"]+"/Features/run_features_variant_beds.log"
 
 #first run to prepare files
 rule vcf2bed:

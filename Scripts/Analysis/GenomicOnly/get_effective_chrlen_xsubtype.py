@@ -35,6 +35,7 @@ chr_len_dic["PAR2"]=len_par2
 chr_len_dic["NONPAR"]=len_nonpar
 chr_len_dic["XCR1"]=len_xcr1
 chr_len_dic["XCR2"]=len_xcr2
+chr_len_dic["XAR"]=len_xar
 chr_len_dic["XTR"]=len_xtr
 
 

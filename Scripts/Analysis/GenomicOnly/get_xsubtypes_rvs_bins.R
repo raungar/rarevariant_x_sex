@@ -9,6 +9,7 @@ option_list = list(
   make_option(c("--infile"), type = 'character', default = NULL, help = "path of input file"),
   make_option(c("--euro_file"), type = 'character', default = NULL, help = "path of european file (gtex_2017-06-05_v8_euro_VCFids.txt)"),
   make_option(c("--sex_file"), type = 'character', default = NULL, help = "path of sample annotations file that includes sex"),
+  make_option(c("--effective_chrlen"), type = 'character', default = NULL, help = "path of file that has all chr lengths"),
   make_option(c("--out_numrvs"), type = 'character', default = NULL, help = "outfile: number of rare variants"),
   make_option(c("--out_sigdif"), type = 'character', default = NULL, help = "outfile: sig difference between m/f")
 )
@@ -21,13 +22,20 @@ euro_file <- as.character(opt$euro_file)
 sex_file <- as.character(opt$sex_file)
 out_numrvs <- as.character(opt$out_numrvs)
 out_sigdif <- as.character(opt$out_sigdif)
+chrlens <- as.character(opt$effective_chrlen)
 
+###chrs!
+chr_df<-fread(chrlens,data.table=F)
+colnames(chr_df)<-c("chr","effective_length")
+chr_hash<-chr_df$effective_length
+names(chr_hash)<-chr_df$chr
+par_hash=chr_hash
 
-
-# infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/x_all_rvs_inds_types.txt.gz"
+# infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/Combined/x_all_rvs_inds_typesSeenTwice_linc_prot.txt.gz"
 # euro_file<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt"
-# sex_file<-"/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/sample_annotations/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS_v2_downloaded_april2020.txt"
-# out_numrvs<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_all_numrv.txt.gz"
+# chrlens<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/effective_chr_len_prot_linc_xsubtype.txt"
+#  sex_file<-"/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/sample_annotations/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS_v2_downloaded_april2020.txt"
+#  out_numrvs<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_all_numrv.txt.gz"
 # out_sigdif<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_all_sigdif.txt"
 # chrtype="x"
 
@@ -37,7 +45,8 @@ wrong_self_reported_ancestry<-c("GTEX-11TT1", "GTEX-12ZZX", "GTEX-131XF", "GTEX-
 
 
 exp_data = fread(infile,data.table=F)
-colnames(exp_data)<-c("chr","start","end","maf","gtex_sample","vartype","ensg","genetype")
+#colnames(exp_data)<-c("chr","start","end","maf","gtex_sample","vartype","ensg","genetype")
+colnames(exp_data)<-c("chr","start","end","maf_gtex","maf_gnomad","maf","gtex_sample","vartype","ensg","genetype","sex")
 euro<-fread(euro_file)
 euro_vec_unchecked<-as.character(data.frame(euro)[,1])
 euro_vec<-euro_vec_unchecked[!(euro_vec_unchecked %in% wrong_self_reported_ancestry )]
@@ -84,6 +93,13 @@ get_summary_par<-function(this_cum_maf, this_sdcol){
   print(paste0("THIS SD COL: ",this_sdcol))
   print(head(this_cum_maf))
   print(tail(this_cum_maf))
+  if(nrow(this_cum_maf)==0){
+	print("no observations")
+	return(data.frame("vartype"=character(),"maf"=numeric(),"chr"=character(),
+	"par"=character(),"this_min"=numeric(),"IQR1"=numeric(),
+	"this_median"=numeric(),"this_mean"=numeric(),"IQR3"=numeric(),
+	"this_max"=numeric(),"this_sd"=numeric()))
+  }
   cum_maf_sd<-as.data.table(this_cum_maf)[,
                                           Reduce(c,lapply(.SD,stats::sd)), 
                                           by=.(vartype,UpperBound,chr,par_region),.SDcols=c(this_sdcol)]
@@ -127,7 +143,8 @@ make_subregion_df<-function(){
 
 
 subregion_df<-make_subregion_df()[[1]]
-par_hash<-make_subregion_df()[[2]]
+
+# par_hash<-make_subregion_df()[[2]]
 
 cum_maf_parreg<-data.frame(row.names=c("gtex_sample","vartype","chr","par_region","UpperBound","N.cum","CDF", "N.cum.adj"))
 
@@ -148,11 +165,15 @@ for (this_subregion in rownames(subregion_df)){
   exp_data_this_subregion<-exp_data_euro_wpars %>% dplyr::filter(par_region==this_subregion)
   #uses mltools package to calculate the cumulative number of RVs at each MAF for
   #each individual x vartype x chr x maf level, going from 0 to .5 in 0.001 intervals
-  bin_list<-list(c(0,0.001),c(0.001,0.005),c(0.005,0.01),c(0.01,0.05),c(0.05,0.1),c(0.1,0.25))
+  print("further in bin list")
+  bin_list<-list(c(-1,0),c(0,0.001),c(0.001,0.005),c(0.005,0.01), c(0.01,0.05),c(0.05,0.1),c(0.1,0.25))
+  print(bin_list)
   for (this_bin in bin_list){
     this_bin_min=this_bin[1]
     this_bin_max=this_bin[2]
     
+  	print(paste0("this bin min: ",this_bin_min," and this bin max: ", this_bin_max))
+
     cum_maf_parreg_this_subregion<-as.data.table(exp_data_this_subregion %>% dplyr::filter(maf > this_bin_min & maf <= this_bin_max))[,
                                                      Reduce(c,lapply(.SD, function(x) as.list(empirical_cdf(x,ubounds=this_bin_max)))),
                                                      by=.(gtex_sample,vartype,chr,par_region),.SDcols="maf"] %>% mutate(range_min=this_bin_min,range_max=this_bin_max)
@@ -170,6 +191,7 @@ for (this_subregion in rownames(subregion_df)){
 this_cum_maf_parreg_m<-cum_maf_parreg[sex_hash[cum_maf_parreg$gtex_sample]==1,]
 this_cum_maf_parreg_f<-cum_maf_parreg[sex_hash[cum_maf_parreg$gtex_sample]==2,]
 this_cum_maf_parreg_m_double<-this_cum_maf_parreg_m
+#double for males
 this_cum_maf_parreg_m_double$N.cum<-this_cum_maf_parreg_m_double$N.cum*2
 this_cum_maf_parreg_m_double$N.cum.adj<-this_cum_maf_parreg_m_double$N.cum.adj*2
 
@@ -201,18 +223,58 @@ colnames(cum_maf_summ_plot_m_and_f_parreg_adj_all)<-c("vartype","maf","chr","par
 mmw_all_par<-data.frame(matrix(nrow=0,ncol=7))
 colnames(mmw_all_par)<-c("maf","pval","padj","vartype","par_region","bin_min","bin_max")
 
-bin_list<-list(c(0,0.001),c(0.001,0.005),c(0.005,0.01),c(0.01,0.05),c(0.05,0.1),c(0.1,0.25))
+# bin_list<-list(c(-1,0),c(0,0.00698),c(0.00698,0.00699),c(0.00699,0.001), c(0.001,0.01),c(0.01,0.05),c(0.05,0.1),c(0.1,0.25))
+print("bin list")
+print(bin_list)
 for (this_bin in bin_list){
   this_bin_min=this_bin[1]
   this_bin_max=this_bin[2]
+  print(paste0("doing: ",this_bin_min," - ",this_bin_max))
   binned_f<-this_cum_maf_parreg_f  %>% dplyr::filter(UpperBound > this_bin_min & UpperBound <= this_bin_max)
   binned_m<-this_cum_maf_parreg_m_double  %>% dplyr::filter(UpperBound > this_bin_min & UpperBound <= this_bin_max)
+  print("getting summary")
   summ_parreg_adj_binned_f<-get_summary_par(binned_f,"N.cum.adj")
+   print("summ summ_parreg_adj_binned_f: ")
+   print(summ_parreg_adj_binned_f)
   summ_parreg_adj_binned_m<-get_summary_par(binned_m,"N.cum.adj")
-  this_cum_maf_summ_plot_m_and_f_parreg_adj<-cbind(rbind(cbind(summ_parreg_adj_binned_m, "sex"="male"),
+  print("summ_parreg_adj_binned_m")
+  print(summ_parreg_adj_binned_m)
+
+
+  nrow_summ_parreg_adj_binned_m<-nrow(summ_parreg_adj_binned_m)
+  nrow_summ_parreg_adj_binned_f<-nrow(summ_parreg_adj_binned_f)
+
+  print(paste0("nrow m: ",nrow_summ_parreg_adj_binned_m,"  --- nrow f" ,nrow_summ_parreg_adj_binned_f))
+  if (nrow_summ_parreg_adj_binned_m!=0 & nrow_summ_parreg_adj_binned_f!=0){
+   print("neither zero")
+   this_cum_maf_summ_plot_m_and_f_parreg_adj<-cbind(rbind(cbind(summ_parreg_adj_binned_m, "sex"="male"),
                                               cbind(summ_parreg_adj_binned_f, "sex"="female")),
                                               "bin_min"=this_bin_min,"bin_max"=this_bin_max)
-  cum_maf_summ_plot_m_and_f_parreg_adj_all<-rbind(cum_maf_summ_plot_m_and_f_parreg_adj_all,this_cum_maf_summ_plot_m_and_f_parreg_adj)
+	  print("combined.....")
+	  print(this_cum_maf_summ_plot_m_and_f_parreg_adj)
+	  cum_maf_summ_plot_m_and_f_parreg_adj_all<-rbind(cum_maf_summ_plot_m_and_f_parreg_adj_all,this_cum_maf_summ_plot_m_and_f_parreg_adj)
+
+  } else if (nrow_summ_parreg_adj_binned_m==0 & nrow_summ_parreg_adj_binned_f==0){
+	print("both were zero")
+  } else if(nrow_summ_parreg_adj_binned_m==0){
+     print("male zero")
+	this_cum_maf_summ_plot_m_and_f_parreg_adj<-cbind(rbind(cbind(summ_parreg_adj_binned_f, "sex"="female"),
+                                              "bin_min"=this_bin_min,"bin_max"=this_bin_max))
+       print("combined.....")
+       print(this_cum_maf_summ_plot_m_and_f_parreg_adj)
+      cum_maf_summ_plot_m_and_f_parreg_adj_all<-rbind(cum_maf_summ_plot_m_and_f_parreg_adj_all,this_cum_maf_summ_plot_m_and_f_parreg_adj)
+  } else if (nrow_summ_parreg_adj_binned_f==0){
+      print("females 0")
+	this_cum_maf_summ_plot_m_and_f_parreg_adj<-cbind(rbind(cbind(summ_parreg_adj_binned_m, "sex"="male"),
+                                              "bin_min"=this_bin_min,"bin_max"=this_bin_max))	
+       print("combined.....")
+       print(this_cum_maf_summ_plot_m_and_f_parreg_adj)
+      cum_maf_summ_plot_m_and_f_parreg_adj_all<-rbind(cum_maf_summ_plot_m_and_f_parreg_adj_all,this_cum_maf_summ_plot_m_and_f_parreg_adj)
+	
+  } else{
+	print("shouldnt get here.. error")
+  }
+
   
   mmw_snps_par<-get_mww_test_m_f_par(binned_m,binned_f,"SNPs","BH",par_hash)
   #mmw_indels_par<-get_mww_test_m_f_par(binned_m,binned_f,this_var = "indels","BH",par_hash)

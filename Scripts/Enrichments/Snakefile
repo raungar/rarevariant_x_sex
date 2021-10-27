@@ -3,27 +3,28 @@ configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths
 #GROUPS=["both","m","f","both.regress","both.sex", "both_half","both_half.regress", "both_half.sex"]
 GROUPS=["m","f", "both_half.regress"]
 TYPES=["x","aut"]
-zmin="2"
-nphen="1"
+zmin="3"
+nphen="5"
 
 rule all:
 	input: 
-		config["RAREDIR"]+"/enrichments_v8/all_rvs_inds_types.txt.gz"
+		#config["RAREDIR"]+"/enrichments_v8/aut_all_rvs_inds_types.txt.gz"
 		#expand(config["RAREDIR"]+"/enrichments_v8/relative_risk_z"+zmin+"_nphen"+nphen+"_x_{group}.xci.csv",  group=GROUPS),
 		#expand(config["RAREDIR"]+"/enrichments_v8/relative_risk_z"+zmin+"_nphen"+nphen+"_x_{group}.par.csv",  group=GROUPS),
 		#expand(config["RAREDIR"]+"/enrichments_v8/relative_risk_z3_nphen1_x_{group}.xci.RData",  group=GROUPS)
 		#expand(config["RAREDIR"]+"/enrichments_v8/outliers_zthresh3_nphen5_noglobal_medz_varAnnot_{type}_{group}.txt", type=TYPES, group=GROUPS)
-		#expand(config["RAREDIR"]+"/enrichments_v8/enrichments_10kb_z3_nphen1_{type}_{group}.RData", type=TYPES, group=GROUPS),
+		expand(config["RAREDIR"]+"/enrichments_v8/relative_risk_z"+zmin+"_nphen"+nphen+"_{type}_{group}.RData", type=TYPES, group=GROUPS),
+		#expand(config["RAREDIR"]+"/enrichments_v8/enrichments_10kb_z"+zmin+"_nphen"+nphen+"_{type}_{group}.RData", type=TYPES, group=GROUPS),
 		#config["RAREDIR"]+"/enrichments_v8/outliers_zthresh"+zmin+"_nphen"+nphen+"_noglobal_medz_varAnnot_x_m.txt"
 
-rule combine_rvs_inds:
+rule combine_rvs_inds_x:
 	input:
 		file_dir=config["RAREDIR"]+"/features_v8/bySite"
 	params:
-		pregz=config["RAREDIR"]+"/enrichments_v8/all_rvs_inds_types.txt",
+		pregz=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types.txt",
 		pattern="x*gz"
 	output:
-		gz=config["RAREDIR"]+"/enrichments_v8/all_rvs_inds_types.txt.gz"
+		gz=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types.txt.gz"
 	shell:
 		"""
 		echo -e chr\tstart\tend\tmaf\tsample\tvartype	> {params.pregz}
@@ -41,11 +42,40 @@ rule combine_rvs_inds:
 		gzip {params.pregz}
 		"""
 
+
+rule combine_rvs_inds_aut:
+	input:
+		file_dir=config["RAREDIR"]+"/features_v8/bySiteAut",
+		sv_file=config["RAREDIR"]+"/features_v8/all_rare_variants_noWindow_HallLabSV_hg38_corrected.bed"
+	params:
+		pregz=config["RAREDIR"]+"/enrichments_v8/aut_all_rvs_inds_types.txt",
+		pattern="GTEX*gz"
+	output:
+		gz=config["RAREDIR"]+"/enrichments_v8/aut_all_rvs_inds_types.txt.gz"
+	shell:
+		"""
+		echo -e chr\tstart\tend\tmaf\tsample\tvartype	> {params.pregz}
+
+		for f in {input.file_dir}/{params.pattern}
+		do
+			echo $f
+			gtex_id=`echo $f | awk -F"/" '{{print $NF}}' | grep -o -P 'GTEX.{{0,6}}'`
+			var_type=`echo $f | awk -F"/" '{{print $NF}}' | egrep -o '_indels|_SNPs|_SV' | cut -c2-`
+			echo $gtex_id","$var_type
+			zcat $f | awk -F"\t" -v gtex_id=$gtex_id -v var_type=$var_type '{{print $1"\t"$2"\t"$3"\t"$4"\t"gtex_id"\t"var_type}}' \
+			 >> {params.pregz}
+		done
+		
+		less -S {input.sv_file} | awk -F"\t" '{{print $1"\t"$2"\t"$3"\t"$5"\t"$4"\tSV"}}' >> {params.pregz}
+
+		gzip {params.pregz}
+		"""
+
 rule get_shared_rvs:
 	input:
-		rvs_all=Output/enrichments_v8/all_rvs_inds_types.txt.gz
+		rvs_all=config["RAREDIR"]+"/enrichments_v8/all_rvs_inds_types.txt.gz"
 	output:
-		temp_out=temp(config["RAREDIR"]+"/enrichments_v8/{type}_temp_out.txt")
+		temp_out=temp(config["RAREDIR"]+"/enrichments_v8/{type}_temp_out.txt"),
 		out=config["RAREDIR"]+"/enrichments_v8/{type}_all_rvs_inds_types_repeated.txt"
 	shell:
 		"""
@@ -54,8 +84,8 @@ rule get_shared_rvs:
 
 rule annotate_shared_rvs:
 	input:
-		rv_file=config["RAREDIR"]+"/enrichments_v8/{type}_all_rvs_inds_types_repeated.txt.gz"
-		gtf_file=config["hg38_gtf"]
+		rv_file=config["RAREDIR"]+"/enrichments_v8/{type}_all_rvs_inds_types_repeated.txt.gz",
+		gtf_file=config["GTEX_GENES"]
 	output:
 		config["RAREDIR"]+"/enrichments_v8/{type}_all_rvs_inds_types_repeated_annot.txt"
 	shell:
@@ -88,6 +118,7 @@ rule calculate_risks:
 		relative=config["RAREDIR"]+"/enrichments_v8/relative_risk_z"+zmin+"_nphen"+nphen+"_{type}_{group}.RData"
 	shell:
 		"""
+		module load R
 		if [ ! -f {output.relative} ]
 		then
 			Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_across_types.R \
