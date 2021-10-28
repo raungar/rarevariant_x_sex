@@ -56,8 +56,8 @@ print(paste0("reading in: ",infile))
 
 exp_data = fread(infile,data.table=F)
 #Df is number of tisseus
-colnames(exp_data)<-c("ind","ensg","N","Df","MedZ","Y","chr","start","end","vartype","sex",
-                      "gtex_maf","gnomad_maf","use_maf","genetype","numrv","cadd_raw","cadd_phred")
+colnames(exp_data)<-c("ind","ensg","N","Df","MedZ","Y","chr","chrNum","start","end","vartype","sex",
+                      "gtex_maf","gnomad_maf","use_maf","genetype","cadd_raw","cadd_phred","geno","numrv")
 
 exp_data$gene_id_red<-sapply(strsplit(exp_data$ensg,"\\."), "[[",1)
 exp_data$cadd_phred[is.na(exp_data$cadd_phred)] <- 0
@@ -65,18 +65,26 @@ exp_data$OutlierValue = -log10(2*pnorm(-abs(exp_data$MedZ)))
 
 print("filter for MAF")
 #choose rare/common
-has_variant<-apply((exp_data),1,function(x){
+has_variant<-apply(exp_data,1,function(x){
   this_maf<-as.numeric(x[which(colnames(exp_data)=="use_maf")])
+  # print(this_maf)
   this_cadd_phred<-as.numeric(x[which(colnames(exp_data)=="cadd_phred")])
+  this_geno<-as.numeric(x[which(colnames(exp_data)=="geno")])
+  # print(this_cadd_phred)
   #no variants found w/in 10kb of gene, so not rare
-  if(is.na(this_maf)){"common"}
-  else if (this_maf>=min_maf & this_maf<max_maf){
-    if(this_cadd_phred>=cadd_min){"rare"}
+  if(is.na(this_maf)){
+    "common"
+  } else if (this_maf>=min_maf & this_maf<max_maf){
+    # print("HI")
+    if(this_cadd_phred>=cadd_min & this_geno>=1 & !is.na(this_geno)){"rare"}
     else if(this_cadd_phred<cadd_min){"common"}
+    else if(this_cadd_phred>=cadd_min & (this_geno<1 | is.na(this_geno))){"common"}
     else (stop("ERROR: VARIANT NOT MAKING SENSE"))
-    }
-  else if (this_maf>=max_maf){"common"}
-  else (stop("ERROR: VARIANT NOT MAKING SENSE"))
+  } else if (this_maf>=max_maf){
+    "common"
+  }else if(this_maf<min_maf){
+    "common"  
+  }else (stop("ERROR: VARIANT NOT MAKING SENSE"))
 })
 exp_data$has_variant<-has_variant
 gtf_code<-fread(gtf_code_file,header=F)
@@ -89,15 +97,23 @@ xinact$GeneID_red<-sapply(strsplit(xinact$`Gene ID`,"\\."), "[[",1)
 
 exp_data_xci<-merge(exp_data,xinact[c("Combined XCI status", "GeneID_red")], by.x="gene_id_red",by.y="GeneID_red")
 colnames(exp_data_xci)[colnames(exp_data_xci)=="Combined XCI status"]<-"XCI_STATUS"
-
+print(head(exp_data_xci))
 print("filter")
 ### get relative risk per category
+### get relative risk per category
+exp_controls = exp_data_xci %>% dplyr::filter(Y=="control")
+exp_outliers = exp_data_xci %>% dplyr::filter(Y=="outlier")
+exp_outliers_over = exp_data_xci %>% dplyr::filter(Y=="outlier") %>% dplyr::filter(MedZ>0)#was just expdata
+exp_outliers_under = exp_data_xci %>% dplyr::filter(Y=="outlier") %>% dplyr::filter(MedZ<0)#was just expdata
 
-exp_outliers = exp_data_xci %>% dplyr::filter(abs(MedZ) >= zscore)  %>% dplyr::filter(as.numeric(Df)>=nphen)
-exp_controls = dplyr::filter(exp_data_xci, (abs(MedZ) < zscore) | (abs(MedZ) >= zscore & as.numeric(Df)<nphen))
 
 
-
+print("relative risk")
+### Relative risk
+risks = data.frame(Risk = numeric(), Lower = numeric(), Upper = numeric(), Pval = numeric(), St = character())
+risks = data.frame(Risk = numeric(), Lower = numeric(), Upper = numeric(), Pval = numeric(), Subregion = character(),
+                   exp_nn=numeric(),exp_ny=numeric(),exp_yn=numeric(),exp_yy=numeric(),num_outliers=numeric(),
+                   sex=character(),z=numeric(),nphen=numeric(),cadd_min=numeric(),Type=character())
 
 
 
@@ -105,32 +121,54 @@ exp_controls = dplyr::filter(exp_data_xci, (abs(MedZ) < zscore) | (abs(MedZ) >= 
 print("relative risk")
 ### Relative risk
 risks = data.frame(Risk = numeric(), Lower = numeric(), Upper = numeric(), Pval = numeric(), St = character())
+exp_types=c("all","over","under")
 xci_status = unique(exp_data_xci$XCI_STATUS)
-for (xci in na.omit(xci_status)) {
-   print(xci)
-
-    exp_nn = nrow(exp_controls %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter( has_variant != "rare")) #%>% dplyr::filter(cadd_phred>cadd_min))
-    exp_ny = nrow(exp_controls %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter(has_variant == "rare")) #%>% dplyr::filter(cadd_phred>cadd_min))
-    exp_yn = nrow(exp_outliers %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter(has_variant != "rare")) #%>% dplyr::filter(cadd_phred>cadd_min))
-    exp_yy = nrow(exp_outliers %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter(has_variant == "rare")) #%>% dplyr::filter(cadd_phred>cadd_min))
-   print(paste0("building table with: ",exp_nn," and ",exp_ny," and ",exp_yn," and ",exp_yy))
-
-   exptable = rbind(c(exp_nn,exp_ny),c(exp_yn,exp_yy))
-   err = epitab(exptable, method = 'riskratio')
-   risks = rbind(risks, data.frame(Risk = err$tab[2,5],
-                                   Lower = err$tab[2,6],
-                                   Upper = err$tab[2,7],
-                                   Pval = err$tab[2,8],
-                                   XCI_STATUS = xci,
-                                   exp_nn=exp_nn,
-                                   exp_ny=exp_ny,
-                                   exp_yn=exp_yn,
-                                   exp_yy=exp_yy,
-                                   num_outliers=nrow(exp_outliers%>% dplyr::filter(XCI_STATUS == xci)),
-                                   sex=sex,z=zscore,nphen=nphen,cadd=cadd_min,
-                                   Type = 'XCI'))   
+for(exp_type in exp_types){
+  if(exp_type=="all"){
+    this_exp_outliers<-exp_outliers
+    
+  }else if(exp_type=="over"){
+    this_exp_outliers<-exp_outliers_over
+    
+  }else if(exp_type=="under"){
+    this_exp_outliers<-exp_outliers_under
+    
+  }else{stop("ERROR: INVALID EXP TYPE")}  
+    for (xci in na.omit(xci_status)) {
+     print(xci)
+  
+      exp_nn = nrow(exp_controls %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter( has_variant != "rare")) #%>% dplyr::filter(cadd_phred>cadd_min))
+      exp_ny = nrow(exp_controls %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter(has_variant == "rare")) #%>% dplyr::filter(cadd_phred>cadd_min))
+      exp_yn = nrow(this_exp_outliers %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter(has_variant != "rare")) #%>% dplyr::filter(cadd_phred>cadd_min))
+      exp_yy = nrow(this_exp_outliers %>% dplyr::filter(XCI_STATUS == xci) %>% dplyr::filter(has_variant == "rare")) #%>% dplyr::filter(cadd_phred>cadd_min))
+     print(paste0("building table with: ",exp_nn," and ",exp_ny," and ",exp_yn," and ",exp_yy))
+     if(exp_nn==0 & exp_ny==0){print("NO NON OUTLIERS")}
+     else if(exp_nn==1 | exp_ny == 1){print("don't swap for no reason.")}
+     else if(exp_nn==0){exp_nn=1;exp_ny=exp_ny-1}
+     else if(exp_ny==0){exp_ny=1;exp_nn=exp_nn-1}
+     else{print("No zeros, no worries")}
+     if(exp_yn==0 & exp_yy==0){print("NO OUTLIERS")}
+     else if(exp_yn==1 | exp_yy == 1){print("don't swap for no reason.")}
+     else if(exp_yn==0){exp_yn=1;exp_yy=exp_yy-1}
+     else if(exp_yy==0){exp_yy=1;exp_yn=exp_yn-1}
+     else{print("No zeros, no worries")}
+     exptable = rbind(c(exp_nn,exp_ny),c(exp_yn,exp_yy))
+     err = epitab(exptable, method = 'riskratio')
+     risks = rbind(risks, data.frame(Risk = err$tab[2,5],
+                                     Lower = err$tab[2,6],
+                                     Upper = err$tab[2,7],
+                                     Pval = err$tab[2,8],
+                                     XCI_STATUS = xci,
+                                     exp_nn=exp_nn,
+                                     exp_ny=exp_ny,
+                                     exp_yn=exp_yn,
+                                     exp_yy=exp_yy,
+                                     num_outliers=nrow(this_exp_outliers%>% dplyr::filter(XCI_STATUS == xci)),
+                                     sex=sex,z=zscore,nphen=nphen,cadd=cadd_min,
+                                     exp_type=exp_type,
+                                     Type = 'XCI'))   
+  }
 }
- 
 risks = risks %>% arrange(by=Risk) 
 risks$XCI_STATUS = factor(risks$XCI_STATUS, levels=unique(risks$XCI_STATUS))
 # risks$Type = factor(risks$Type, levels=c('ASE','Splicing', 'Total expression'))
