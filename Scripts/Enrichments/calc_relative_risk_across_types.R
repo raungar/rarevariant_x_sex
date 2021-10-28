@@ -143,6 +143,16 @@ for(exp_type in exp_types){
       exp_yn = nrow(this_exp_outliers %>% dplyr::filter(variant_cat == vcat) %>% dplyr::filter(has_variant != "rare"))  #%>% dplyr::filter(cadd_phred>cadd_min))
       exp_yy = nrow(this_exp_outliers %>% dplyr::filter(variant_cat == vcat) %>% dplyr::filter(has_variant == "rare")) # %>% dplyr::filter(cadd_phred>cadd_min))
   	print(paste0("the following: ",exp_nn," and ",exp_ny," and ",exp_yn," and ",exp_nn))
+  	if(exp_nn==0 & exp_ny==0){print("NO NON OUTLIERS")}
+  	else if(exp_nn==1 | exp_ny == 1){print("don't swap for no reason.")}
+  	else if(exp_nn==0){exp_nn=1;exp_ny=exp_ny-1}
+  	else if(exp_ny==0){exp_ny=1;exp_nn=exp_nn-1}
+  	else{print("No zeros, no worries")}
+  	if(exp_yn==0 & exp_yy==0){print("NO OUTLIERS")}
+  	else if(exp_yn==1 | exp_yy == 1){print("don't swap for no reason.")}
+  	else if(exp_yn==0){exp_yn=1;exp_yy=exp_yy-1}
+  	else if(exp_yy==0){exp_yy=1;exp_yn=exp_yn-1}
+  	else{print("No zeros, no worries")}
      #exp_nn = nrow(this_exp_outliers %>% dplyr::filter(variant_cat == vcat) %>% dplyr::filter( has_variant == "rare"))
      #exp_ny = nrow(this_exp_outliers %>% dplyr::filter(variant_cat == vcat) %>% dplyr::filter(has_variant != "rare"))
      #exp_yn = nrow(exp_controls %>% dplyr::filter(variant_cat == vcat) %>% dplyr::filter(has_variant== "rare"))
@@ -168,6 +178,16 @@ for(exp_type in exp_types){
    exp_ny_all=nrow(dplyr::filter(exp_controls,has_variant == "rare")) #%>% dplyr::filter(cadd_phred>cadd_min))
    exp_yn_all=nrow(dplyr::filter(this_exp_outliers,has_variant != "rare"))  #%>% dplyr::filter(cadd_phred>cadd_min))
    exp_yy_all=nrow(dplyr::filter(this_exp_outliers,has_variant == "rare"))  #%>% dplyr::filter(cadd_phred>cadd_min))
+   if(exp_nn_all==0 & exp_ny_all==0){print("NO NON OUTLIERS")}
+   else if(exp_nn_all==1 | exp_ny_all == 1){print("don't swap for no reason.")}
+   else if(exp_nn_all==0){exp_nn_all=1;exp_ny_all=exp_ny_all-1}
+   else if(exp_ny_all==0){exp_ny_all=1;exp_nn_all=exp_nn_all-1}
+   else{print("No zeros, no worries")}
+   if(exp_yn_all==0 & exp_yy_all==0){print("NO OUTLIERS")}
+   else if(exp_yn_all==1 | exp_yy_all == 1){print("don't swap for no reason.")}
+   else if(exp_yn_all==0){exp_yn_all=1;exp_yy_all=exp_yy_all-1}
+   else if(exp_yy_all==0){exp_yy_all=1;exp_yn_all=exp_yn_all-1}
+   else{print("No zeros, no worries")}
   #exp_nn_all = nrow(this_exp_outliers %>% dplyr::filter( has_variant == "rare"))
   #exp_ny_all = nrow(this_exp_outliers %>% dplyr::filter(has_variant != "rare"))
   #exp_yn_all = nrow(exp_controls %>% dplyr::filter(has_variant== "rare"))
