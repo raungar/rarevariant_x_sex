@@ -9,7 +9,7 @@ NPHEN=["3"] #,"5"]
 ZMIN="2.5"
 MAF_MIN="0"
 MAF_MIN=["0","0.0001","0.001","0.01","0.05"]
-MAF_MIN=["0","0","0","0","0"]
+#MAF_MIN=["0","0","0","0","0"]
 MAF_MAX=["0.0001","0.001","0.01","0.05","0.1"]
 #MAF_MAX=["0.1","0.05","0.01","0.001","0.0001"] #,"0.001","0.0001"]
 #CHRNUM=range(1,23) #
@@ -21,13 +21,16 @@ CHRNUM=["7"]
 #                 "CADDtypesGQ10BlacklistRemovedALL","CADDtypesGQ5BlacklistRemovedALL",
 #                 "CADDtypesGQ10BlacklistRemovedSeenTwice",  "CADDtypesGQ5BlacklistRemovedSeenTwice"]
 filter_version=["CADDtypesALL"] #,"CADDtypesSeenTwice"]
-#filter_version="CADDtypesGQ5BlacklistRemovedALL"
+filter_version="CADDtypesGQ5BlacklistRemovedALL"
 #filter_version=["CADDtypesALL"]
-#SUBANALYSES=["strata","par","xci"]
+SUBANALYSES=["strata","par","xci"]
 OUTLIER_TYPES=["outliers","outliersTOP"]
 CONGLOMERATE=["AllAut","All"]
 rule all:
 	input: 
+		expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_min{min_maf}max{max_maf}_{{group}}_{{this_filt}}_CADD{{cadd_min}}_linc_prot.{{subanalysis}}.csv",
+			zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+		 	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,this_filt=filter_version,cadd_min=CADD,subanalysis=SUBANALYSES,outlierType=OUTLIER_TYPES)
 		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_x_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{this_filt}_CADD{cadd_min}_linc_prot.csv",
 		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES)
 		#expand(config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
@@ -35,18 +38,18 @@ rule all:
 		#	cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
 		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt",
 		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt",
-		expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_AllAut_min{maf_min}max{maf_max}_{{filt}}_CADD{{cadd_min}}_linc_prot.txt",
-			zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
-			group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,
-			cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
-		expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_{{chrNUM}}_min{maf_min}max{maf_max}_{{filt}}_CADD{{cadd_min}}_linc_prot.txt",
-			zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
-			group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,
-			cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
-		expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_x_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{type}}_{{group}}_min{maf_min}max{maf_max}_{{this_filt}}_CADD{{cadd_min}}_linc_prot.csv",
-			zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
-			group=GROUPS,zmin=ZMIN,nphen=NPHEN,chrNUM=CHRNUM,
-			cadd_min=CADD,type=TYPES,this_filt=["CADDtypesGQ5BlacklistRemovedALL"],outlierType=OUTLIER_TYPES)
+		#expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_AllAut_min{maf_min}max{maf_max}_{{filt}}_CADD{{cadd_min}}_linc_prot.txt",
+		#	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,
+		#	cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
+		#expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_{{chrNUM}}_min{maf_min}max{maf_max}_{{filt}}_CADD{{cadd_min}}_linc_prot.txt",
+		#	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,
+		#	cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
+		#expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_x_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{type}}_{{group}}_min{maf_min}max{maf_max}_{{this_filt}}_CADD{{cadd_min}}_linc_prot.csv",
+		#	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,chrNUM=CHRNUM,
+		#	cadd_min=CADD,type=TYPES,this_filt=["CADDtypesGQ5BlacklistRemovedALL"],outlierType=OUTLIER_TYPES),
 		#expand(config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}_CADD{cadd_min}.txt.gz",
 		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
 		#	cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
@@ -69,8 +72,6 @@ rule all:
 		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{this_filt}_CADD{cadd_min}_linc_prot.csv",
 		###expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_x_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_CADD{this_filt}_CADD{cadd_min}_linc_prot.csv",
 		###	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,this_filt=filter_version,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,outlierType=OUTLIER_TYPES)
-		 ###expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{min_maf}max{max_maf}_{group}_CADD{this_filt}_CADD{cadd_min}_linc_prot.{subanalysis}.csv",
-		### 	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,this_filt=filter_version,min_maf=MAF_MIN,max_maf=MAF_MAX,cadd_min=CADD,subanalysis=SUBANALYSES)
 		# expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.strata.csv",
 		 #	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,this_filt=filter_version,min_maf=MAF_MIN,max_maf=MAF_MAX,cadd_min=CADD),
 		 #expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{min_maf}max{max_maf}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.xci.csv",
@@ -300,7 +301,8 @@ rule calculate_risks_x:
 #	
 rule get_risk_xci:
 	input:
-		infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
+		infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.txt.gz",
 		gtf_file=config["RAREDIR"]+"/preprocessing_v8redo/x_proteincoding_lncrna.gtf",
 		xci_file=config["xci_file"]
 	params:
@@ -325,7 +327,8 @@ rule get_risk_par:
 	input:
 		#infile=config["RAREDIR"]+"/enrichments_v8redo/outliers_zthresh{zmin}_nphen{nphen}_noglobal_medz_varAnnot_x_{group}.txt",
 		#infile=config["RAREDIR"]+"/enrichments_v8redo/outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
-		infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
+		infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.txt.gz",
 		par_file=config["RAREDIR"]+"/preprocessing_v8redo/par_table.txt" ,
 		gtf_file=config["RAREDIR"]+"/preprocessing_v8redo/x_proteincoding_lncrna.gtf"
 	params:
@@ -351,7 +354,8 @@ rule get_risk_strata:
 	input:
 		#infile=config["RAREDIR"]+"/enrichments_v8redo/outliers_zthresh{zmin}_nphen{nphen}_noglobal_medz_varAnnot_x_{group}.txt",
 		#infile=config["RAREDIR"]+"/enrichments_v8redo/outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
-		infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",
+		infile=config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot.txt.gz",
 		par_file=config["RAREDIR"]+"/preprocessing_v8redo/strata_table.txt" ,
 		gtf_file=config["RAREDIR"]+"/preprocessing_v8redo/x_proteincoding_lncrna.gtf"
 	params:
