@@ -21,7 +21,7 @@ CHRNUM=["7"]
 #                 "CADDtypesGQ10BlacklistRemovedALL","CADDtypesGQ5BlacklistRemovedALL",
 #                 "CADDtypesGQ10BlacklistRemovedSeenTwice",  "CADDtypesGQ5BlacklistRemovedSeenTwice"]
 filter_version=["CADDtypesALL"] #,"CADDtypesSeenTwice"]
-filter_version="CADDtypesGQ5BlacklistRemovedALL"
+#filter_version="CADDtypesGQ5BlacklistRemovedALL"
 #filter_version=["CADDtypesALL"]
 SUBANALYSES=["strata","par","xci","pq"]
 #SUBANALYSES="strata"
@@ -29,14 +29,14 @@ OUTLIER_TYPES=["outliers","outliersTOP"]
 CONGLOMERATE=["AllAut","All"]
 rule all:
 	input: 
-		expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_min{min_maf}max{max_maf}_{{group}}_{{this_filt}}_CADD{{cadd_min}}_linc_prot.{{subanalysis}}.csv",
-			zip,min_maf=MAF_MIN,max_maf=MAF_MAX),
-		 	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,this_filt=filter_version,cadd_min=CADD,subanalysis=SUBANALYSES,outlierType=OUTLIER_TYPES)
+		#expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_min{min_maf}max{max_maf}_{{group}}_{{this_filt}}_CADD{{cadd_min}}_linc_prot.{{subanalysis}}.csv",
+		#	zip,min_maf=MAF_MIN,max_maf=MAF_MAX),
+		# 	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,this_filt=filter_version,cadd_min=CADD,subanalysis=SUBANALYSES,outlierType=OUTLIER_TYPES)
 		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_x_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{this_filt}_CADD{cadd_min}_linc_prot.csv",
 		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES)
-		#expand(config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
-		#				group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
-		#	cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
+		expand(config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
+						group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
+			cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
 		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt",
 		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt",
 		#expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_AllAut_min{maf_min}max{maf_max}_{{filt}}_CADD{{cadd_min}}_linc_prot.txt",
@@ -61,8 +61,10 @@ rule all:
 		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
 		#	cadd_min=CADD,type=TYPES,this_filt=filter_version,outlierType=OUTLIER_TYPES),
 		#expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{congl}_min{maf_min}max{maf_max}_{filt}_CADD{cadd_min}_linc_prot.txt",
-		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
-		#	cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,congl=CONGLOMERATE)
+		expand(expand(config["RAREDIR"]+"/enrichments_v8redo/RR/relative_risk_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_AllAut_min{maf_min}max{maf_max}_{{filt}}_CADD{{cadd_min}}_linc_prot.txt",
+			zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+			group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,
+			cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,congl=CONGLOMERATE)
 		#expand(config["RAREDIR"]+"/enrichments_v8redo/{chrNUM}_outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{filt}.txt.gz",
 		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM)
 		#expand(config["RAREDIR"]+"/enrichments_v8redo/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_linc_prot.txt.gz",

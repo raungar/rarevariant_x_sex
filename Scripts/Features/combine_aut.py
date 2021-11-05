@@ -38,13 +38,14 @@ seen_dic={}
 
 ####put positions into found dic
 for this_f in glob.glob(args.indir+"/*"+args.filename_match):
-	with open(this_f, 'r') as f:
+	print(this_f)
+	with gzip.open(this_f, 'r') as f:
 		f_split=this_f.split("/")[-1]
 		f_split_again=f_split.split("_")
 		ind=next(filter(lambda x: re.search('GTEX',x),f_split_again))
 		sex=sex_key[ind]
 		for line in f:
-			line_split=line.split("\t")
+			line_split=line.decode('utf-8').split("\t")
 			chr=line_split[0] #chr
 			pos=line_split[1] #pos
 			if pos in seen_dic:
@@ -56,7 +57,7 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 	print(this_f)
 	if (os.path.isdir(this_f)):
 		continue
-	with open(this_f, 'r') as f:
+	with gzip.open(this_f, 'r') as f:
 		f_split=this_f.split("/")[-1]
 		f_split_again=f_split.split("_")
 		ind=next(filter(lambda x: re.search('GTEX',x),f_split_again))
@@ -65,7 +66,7 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 		print(ind)
 		print(sex)
 		for line in f:
-			line_split=line.split("\t")
+			line_split=line.decode('utf-8').split("\t")
 			print(line_split)
 			chr=line_split[0] #chr
 			pos=line_split[1] #pos

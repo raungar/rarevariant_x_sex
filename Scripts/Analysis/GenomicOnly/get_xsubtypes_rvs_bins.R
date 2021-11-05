@@ -31,12 +31,12 @@ chr_hash<-chr_df$effective_length
 names(chr_hash)<-chr_df$chr
 par_hash=chr_hash
 
-# infile<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/features_v8/Combined/x_all_rvs_inds_typesSeenTwice_linc_prot.txt.gz"
-# euro_file<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt"
-# chrlens<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/effective_chr_len_prot_linc_xsubtype.txt"
-#  sex_file<-"/oak/stanford/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/sample_annotations/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS_v2_downloaded_april2020.txt"
-#  out_numrvs<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_all_numrv.txt.gz"
-# out_sigdif<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_all_sigdif.txt"
+# infile<-"/Volumes/groups/smontgom/raungar/Sex/Output/features_v8/Combined/x_all_rvs_inds_CADDtypesGQ5BlacklistRemovedALL_linc_prot.txt.gz"
+# euro_file<-"/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids_notambiguous.txt"
+# chrlens<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/effective_chr_len_prot_linc_xsubtype.txt"
+#  sex_file<-"/Volumes/groups/smontgom/shared/GTEx/all_data/GTEx_Analysis_2017-06-05_v8/sample_annotations/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS_v2_downloaded_april2020.txt"
+#  out_numrvs<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_all_numrv.txt.gz"
+# out_sigdif<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_all_sigdif.txt"
 # chrtype="x"
 
 
@@ -159,7 +159,8 @@ for (this_subregion in rownames(subregion_df)){
     if(s>=this_s & e<=this_e){this_subregion}
     else{"NA"}
   },as.numeric(exp_data_euro$start),as.numeric(exp_data_euro$end))
-  exp_data_euro_wpars<-cbind(exp_data_euro,par_region)
+  colnames(exp_data_euro)[c(12,13,14)]<-c("cadd_raw","cadd_phred","num_rv")
+  exp_data_euro_wpars<-cbind(exp_data_euro,"par_region"=par_region)
   
   #look only at this subregion
   exp_data_this_subregion<-exp_data_euro_wpars %>% dplyr::filter(par_region==this_subregion)

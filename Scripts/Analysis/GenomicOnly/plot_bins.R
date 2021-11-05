@@ -3,12 +3,12 @@ library("dplyr")
 library("mltools") #ecdf
 library("data.table")
 #x_subtypes_types_numrv_bins_linc_prot.txt.gz
-infile_x_numrv<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_typesGQ5BlacklistRemovedALL_numrv_bins_linc_prot.txt.gz"
-infile_x_sigdif<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_typesGQ5BlacklistRemovedALL_sigdif_bins_linc_prot.txt.gz"
-infile_aut_numrv<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/chr7_CADDtypesSeenTwice_numrv_bins_linc_prot.txt.gz"
-infile_aut_sigdif<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/chr7_CADDtypesSeenTwice_sigdif_bins_linc_prot.txt.gz"
-infile_x_subtypes_numrv<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_typesALL_numrv_bins_linc_prot.txt.gz"
-infile_x_subtypes_sigdif<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8/genomic_only/x_subtypes_typesALL_sigdif_bins_linc_prot.txt.gz"
+infile_x_numrv<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8redo/genomic_only/x_CADDtypesGQ5BlacklistRemovedALL_numrv_bins_linc_prot.txt.gz"
+infile_x_sigdif<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8redo/genomic_only/x_CADDtypesGQ5BlacklistRemovedALL_sigdif_bins_linc_prot.txt.gz"
+infile_aut_numrv<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8redo/genomic_only/chr7_CADDtypesSeenTwice_numrv_bins_linc_prot.txt.gz"
+infile_aut_sigdif<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8redo/genomic_only/chr7_CADDtypesSeenTwice_sigdif_bins_linc_prot.txt.gz"
+infile_x_subtypes_numrv<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8redo/genomic_only/x_subtypes_CADDtypesGQ5BlacklistRemovedALL_numrv_bins_linc_prot.txt.gz"
+infile_x_subtypes_sigdif<-"/Volumes/groups/smontgom/raungar/Sex/Output/analysis_v8redo/genomic_only/x_subtypes_CADDtypesGQ5BlacklistRemovedALL_sigdif_bins_linc_prot.txt.gz"
 
 x_numrv<-fread(infile_x_numrv,data.table=F, header=T)
 x_sigdif<-fread(infile_x_sigdif,data.table=F)

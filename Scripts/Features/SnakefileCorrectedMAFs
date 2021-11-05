@@ -37,6 +37,7 @@ CHROMOSOMES=range(1,23)
 GROUPS=["m","f","both"]
 #filter_version=["types_filtsexdiff","types"]
 SEXDIFF_VAL=["5","10"]
+SEXDIFF_VAL=["5"]
 filter_version=["typesSeenTwice","typesALL","typesBlacklistRemovedALL","typesBlacklistRemovedSeenTwice",
                 "typesGQ10BlacklistRemovedALL","typesGQ5BlacklistRemovedALL",
                 "typesGQ10BlacklistRemovedSeenTwice",  "typesGQ5BlacklistRemovedSeenTwice"]
@@ -46,21 +47,26 @@ filter_version=["typesALL"]
 
 CADD=["0","15"]
 CHRNUM=range(1,23) #16
-
+#CHRNUM="7"
 rule all:
 	input:
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/CADD/{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
 		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_aut.tsv.gz",
 		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_aut_cadd{cadd_min}.txt.gz",cadd_min=CADD),
-		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_all_cadd{cadd_min}.txt.gz",cadd_min=CADD),
+		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_all_cadd{cadd_min}.txt.gz",cadd_min=CADD),
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADD{this_type}_cadd{cadd_min}.txt.gz",cadd_min=CADD,this_type=filter_version)
-		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_aut.txt.gz",
-		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_all.txt.gz"
-		expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_redGQ_blacklisted_filt.bed.gz",
-			chrN="X",sample_vartype=IDS_VARTYPES,  sexdiff_val=SEXDIFF_VAL),
-		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrN}_CADD{this_type}_cadd{cadd_min}.txt.gz",
-		#		chrN=CHRNUM,this_type=filter_version,cadd_min=CADD)
+		##expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_redGQ_blacklisted_filt.bed.gz",
+		##	chrN="X",sample_vartype=IDS_VARTYPES,  sexdiff_val=SEXDIFF_VAL)
+		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/CADD/{sample_vartype}_chr{chrN}_anno_genes_cadd_filt.bed.gz",
+		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
+		#expand(config["RAREDIR"]+"/features_v8/Combined/chr{chrN}_all_rvs_inds_CADDtypesALL_linc_prot.txt.gz",
+		#	chrN=CHRNUM)
+		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADD{this_type}_cadd{cadd_min}.txt.gz",this_type=filter_version,cadd_min=CADD)
+		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_redGQ_blacklisted_filt.bed.gz",
+		#	chrN="X",sample_vartype=IDS_VARTYPES,  sexdiff_val=SEXDIFF_VAL)
+		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrN}_CADD{this_type}_cadd{cadd_min}.txt.gz",
+				chrN=CHRNUM,this_type=filter_version,cadd_min=CADD)
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_{this_type}.txt.gz",this_type=filter_version)
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/x_{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz",
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/x_{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz",
@@ -72,9 +78,6 @@ rule all:
 		#config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADDtypesGQ10BlacklistRemovedSeenTwice_linc_prot.txt.gz",
 		#expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_blacklisted.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
-		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADD{this_type}.txt.gz",this_type=filter_version)
-		expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_redGQ_blacklisted_filt.bed.gz",
-			chrN="X",sample_vartype=IDS_VARTYPES,  sexdiff_val=SEXDIFF_VAL)
 #first run to prepare files
 rule vcf2bed:
 	input:
@@ -250,6 +253,15 @@ rule cadd_anno_aut:
 		echo "{input.this_script} "
 		cat {input.sample} | python {input.this_script}  > {output}
 		"""
+rule filt_mismatched_vars_aut:
+	input:
+		config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/CADD/{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz"
+	output:
+		config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/CADD/{sample_vartype}_chr{chrN}_anno_genes_cadd_filt.bed.gz"
+	shell:
+		"""
+		cat {input} | awk -F"\t" '{{if($2==$37){{print $0}}}}'| grep -v "variant_type=indel" | gzip -c > {output}
+		"""
 
 rule reduces_annos_x:
 	input:
@@ -303,15 +315,17 @@ rule remove_sexdiffvars_in_blacklist:
 		module load bedtools
 		bedtools subtract -a {input.gtex_file} -b {input.blacklist} -A | gzip -c > {output}
 		"""
-rule filt_mismatched_vars:
+
+rule filt_mismatched_vars_x:
 	input:
 		config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_redGQ_blacklisted.bed.gz"
 	output:
 		config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_redGQ_blacklisted_filt.bed.gz"
 	shell:
 		"""
-		zcat {input} | awk -F"\t" '{if($2==$29){print $0}}'| grep -v "variant_type=indel" | gzip -c > {output}
+		zcat {input} | awk -F"\t" '{{if($2==$29){{print $0}}}}'| grep -v "variant_type=indel" | gzip -c > {output}
 		"""		
+
 #rule remove_sexdiff5vars_in_blacklist:
 #	input:
 #		gtex_file=config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/FiltSexDiffGQ5/x_{sample_vartype}_chr{chrN}_anno_genes_red_gq.bed", #only within 10kb of a gene		
@@ -641,7 +655,7 @@ rule combine_aut_rvs:
 		indir=ancient(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/CADD"),
 		this_script=config["SCRIPTSDIR"]+"/Features/combine_aut.py"
 	params:
-		file_glob_this="chr{chrN}_anno_genes_cadd.bed.gz"
+		file_glob_this="chr{chrN}_anno_genes_cadd_filt.bed.gz"
 	output:
 		outfile_all=config["RAREDIR"]+"/features_v8/Combined/chr{chrN}_all_rvs_inds_CADDtypesALL_linc_prot.txt.gz",
 		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/chr{chrN}_all_rvs_inds_CADDtypesSeenTwice_linc_prot.txt.gz"

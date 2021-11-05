@@ -8,23 +8,23 @@ library("forcats")
 
 #groups=c("m","f","both_half.regress") #, "both_half","both_half.sex","both_half.regress")
 groups=c("m","f","both") #, "both_half","both_half.sex","both_half.regress
-my_cat=c("xci","par","strata","")
+my_cat=c("xci","par","strata","","pq")
 #my_cat=c(".xci",".par",".strata")
-my_cat=""
+my_cat="pq"
 # chr_types=c(as.character(c(1:5,7:11,15:21)),"x") #,
 # chr_types=c(as.character(1:22),"x") #,
 # chr_types=c(as.character(1:22),"x") #,
 chr_types=c("x","7","AllAut") #,"AllAut","7") #,
-#chr_types=c("x") #,
+chr_types=c("x") #,
 # chr_types=c("x") #aut
-nphen=c(3,5)
+nphen=c(3) #,5)
 z=c(2,2.5,3)
 z=2.5
 CADD<-c(0,15)
 risk_cat<-c("relative_risk") #,"absolute_risk")
 maxmaf<-c("0.1","0.05","0.01","0.001","0.0001") #,"0.001","0.0001")
 maxtomin_dic<-c("0.05","0.01","0.001","0.0001","0")
-maxtomin_dic<-c("0","0","0","0","0")
+# maxtomin_dic<-c("0","0","0","0","0")
 names(maxtomin_dic)<-maxmaf
 filter_version=c("typesSeenTwice","typesALL","typesBlacklistRemovedALL","typesBlacklistRemovedSeenTwice",
                 "typesGQ10BlacklistRemovedALL","typesGQ5BlacklistRemovedALL",
@@ -46,15 +46,16 @@ for(this_cat in my_cat){
        for(this_z in z){
          for(this_filt in filter_version){
            for(cadd_min in CADD){
-             # if(this_chr=="x"){
-             #   file=paste0(mydir,"/relative_risk_x_",this_outlier,"_z",this_z,"_nphen",this_nphen,"_",this_chr,"_",this_group,
-             #               "_min0max",this_maxmaf,"_CADD","typesGQ5BlacklistRemovedALL","_CADD",cadd_min,"_linc_prot",this_cat,".csv")
-             #   #relative_risk_x_outliers_z2.5_nphen5_x_both_min0max0.001_CADDtypesGQ5BlacklistRemovedALL_CADD15_linc_prot.csv
-             #   this_filt="GQ5BlacklistRemovedALL"
-             # }else{
-             # file=paste0(mydir,"/relative_risk_",this_outlier,"_z",this_z,"_nphen",this_nphen,"_",this_group,"_",this_chr,
-             #             "_min0max",this_maxmaf,"_CADD",this_filt,"_CADD",cadd_min,"_linc_prot",this_cat,".txt")
-             # } 
+          # if(this_chr=="x"){
+          #      file=paste0(mydir,"/relative_risk_",this_outlier,"_z",this_z,"_nphen",this_nphen,
+          #                  "_min",maxtomin_dic[this_maxmaf],"max",this_maxmaf,"_",this_group,"_CADD","typesGQ5BlacklistRemovedALL",
+          #                  "_CADD",cadd_min,"_linc_prot.",this_cat,".csv")
+          #      #relative_risk_x_outliers_z2.5_nphen5_x_both_min0max0.001_CADDtypesGQ5BlacklistRemovedALL_CADD15_linc_prot.csv
+          #      this_filt="GQ5BlacklistRemovedALL"
+          #    }else{
+          #    file=paste0(mydir,"/relative_risk_",this_outlier,"_z",this_z,"_nphen",this_nphen,"_",this_group,"_",this_chr,
+          #                "_min0max",this_maxmaf,"_CADD",this_filt,"_CADD",cadd_min,"_linc_prot.",this_cat,".txt")
+          #    }
              if(this_chr=="x"){
                file=paste0(mydir,"/relative_risk_x_",this_outlier,"_z",this_z,"_nphen",this_nphen,
                            "_x_",this_group,"_min",maxtomin_dic[this_maxmaf],"max",this_maxmaf,"_CADDtypesGQ5BlacklistRemovedALL_CADD",
@@ -68,7 +69,7 @@ for(this_cat in my_cat){
                            "_",this_group,"_",this_chr,"_min",maxtomin_dic[this_maxmaf],"max",this_maxmaf,"_CADDtypesALL_CADD",cadd_min,
                            "_linc_prot.txt")
              }
-             
+
              risks=read.csv(file[1])
            #load(file)
           risks$z<-this_z
@@ -166,6 +167,8 @@ for(this_cat in my_cat){
 # }}}}}}}}}}
 
 all_risks$outliers_tested<-all_risks$exp_yn+all_risks$exp_yy
+all_risks$nonoutliers_tested<-all_risks$exp_nn+all_risks$exp_ny
+all_risks$prop_outliers<-all_risks$outliers_tested/all_risks$nonoutliers_tested
 #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1125071/ following this
 risks_to_compare<-all_risks %>% group_by(outlierType,CATEGORY,z,nphen,cadd,chr,sex,maxmaf,real_or_null,exp_type) %>% 
   dplyr::summarise(across(c(Risk,Lower,Upper),log)) %>%
@@ -203,98 +206,7 @@ all_risks_p<-merge(all_risks,risks_to_compare_side[,c("outlierType","exp_type","
 #   }
 # }
 
-# relrisk_aut_m<-relrisk_z3_aut_m
-# relrisk_aut_f<-relrisk_z3_aut_f
-# relrisk_aut_both_half.regress<-relrisk_z3_aut_both_half.regress
-# relrisk_x_m<-relrisk_z3_x_m
-# relrisk_x_f<-relrisk_z3_x_f
-# relrisk_x_both_half.regress<-relrisk_z3_x_both_half.regress
-# 
-# relrisk_final_aut<-rbind(cbind(relrisk_aut_m,pop="aut_m",sex="m"),
-#   cbind(relrisk_aut_f,pop="aut_f",sex="f"),
-#   cbind(relrisk_aut_both_half.regress,pop="aut_both",sex="both"))
-# 
-# relrisk_final_x<-rbind(cbind(relrisk_x_m,pop="x_m",sex="m"),
-#                    cbind(relrisk_x_f,pop="x_f",sex="f"),
-#                    cbind(relrisk_x_both_half.regress,pop="x_both",sex="both"))
-# 
-# 
-# relrisk_xci_z3_nphen1<-cbind(rbind(cbind(relrisk_z3_nphen1_x_m.xci,pop="x_m",sex="m"),
-#                        cbind(relrisk_z3_nphen1_x_f.xci,pop="x_f",sex="f"),
-#                        cbind(relrisk_z3_nphen1_x_both_half.regress.xci,pop="x_both",sex="both")),
-#                        "z"=3,"nphen"=1)
-# relrisk_xci_z3_nphen5<-cbind(rbind(cbind(relrisk_z3_nphen5_x_m.xci,pop="x_m",sex="m"),
-#                              cbind(relrisk_z3_nphen5_x_f.xci,pop="x_f",sex="f"),
-#                              cbind(relrisk_z3_nphen5_x_both_half.regress.xci,pop="x_both",sex="both")),
-#                              "z"=3,"nphen"=5)
-# relrisk_xci_z2_nphen5<-cbind(rbind(cbind(relrisk_z2_nphen5_x_m.xci,pop="x_m",sex="m"),
-#                                    cbind(relrisk_z2_nphen5_x_f.xci,pop="x_f",sex="f"),
-#                                    cbind(relrisk_z2_nphen5_x_both_half.regress.xci,pop="x_both",sex="both")),
-#                              "z"=2,"nphen"=5)
-# relrisk_par_z3_nphen1<-cbind(rbind(cbind(relrisk_z3_nphen1_x_m.par,pop="x_m",sex="m"),
-#                    cbind(relrisk_z3_nphen1_x_f.par,pop="x_f",sex="f"),
-#                    cbind(relrisk_z3_nphen1_x_both_half.regress.par,pop="x_both",sex="both")),
-#                     "z"=3,"nphen"=1)
-# relrisk_xci_all<-rbind(relrisk_xci_z3_nphen5,relrisk_xci_z3_nphen1,relrisk_xci_z2_nphen5)
-# 
-# relrisk_par_z3_nphen5<-cbind(rbind(cbind(relrisk_z3_nphen5_x_m.par,pop="x_m",sex="m"),
-#                              cbind(relrisk_z3_nphen5_x_f.par,pop="x_f",sex="f"),
-#                              cbind(relrisk_z3_nphen5_x_both_half.regress.par,pop="x_both",sex="both")),
-#                              "z"=3,"nphen"=5)
-# relrisk_par_z2_nphen5<-cbind(rbind(cbind(relrisk_z2_nphen5_x_m.par,pop="x_m",sex="m"),
-#                                    cbind(relrisk_z2_nphen5_x_f.par,pop="x_f",sex="f"),
-#                                    cbind(relrisk_z2_nphen5_x_both_half.regress.par,pop="x_both",sex="both")),
-#                              "z"=2,"nphen"=5)
-# relrisk_par_all<-rbind(relrisk_par_z3_nphen5,relrisk_par_z3_nphen1,relrisk_par_z2_nphen5)
-# 
-# 
-# relrisk_final<-rbind(cbind(relrisk_final_x,chr="x"),
-#                    cbind(relrisk_final_aut,chr="aut"))
-# relrisk_all_m<-dplyr::left_join(relrisk_x_m[,c(1:3,5)],relrisk_aut_m[,c(1:3,5)],by="Cat")
-# relrisk_all_f<-dplyr::left_join(relrisk_x_f[,c(1:3,5)],relrisk_aut_f[,c(1:3,5)],by="Cat")
-# relrisk_all_both<-dplyr::left_join(relrisk_x_both_half.regress[,c(1:3,5)],relrisk_aut_both_half.regress[,c(1:3,5)],by="Cat")
-# 
-# relrisk_all_x<-dplyr::left_join(relrisk_x_m[,c(1:3,5)],relrisk_x_f[,c(1:3,5)],by="Cat")
-# relrisk_all_aut<-dplyr::left_join(relrisk_aut_m[,c(1:3,5)],relrisk_aut_f[,c(1:3,5)],by="Cat")
-# 
-# relrisk_final_div_log<-rbind(
-#   data.frame("Risk"=log(relrisk_all_m$Risk.x/relrisk_all_m$Risk.y), 
-#              "Lower"=log(relrisk_all_m$Lower.x/relrisk_all_m$Lower.y),
-#              "Upper"=log(relrisk_all_m$Upper.x/relrisk_all_m$Upper.y),"Cat"=relrisk_all_m$Cat, sex="male"),
-#   data.frame("Risk"=log(relrisk_all_f$Risk.x/relrisk_all_f$Risk.y), 
-#              "Lower"=log(relrisk_all_f$Lower.x/relrisk_all_f$Lower.y),
-#              "Upper"=log(relrisk_all_f$Upper.x/relrisk_all_f$Upper.y),"Cat"=relrisk_all_f$Cat, sex="female"),
-#   data.frame("Risk"=log(relrisk_all_both$Risk.x/relrisk_all_both$Risk.y), 
-#              "Lower"=log(relrisk_all_both$Lower.x/relrisk_all_both$Lower.y),
-#              "Upper"=log(relrisk_all_both$Upper.x/relrisk_all_both$Upper.y),"Cat"=relrisk_all_both$Cat, sex="both")
-# )
-# relrisk_final_div<-rbind(
-#   data.frame("Risk"=relrisk_all_m$Risk.x/relrisk_all_m$Risk.y, 
-#              "Lower"=relrisk_all_m$Lower.x/relrisk_all_m$Lower.y,
-#              "Upper"=relrisk_all_m$Upper.x/relrisk_all_m$Upper.y,"Cat"=relrisk_all_m$Cat, sex="male"),
-#   data.frame("Risk"=relrisk_all_f$Risk.x/relrisk_all_f$Risk.y, 
-#              "Lower"=relrisk_all_f$Lower.x/relrisk_all_f$Lower.y,
-#              "Upper"=relrisk_all_f$Upper.x/relrisk_all_f$Upper.y,"Cat"=relrisk_all_f$Cat, sex="female"),
-#   data.frame("Risk"=relrisk_all_both$Risk.x/relrisk_all_both$Risk.y, 
-#              "Lower"=relrisk_all_both$Lower.x/relrisk_all_both$Lower.y,
-#              "Upper"=relrisk_all_both$Upper.x/relrisk_all_both$Upper.y,"Cat"=relrisk_all_both$Cat, sex="both")
-# )
-# relrisk_final_div_sex<-rbind(
-#   data.frame("Risk"=relrisk_all_x$Risk.y/relrisk_all_x$Risk.x, 
-#              "Lower"=relrisk_all_x$Lower.y/relrisk_all_x$Lower.x,
-#              "Upper"=relrisk_all_x$Upper.y/relrisk_all_x$Upper.x,"Cat"=relrisk_all_m$Cat, chr="x"),
-#   data.frame("Risk"=relrisk_all_aut$Risk.y/relrisk_all_aut$Risk.x, 
-#              "Lower"=relrisk_all_aut$Lower.y/relrisk_all_aut$Lower.x,
-#              "Upper"=relrisk_all_aut$Upper.y/relrisk_all_aut$Upper.x,"Cat"=relrisk_all_aut$Cat, chr="aut")
-# )
-# #melted_df<-melt(my_df[4:6,])
-# # library(ggpubr)
-# # compmeans_sex<-compare_means(Risk~sex,relrisk_final_aut,method = "kruskal.test",group.by = c("Cat"))
-# # compeans_chr<-compare_means(Risk~chr,relrisk_final,method = "wilcox.test",group.by = c("Cat","sex"),paired=T)
-# 
-# all_only<-relrisk_final %>% dplyr::filter(Cat=="all")
-# relrisk_final_nozero <-relrisk_final %>% dplyr::filter(Risk !=0)
-# 
+
 # to_plot<-all_risks%>%dplyr::filter(chr=="7")  %>% dplyr::filter(z==2.5) %>% dplyr::filter(nphen==2) %>% 
 #   dplyr::filter(maxmaf=="0.01") %>% dplyr::filter(Cat=="all")
 # 
@@ -403,7 +315,7 @@ library(facetscales)
 
 
 ####outliers plotting
-  to_plot<-all_risks  %>% dplyr::filter(cadd==0) %>%dplyr::filter(CATEGORY=="all") # %>% dplyr::filter(outlierType=="outliersTOP") #$%>%dplyr::filter(CATEGORY=="all")
+  to_plot<-all_risks  %>% dplyr::filter(cadd==0) #%>%dplyr::filter(CATEGORY=="all") # %>% dplyr::filter(outlierType=="outliersTOP") #$%>%dplyr::filter(CATEGORY=="all")
   #%>% dplyr::filter(maxmaf=="0.01") %>% dplyr::filter(chr=="5")
   all_risks_renamed<-all_risks
   chr_rename<-c("chrX","chr7","autosomes")
@@ -577,3 +489,44 @@ ggplot(relrisk_final_div_nozero_sex,aes(color=chr, fill=chr) ) +
   geom_crossbar(aes(x=Subregion,y=Risk,ymin=Lower,ymax=Upper),position="dodge")+
   geom_hline(yintercept=1,color="red") #+
 
+ 
+ ###PAR
+ to_plot<-all_risks %>% dplyr::filter(outlierType=="outliers") %>% mutate(is_sig=ifelse(Pval<0.01,T,F)) %>% 
+   dplyr::filter(cadd=="15")  %>% dplyr::filter(exp_type=="over")
+ 
+ ggplot(to_plot,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=sex,color=sex,shape=sex,label=num_outliers)) + 
+   geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.1,position=position_dodge(width=0.5)) +
+   geom_line(position=position_dodge(width=0.5))+
+   theme_bw(base_size=8)+
+   geom_point(aes(size=is_sig),position=position_dodge(width=0.5))+
+   # geom_crossbar(aes(x=CATEGORY,y=Risk,ymin=Lower,ymax=Upper),position="dodge") +
+   # geom_crossbar(aes(x=interaction(maxmaf,chr),y=Risk,ymin=Lower,ymax=Upper),position="dodge") +
+   theme(axis.text.x = element_text(angle = 45,  hjust=1))+
+   xlab("chr")+
+   ylab("Relative Risk")+
+   labs(fill="Group")+
+   ggtitle(paste0("Relative Risk: (outlierType=",unique(to_plot$outlierType),"cadd=",unique(to_plot$cadd),
+                  ",nphen=",unique(to_plot$nphen),",z=",unique(to_plot$z),"), num outlier range [",
+                  min(unique(to_plot$num_outliers)),",",max(unique(to_plot$num_outliers)),"]"))+
+   scale_fill_manual(values=c("#B1EAA2","#FCF5A9","#97D6F2"))+
+   scale_color_manual(values=c("#296818","#dbab3b","#5d8596"))+  
+   guides(colour=FALSE)+
+   facet_wrap(~paste0("z_type=",exp_type)*paste0('REGION: ',CATEGORY),ncol =3,scales="free_y")+
+ geom_text(aes(group=sex,x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,label=ifelse(Pval<0.01,
+                                                                         paste0("n=",num_outliers,"\nRR=",round(Risk,1),"\np=",
+                                                                                round(Pval,3)),
+                                                                         paste0("n=",num_outliers,"\np=",round(Pval,3)))),
+             position = position_dodge(width = 1), vjust=-.25,size=2.5) +
+   #geom_crossbar(aes(x=XCI_STATUS,y=Risk,ymin=Lower,ymax=Upper),position="dodge") +
+   geom_hline(yintercept=1,color="red") #+#+
+ 
+ 
+ ##outliers
+ to_plot<-all_risks %>% dplyr::filter(outlierType=="outliers") %>% mutate(is_sig=ifelse(Pval<0.01,T,F)) %>% 
+   dplyr::filter(cadd=="15")
+ ggplot(to_plot,aes(x=CATEGORY,y=prop_outliers,color=sex))+
+ geom_line(position=position_dodge(width=0.5))+
+   theme_bw(base_size=8)+
+   scale_color_manual(values=c("#296818","#dbab3b","#5d8596"))+ 
+   geom_point(position=position_dodge(width=0.5))+facet_wrap(~exp_type)
+ 
