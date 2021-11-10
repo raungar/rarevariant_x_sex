@@ -27,6 +27,6 @@ max_outliers <- as.numeric(opt$max_outliers)
 outliers<-fread(infile)
 outliers_red<-(outliers) %>% group_by(Gene, Y) %>% mutate(n_genes=n()) %>% 
   mutate(filter_me=ifelse(n_genes<=max_outliers & Y=="outlier","filter","ok")) %>% 
-  dplyr::filter(filter_me=="ok")
-write.csv(outliers_red,  file=outfile,quote=F,sep="\t")
+  dplyr::filter(filter_me=="ok") %>% select(-n_genes,-filter_me)
+fwrite(outliers_red,  file=outfile,quote=F,sep="\t")
 
