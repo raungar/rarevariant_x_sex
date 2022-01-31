@@ -75,11 +75,13 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			ref=line_split[5]
 			alt=line_split[6]
 			ensg=line_split[50]
+			TSS=int(line_split[44])-int(pos)
+			TES=int(line_split[45])-int(pos)
 			genetype=line_split[54]
 			gnomad_split=(line_split[42]).split(';')
 			cadd_raw=line_split[len(line_split)-2]
 			cadd_phred=(line_split[len(line_split)-1]).strip()
-			#print(','.join([chr,pos,gtex_maf,ref,alt,ensg,cadd_raw,cadd_phred,genetype]))
+			##print(','.join([chr,pos,gtex_maf,ref,alt,ensg,cadd_raw,cadd_phred,genetype,str(TSS),str(TES),line_split[44],line_split[45]]))
 			if gnomad_split[0] == "NO_MATCH":
 				# print("NO MATCH: ",ref,",",alt,",",gtex_maf)
 				#this prepares for cases where the reference allelse is actually teh minor allele
@@ -109,7 +111,7 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			if(float(gnomad_maf_both)==0):
 				use_maf=gtex_maf
 			#print("\t".join([chr,pos,ensg, genetype,ind,sex,gtex_maf,str(gnomad_maf_both)]))
-			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex,str(cadd_raw),str(cadd_phred),str(geno)]
+			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex,str(cadd_raw),str(cadd_phred),str(geno),str(TSS),str(TES)]
 			# print(myline)
 			#must be seen in both
 			#length of dic will be two if has male and female!

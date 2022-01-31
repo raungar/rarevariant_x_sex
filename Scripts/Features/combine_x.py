@@ -75,6 +75,8 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			geno=line_split[4] #genotype
 			ref=line_split[5]
 			alt=line_split[6]
+			TSS=int(line_split[36])-int(pos)
+			TES=int(line_split[37])-int(pos)
 			ensg=line_split[42]
 			genetype=line_split[46]
 			gnomad_split=(line_split[34]).split(';')
@@ -105,7 +107,7 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			if(float(gnomad_maf_both)==0):
 				use_maf=gtex_maf
 			#print("\t".join([chr,pos,ensg, genetype,ind,sex,gtex_maf,str(gnomad_maf_both)]))
-			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex,str(cadd_raw),str(cadd_phred),str(geno)]
+			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex,str(cadd_raw),str(cadd_phred),str(geno),str(TSS),str(TES)]
 			#must be seen in both
 			#length of dic will be two if has male and female!
 			if (len(seen_dic[pos])<2):
