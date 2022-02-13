@@ -6,6 +6,7 @@ import argparse, re, gzip,glob, numpy, os
 
 parser=argparse.ArgumentParser()
 parser.add_argument("--indir", type=str, help="the bed file", required=True)
+parser.add_argument("--genewindow", type=str, help="distance from gene start site to include", required=True)
 parser.add_argument("--outfile_all", type=str, help="outfile for this sex containing bed info and zscores", required=True)
 parser.add_argument("--outfile_inboth", type=str, help="outfile for this sex containing bed info and zscores", required=True)
 parser.add_argument("--sexfile", type=str, help="the sex of the individual", required=True)
@@ -15,6 +16,7 @@ args = parser.parse_args()
 outf_sex_all=gzip.open(args.outfile_all,"wb")
 outf_sex_inboth=gzip.open(args.outfile_inboth,"wb")
 
+genewindow=int(args.genewindow)
 
 #get sex per individual
 sex_convert_key={}
@@ -67,7 +69,7 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 		print(sex)
 		for line in f:
 			line_split=line.decode('utf-8').split("\t")
-			print(line_split)
+			#print(line_split)
 			chr=line_split[0] #chr
 			pos=line_split[1] #pos
 			gtex_maf=line_split[3] #GTEx MAF
@@ -79,6 +81,13 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			TES=int(line_split[45])-int(pos)
 			genetype=line_split[54]
 			gnomad_split=(line_split[42]).split(';')
+			gene_start=int(line_split[44])
+			gene_end=int(line_split[45])
+			###don't add if not in new window
+			if not ((abs(int(pos)-gene_start) <= genewindow) or (abs(int(pos)-gene_end) <= genewindow)):
+				print(str(pos), " and start/end", str(gene_start), "/",str(gene_end))
+				continue
+			print("passed")
 			cadd_raw=line_split[len(line_split)-2]
 			cadd_phred=(line_split[len(line_split)-1]).strip()
 			##print(','.join([chr,pos,gtex_maf,ref,alt,ensg,cadd_raw,cadd_phred,genetype,str(TSS),str(TES),line_split[44],line_split[45]]))

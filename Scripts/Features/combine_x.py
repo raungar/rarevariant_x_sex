@@ -6,6 +6,7 @@ import argparse, re, gzip,glob, numpy, os
 
 parser=argparse.ArgumentParser()
 parser.add_argument("--indir", type=str, help="the bed file", required=True)
+parser.add_argument("--genewindow", type=str, help="distance from gene start site to include", required=True)
 parser.add_argument("--outfile_all", type=str, help="outfile for this sex containing bed info and zscores", required=True)
 parser.add_argument("--outfile_inboth", type=str, help="outfile for this sex containing bed info and zscores", required=True)
 parser.add_argument("--sexfile", type=str, help="the sex of the individual", required=True)
@@ -15,7 +16,7 @@ args = parser.parse_args()
 outf_sex_all=gzip.open(args.outfile_all,"wb")
 outf_sex_inboth=gzip.open(args.outfile_inboth,"wb")
 
-
+genewindow=int(args.genewindow)
 
 #get sex per individual
 sex_convert_key={}
@@ -40,13 +41,15 @@ seen_dic={}
 ####put positions into found dic
 for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 	print(this_f)
-	with open(this_f, 'r') as f:
+	#with open(this_f, 'r') as f:
+	with gzip.open(this_f, 'rb') as f:
 		f_split=this_f.split("/")[-1]
 		f_split_again=f_split.split("_")
 		ind=next(filter(lambda x: re.search('GTEX',x),f_split_again))
 		sex=sex_key[ind]
 		for line in f:
-			line_split=line.split("\t")
+			line_split=line.decode('utf-8').split("\t")
+			#line_split=line.split("\t")
 			chr=line_split[0] #chr
 			pos=line_split[1] #pos
 			if pos in seen_dic:
@@ -59,7 +62,8 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 	print(this_f)
 	if (os.path.isdir(this_f)):
 		continue
-	with open(this_f, 'r') as f:
+	#with open(this_f, 'r') as f:
+	with gzip.open(this_f, 'rb') as f:
 		f_split=this_f.split("/")[-1]
 		f_split_again=f_split.split("_")
 		ind=next(filter(lambda x: re.search('GTEX',x),f_split_again))
@@ -68,7 +72,8 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 		print(ind)
 		print(sex)
 		for line in f:
-			line_split=line.split("\t")
+			line_split=line.decode('utf-8').split("\t")
+			#line_split=line.split("\t")
 			chr=line_split[0] #chr
 			pos=line_split[1] #pos
 			gtex_maf=line_split[3] #GTEx MAF
@@ -80,6 +85,13 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			ensg=line_split[42]
 			genetype=line_split[46]
 			gnomad_split=(line_split[34]).split(';')
+			gene_start=int(line_split[36])
+			gene_end=int(line_split[37])
+			if((abs(int(pos)-gene_start) <= genewindow) or (abs(int(pos)-gene_end) <= genewindow)):
+				print("YAY")
+			else:
+				continue
+			print(str(gene_start)," and ",str(gene_end))
 			cadd_raw=line_split[len(line_split)-2]
 			cadd_phred=(line_split[len(line_split)-1]).strip()
 			if gnomad_split[0] == "NO_MATCH":
