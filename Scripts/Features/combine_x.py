@@ -108,7 +108,8 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 				var_location="gene_start"
 			#if within gene
 			if((int(pos)>gene_start) and (int(pos)<gene_end)):
-				#get if exon on intron
+				#get if exon or intron
+				#while loop for speed.assuming sorting of both files.
 				while(gtf_start<gene_start):
 					gtf_line=(gtf.readline()).split("\t")
 					gtf_start=int(gtf_line[1])
@@ -117,9 +118,10 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 					var_location="exon"
 				else:
 					var_location="intron"
-				print(var_location)
-			else:
+			if((abs(int(pos)-gene_start) > genewindow) and (abs(int(pos)-gene_end) > genewindow)):
 				continue
+			print(str(pos)+": "+str(gene_start)+","+str(gene_end) + ". This means "+ str(abs(int(pos)-gene_end)) + " or "+ str(abs(int(pos)-gene_start))+ " is more than "+str(genewindow))
+			print(var_location)
 			#print(str(gene_start)," and ",str(gene_end))
 			cadd_raw=line_split[len(line_split)-2]
 			cadd_phred=(line_split[len(line_split)-1]).strip()
