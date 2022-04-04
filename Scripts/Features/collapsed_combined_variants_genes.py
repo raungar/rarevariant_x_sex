@@ -53,9 +53,10 @@ with gzip.open(combined_file,"r") as f_read:
 		ensg=line_split[8]
 		genetype=line_split[9]
 		sex=line_split[10]
-		cadd_raw=line_split[11]
-		cadd_phred=line_split[12].strip()
-		geno=line_split[13].strip()
+		var_location=line_split[11]
+		cadd_raw=line_split[12]
+		cadd_phred=line_split[13].strip()
+		geno=line_split[14].strip()
 		if(cadd_phred=="NA"):
 			cadd_phred=0
 		#if homo dom, dont consider
@@ -63,14 +64,14 @@ with gzip.open(combined_file,"r") as f_read:
 		print(int(geno) ==0)
 		if(int(geno) == 0):
 			continue
-		store_line=[chrom,start,end,ensg, vartype,ind,sex, maf_gtex, maf_gnomad,maf_use,genetype,cadd_raw,cadd_phred,geno]
+		store_line=[chrom,start,end,ensg, vartype,ind,sex,var_location, maf_gtex, maf_gnomad,maf_use,genetype,cadd_raw,cadd_phred,geno]
 		#if there is already a RV recorded for this gene
 		if ind not in this_inds_dic:
 			this_inds_dic[ind]=dict()
 		if ensg in this_inds_dic[ind]:
 			#get current min MAF
-			dic_current_min_maf=float((this_inds_dic[ind][ensg])[9])
-			dic_current_min_cadd_phred=(this_inds_dic[ind][ensg])[12]
+			dic_current_min_maf=float((this_inds_dic[ind][ensg])[10])
+			dic_current_min_cadd_phred=(this_inds_dic[ind][ensg])[13]
 
 			print("this/min maf: ",maf_use,"/",dic_current_min_maf, "   and this/mincadd ",cadd_phred,"/",dic_current_min_cadd_phred)
 			#check first that this line passes the min cadd threshold (since will be sent to common eventually anyway)

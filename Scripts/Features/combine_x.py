@@ -20,13 +20,9 @@ outf_sex_inboth=gzip.open(args.outfile_inboth,"wb")
 genewindow=int(args.genewindow)
 
 #open gtf fiel for reading, reading line by line (sorting is assumed for speed)
-print(0)
 gtf=open(args.gtf,"r")
 gene_line=(gtf.readline()).split("\t")
-print(gene_line)
 gtf_start=int(gene_line[1])
-print(gtf_start)
-print(1)
 
 #get sex per individual
 sex_convert_key={}
@@ -85,6 +81,10 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			#line_split=line.split("\t")
 			chr=line_split[0] #chr
 			pos=line_split[1] #pos
+			match_pos=line_split[28]
+			if(int(pos) != int(match_pos)):
+				print("ERROR -- "+str(pos)+" and "+str(match_pos)+" does not match!")
+				continue
 			gtex_maf=line_split[3] #GTEx MAF
 			geno=line_split[4] #genotype
 			ref=line_split[5]
@@ -96,10 +96,12 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			gnomad_split=(line_split[34]).split(';')
 			gene_start=int(line_split[36])
 			gene_end=int(line_split[37])
-			#if pos is x away from gene start OR x away from gene end OR between gene start and gene end
-			#if((abs(int(pos)-gene_start) <= genewindow) or (abs(int(pos)-gene_end) <= genewindow)):
-			#	print("YAY")
 
+			print("pos"+str(pos)+": ["+str(gene_start)+","+str(gene_end)+"], gene_end_dist="+ str(abs(int(pos)-gene_end)) + " ,gene_start_dist= "+ str(abs(int(pos)-gene_start)))
+
+			if((abs(int(pos)-gene_start) > genewindow) and (abs(int(pos)-gene_end) > genewindow)):
+				print("var outside of gene window: " + str(abs(int(pos)-gene_start))+" and "+str(abs(int(pos)-gene_end)) +" >"+str(genewindow))
+				continue
 			#this order matters -- will override if in both gene start and gene end window to record as gene start
 			#again will override if actually within gene instead
 			if(abs(int(pos)-gene_end) <= genewindow):
@@ -108,9 +110,11 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 				var_location="gene_start"
 			#if within gene
 			if((int(pos)>gene_start) and (int(pos)<gene_end)):
+				print("this is within the gene")
 				#get if exon or intron
 				#while loop for speed.assuming sorting of both files.
 				while(gtf_start<gene_start):
+					print(str(gtf_start)+"<"+str(gene_start))
 					gtf_line=(gtf.readline()).split("\t")
 					gtf_start=int(gtf_line[1])
 				gtf_end=int(gtf_line[2])
@@ -118,10 +122,8 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 					var_location="exon"
 				else:
 					var_location="intron"
-			if((abs(int(pos)-gene_start) > genewindow) and (abs(int(pos)-gene_end) > genewindow)):
-				continue
-			print(str(pos)+": "+str(gene_start)+","+str(gene_end) + ". This means "+ str(abs(int(pos)-gene_end)) + " or "+ str(abs(int(pos)-gene_start))+ " is more than "+str(genewindow))
-			print(var_location)
+				print("this is in a "+var_location)
+			print("choosing: " + var_location)
 			#print(str(gene_start)," and ",str(gene_end))
 			cadd_raw=line_split[len(line_split)-2]
 			cadd_phred=(line_split[len(line_split)-1]).strip()

@@ -10,6 +10,7 @@ parser.add_argument("--genewindow", type=str, help="distance from gene start sit
 parser.add_argument("--outfile_all", type=str, help="outfile for this sex containing bed info and zscores", required=True)
 parser.add_argument("--outfile_inboth", type=str, help="outfile for this sex containing bed info and zscores", required=True)
 parser.add_argument("--sexfile", type=str, help="the sex of the individual", required=True)
+parser.add_argument("--gtf", type=str, help="gtf file for exon adding. assuming sorted for speed.", required=True)
 parser.add_argument("--filename_match", type=str, help="keyword to find right file", required=True)
 args = parser.parse_args()
 
@@ -17,6 +18,11 @@ outf_sex_all=gzip.open(args.outfile_all,"wb")
 outf_sex_inboth=gzip.open(args.outfile_inboth,"wb")
 
 genewindow=int(args.genewindow)
+
+#open gtf fiel for reading, reading line by line (sorting is assumed for speed)
+gtf=open(args.gtf,"r")
+gene_line=(gtf.readline()).split("\t")
+gtf_start=int(gene_line[1])
 
 #get sex per individual
 sex_convert_key={}
@@ -83,11 +89,28 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			gnomad_split=(line_split[42]).split(';')
 			gene_start=int(line_split[44])
 			gene_end=int(line_split[45])
-			###don't add if not in new window
-			if not ((abs(int(pos)-gene_start) <= genewindow) or (abs(int(pos)-gene_end) <= genewindow)):
-				print(str(pos), " and start/end", str(gene_start), "/",str(gene_end))
+
+			#this order matters -- will override if in both gene start and gene end window to record as gene start
+			#again will override if actually within gene instead
+			if(abs(int(pos)-gene_end) <= genewindow):
+				var_location="gene_end"
+			if(abs(int(pos)-gene_start) <= genewindow):
+				var_location="gene_start"
+			#if within gene
+			if((int(pos)>gene_start) and (int(pos)<gene_end)):
+				#get if exon or intron
+				#while loop for speed.assuming sorting of both files.
+				while(gtf_start<gene_start):
+					gtf_line=(gtf.readline()).split("\t")
+					gtf_start=int(gtf_line[1])
+				gtf_end=int(gtf_line[2])
+				if((int(pos)>gtf_start) and (int(pos)<gtf_end)):
+					var_location="exon"
+				else:
+					var_location="intron"
+			if((abs(int(pos)-gene_start) > genewindow) and (abs(int(pos)-gene_end) > genewindow)):
 				continue
-			print("passed")
+			print("passed: " +var_location)
 			cadd_raw=line_split[len(line_split)-2]
 			cadd_phred=(line_split[len(line_split)-1]).strip()
 			##print(','.join([chr,pos,gtex_maf,ref,alt,ensg,cadd_raw,cadd_phred,genetype,str(TSS),str(TES),line_split[44],line_split[45]]))
@@ -120,7 +143,7 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			if(float(gnomad_maf_both)==0):
 				use_maf=gtex_maf
 			#print("\t".join([chr,pos,ensg, genetype,ind,sex,gtex_maf,str(gnomad_maf_both)]))
-			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex,str(cadd_raw),str(cadd_phred),str(geno),str(TSS),str(TES)]
+			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex,var_location,str(cadd_raw),str(cadd_phred),str(geno),str(TSS),str(TES)]
 			# print(myline)
 			#must be seen in both
 			#length of dic will be two if has male and female!

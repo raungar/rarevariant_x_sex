@@ -33,6 +33,7 @@ for splitf in split_files:
 #CHRNUM="7"
 #CHRNUM=[1]
 CHROMOSOMES=range(1,23)
+CHROMOSOMES="X"
 #CHROMOSOMES=["13","18"]
 GROUPS=["m","f","both"]
 #filter_version=["types_filtsexdiff","types"]
@@ -44,27 +45,34 @@ filter_version=["typesSeenTwice","typesALL","typesBlacklistRemovedALL","typesBla
 filter_version=["typesALL"]
 filter_version_x=["typesGQ5BlacklistRemovedALL"]
 ##IDS_VARTYPES="GTEX-X4EO_SNPs"
-GENEWINDOWS=["100","1000","5000"]
+GENEWINDOWS=["100","500","1000","5000","10000"]
 CADD=["0","15"]
 CHRNUM=range(1,23) #16
 CHRNUM="7"
 COLLAPSEDTYPE=["collapsedbyTSS","collapsed"]
-COLLAPSEDTYPE=["collapsed"]
+VARLOCS=["","exon","genestart","geneend","intron"]
+#COLLAPSEDTYPE=["collapsed","collapsedbyVARLOCexon","collapsedbyVARLOCgene_start","collapsedbyVARLOCgene_end","collapsedbyVARLOCintron"]
+
 rule all:
 	input:
-		expand(config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/exon_chr{chrN}.gtf",chrN=CHRNUM)
+		#expand(config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/exon_chr{chrN}.gtf",chrN=CHROMOSOMES)
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/CADD/{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
 		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_aut.tsv.gz",
-		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrN}_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
+		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{varloc}_chr{chrN}_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
+				cadd_min=CADD,varloc=VARLOCS,genewindow=GENEWINDOWS,this_type=filter_version,chrN=CHRNUM),
+		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{varloc}_x_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
+				cadd_min=CADD,varloc=VARLOCS,genewindow=GENEWINDOWS,this_type=filter_version_x)
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_aut_cadd{cadd_min}_window{genewindow}.txt.gz",
 		#	 cadd_min=CADD,collapsedTYPE=COLLAPSEDTYPE,genewindow=GENEWINDOWS,this_type=filter_version,chrN=CHRNUM),
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_aut_cadd{cadd_min}.txt.gz",
-		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
-		#		cadd_min=CADD,collapsedTYPE=COLLAPSEDTYPE,genewindow=GENEWINDOWS,this_type=["typesGQ5BlacklistRemovedALL"]),
+		##expand(config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_x_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
+		##		cadd_min=CADD,collapsedTYPE=COLLAPSEDTYPE,genewindow=GENEWINDOWS,this_type=["typesGQ5BlacklistRemovedALL"]),
 		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADDtypesGQ5ALL_linc_prot_window{genewindow}.txt.gz",
-		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADDtypesGQ5BlacklistRemovedALL_linc_prot_window{genewindow}.txt.gz",
-		#	genewindow=GENEWINDOWS)
+		###expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADDtypesGQ5BlacklistRemovedALL_linc_prot_window{genewindow}.txt.gz",
+		###	genewindow=GENEWINDOWS),
+		#####expand(config["RAREDIR"]+"/features_v8/Combined/chr{chrN}_all_rvs_inds_CADDtypesALL_linc_prot_window{genewindow}.txt.gz",
+		#####	genewindow=GENEWINDOWS,chrN=CHRNUM)
 		#
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsedbyTSS_aut_cadd{cadd_min}.txt.gz",cadd_min=CADD),
 		##expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADD{this_type}_cadd{cadd_min}.txt.gz",cadd_min=CADD,this_type=filter_version),
@@ -177,7 +185,7 @@ rule gtf_split_by_gene:
 		genes=config["GTEX_GENES"]
 	params:
 		prefix=config["RAREDIR"]+"/features_v8/GTF",
-		filt_name="exon"
+		filt_name="gene"
 	output:
 		gtf_split_log=config["RAREDIR"]+"/features_v8/GTF/combine_genes.log"
 	shell:
@@ -200,7 +208,7 @@ rule gtf_split_by_exon:
 	input:
 		genes=config["GTEX_GENES"]
 	params:
-		prefix=config["RAREDIR"]+"/features_v8/GTF/exon_",
+		prefix=config["RAREDIR"]+"/features_v8/GTF/exon_", #include trailing
 		filt_name="exon"
 	output:
 		gtf_split_log=config["RAREDIR"]+"/features_v8/GTF/combine_exons.log"
@@ -213,7 +221,7 @@ rule gtf_split_by_exon_lincRNA_protcod_only:
 	input:
 		gtf_split_log=config["RAREDIR"]+"/features_v8/GTF/combine_exons.log"
 	params:
-		gtf=config["RAREDIR"]+"/features_v8/GTF/exon_chr{chrN}.gtf"
+		gtf=config["RAREDIR"]+"/features_v8/GTF/exon_exon_chr{chrN}.gtf"
 	output:
 		config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/exon_chr{chrN}.gtf"
 	shell:
@@ -444,6 +452,29 @@ rule collapse_combined_x_byTSS:
 		module load python3
 		python3 {input.myscript} --combined_file {input.combined} --out {output.outfile} --cadd_min {params.cadd_min}
 		"""
+rule collapse_combined_x_byvarloc:
+	input:
+		myscript=config["SCRIPTSDIR"]+"/Features/collapsed_combined_variants_genes_varlocation.py",
+		combined=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADD{this_type}_linc_prot_window{genewindow}.txt.gz"
+	params:
+		cadd_min="{cadd_min}",
+		varloc="{varloc}"
+	output:
+		outfile=config["RAREDIR"]+"/features_v8/Collapsed/collapsed{varloc}_x_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz"
+	shell:
+		"""
+		module load python3
+		varloc="{params.varloc}"
+		if [[ $varloc == "genestart" ]]
+		then
+			varloc="gene_start"
+		fi
+		if [[ $varloc == "geneend" ]]
+		then
+			varloc="gene_end"
+		fi
+		python3 {input.myscript} --combined_file {input.combined} --out {output.outfile} --cadd_min {params.cadd_min} --vartype $varloc
+		"""
 rule collapse_combined_aut_byTSS:
 	input:
 		myscript=config["SCRIPTSDIR"]+"/Features/collapsed_combined_variants_genes_TSS.py",
@@ -483,9 +514,32 @@ rule collapse_combined_aut:
 		module load python3
 		python3 {input.myscript} --combined_file {input.combined} --out {output.outfile} --cadd_min {params.cadd_min}
 		"""
+rule collapse_combined_aut_varloc:
+	input:
+		myscript=(config["SCRIPTSDIR"]+"/Features/collapsed_combined_variants_genes_varlocation.py"),
+		combined=config["RAREDIR"]+"/features_v8/Combined/chr{chrN}_all_rvs_inds_CADD{this_type}_linc_prot_window{genewindow}.txt.gz"
+	params:
+		cadd_min="{cadd_min}",
+                varloc="{varloc}"
+	output:
+		outfile=config["RAREDIR"]+"/features_v8/Collapsed/collapsed{varloc}_chr{chrN}_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz"
+	shell:
+		"""
+		module load python3
+		varloc="{params.varloc}"
+		if [[ $varloc == "genestart" ]]
+		then
+			varloc="gene_start"
+		fi
+		if [[ $varloc == "geneend" ]]
+		then
+			varloc="gene_end"
+		fi
+		python3 {input.myscript} --combined_file {input.combined} --out {output.outfile} --cadd_min {params.cadd_min} --vartype $varloc
+		"""
 rule collapse_combined_aut_all:
 	input:
-		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/{{collapsedTYPE}}_chr{chrom}_CADDtypesALL_cadd{{cadd_min}}.txt.gz",
+		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/{{collapsedTYPE}}_chr{chrom}_CADDtypesALL_cadd{{cadd_min}}_window{{gene_window}}.txt.gz",
 			chrom=CHROMOSOMES)
 		#	collapsed_maf_f_aut_chr19_linc_prot.tsv.gz #_chr{chrN}_CADD{this_type}_cadd{cadd_min}.txt.gz
 	params:
@@ -649,8 +703,9 @@ rule combine_x_rvs_sexdiff5_blcklst_removed_and_seentwice:
 		sexfile=ancient(config["GTEX_SUBJECTSv8"]),
 		indir=ancient(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ5"),
 		this_script=config["SCRIPTSDIR"]+"/Features/combine_x.py",
-		gtf=ancient(config["RAREDIR"]+"/features_v8/chrX.gtf")
-		#this_script=ancient(config["SCRIPTSDIR"]+"/Features/combine_x_gz.py")
+		#gtf=ancient(config["RAREDIR"]+"/features_v8/chrX.gtf"),
+		exon=config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/exon_chrX.gtf"
+		#this_script=ancient(config["SCRIPTSDIR"]+"/Features/combine_x_gz.py"
 	params:
 		file_glob_this="blacklisted_filt.bed.gz",
 		thiswindow="{genewindow}"
@@ -662,7 +717,8 @@ rule combine_x_rvs_sexdiff5_blcklst_removed_and_seentwice:
 		module load python3
 		python {input.this_script} --sexfile {input.sexfile} --indir {input.indir} \
 			--outfile_all {output.outfile_all} --outfile_inboth {output.outfile_inboth} \
-			--filename_match {params.file_glob_this} --genewindow {params.thiswindow} --gtf {input.gtf}
+			--filename_match {params.file_glob_this} --genewindow {params.thiswindow} \
+			--gtf {input.exon} 
 		"""	
 rule combine_x_rvs_and_filtseentwiceGQ5:
 	input:
@@ -779,7 +835,8 @@ rule combine_aut_rvs:
 		sexfile=config["GTEX_SUBJECTSv8"],
 		indir=ancient(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/CADD"),
 		this_script=config["SCRIPTSDIR"]+"/Features/combine_aut.py",
-		gtf=ancient(config["RAREDIR"]+"/features_v8/GTF/{chrN}.gtf")
+		#gtf=ancient(config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/{chrN}.gtf"),
+		exon=config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/exon_chr{chrN}.gtf"
 	params:
 		file_glob_this="chr{chrN}_anno_genes_cadd_filt.bed.gz",
 		thiswindow="{genewindow}"
@@ -791,7 +848,8 @@ rule combine_aut_rvs:
 		module load python3
 		python {input.this_script} --sexfile {input.sexfile} --indir {input.indir} \
 			--outfile_all {output.outfile_all} --outfile_inboth {output.outfile_inboth} \
-			--filename_match {params.file_glob_this} --genewindow {params.thiswindow} --gtf {input.gtf}
+			--filename_match {params.file_glob_this} --genewindow {params.thiswindow} \
+			--gtf {input.exon}
 		"""	
 
 # rule combine_rvs_inds_aut:
