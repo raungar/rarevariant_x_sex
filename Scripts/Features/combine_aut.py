@@ -87,6 +87,7 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			TES=int(line_split[45])-int(pos)
 			genetype=line_split[54]
 			gnomad_split=(line_split[42]).split(';')
+			vep_split=(line_split[42]).split('|')
 			gene_start=int(line_split[44])
 			gene_end=int(line_split[45])
 
@@ -110,6 +111,21 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 					var_location="intron"
 			if((abs(int(pos)-gene_start) > genewindow) and (abs(int(pos)-gene_end) > genewindow)):
 				continue
+
+			###get vep anno. it repeats in lengths of ten. loop through that.
+			num_vep_annos=int((len(vep_split)-1)/10)
+			vepvar_set=set()
+			snpeff_set=set()
+			for i in range(0,num_vep_annos):
+				this_vepvar=vep_split[i*10+1]
+				this_vepsnpeff=vep_split[i*10+2]
+				this_vepvar_split=this_vepvar.split("&")
+				for myvepvar in this_vepvar_split:
+					vepvar_set.add(myvepvar)
+				snpeff_set.add(this_vepsnpeff)
+			vepvar=','.join(str(s) for s in vepvar_set)
+			vepsnpeff=','.join(str(s) for s in snpeff_set)
+
 			print("passed: " +var_location)
 			cadd_raw=line_split[len(line_split)-2]
 			cadd_phred=(line_split[len(line_split)-1]).strip()
@@ -143,7 +159,7 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			if(float(gnomad_maf_both)==0):
 				use_maf=gtex_maf
 			#print("\t".join([chr,pos,ensg, genetype,ind,sex,gtex_maf,str(gnomad_maf_both)]))
-			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex,var_location,str(cadd_raw),str(cadd_phred),str(geno),str(TSS),str(TES)]
+			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex,var_location,str(cadd_raw),str(cadd_phred),str(geno),str(TSS),str(TES),,vepvar,vepsnpeff]
 			# print(myline)
 			#must be seen in both
 			#length of dic will be two if has male and female!

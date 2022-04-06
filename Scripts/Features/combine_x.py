@@ -83,7 +83,7 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			pos=line_split[1] #pos
 			match_pos=line_split[28]
 			if(int(pos) != int(match_pos)):
-				print("ERROR -- "+str(pos)+" and "+str(match_pos)+" does not match!")
+				#print("ERROR -- "+str(pos)+" and "+str(match_pos)+" does not match!")
 				continue
 			gtex_maf=line_split[3] #GTEx MAF
 			geno=line_split[4] #genotype
@@ -94,14 +94,31 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			ensg=line_split[42]
 			genetype=line_split[46]
 			gnomad_split=(line_split[34]).split(';')
+			vep_split=(line_split[34]).split('|')
 			gene_start=int(line_split[36])
 			gene_end=int(line_split[37])
 
-			print("pos"+str(pos)+": ["+str(gene_start)+","+str(gene_end)+"], gene_end_dist="+ str(abs(int(pos)-gene_end)) + " ,gene_start_dist= "+ str(abs(int(pos)-gene_start)))
+			#print("pos"+str(pos)+": ["+str(gene_start)+","+str(gene_end)+"], gene_end_dist="+ str(abs(int(pos)-gene_end)) + " ,gene_start_dist= "+ str(abs(int(pos)-gene_start)))
 
 			if((abs(int(pos)-gene_start) > genewindow) and (abs(int(pos)-gene_end) > genewindow)):
-				print("var outside of gene window: " + str(abs(int(pos)-gene_start))+" and "+str(abs(int(pos)-gene_end)) +" >"+str(genewindow))
+				#print("var outside of gene window: " + str(abs(int(pos)-gene_start))+" and "+str(abs(int(pos)-gene_end)) +" >"+str(genewindow))
 				continue
+
+			###get vep anno. it repeats in lengths of ten. loop through that.
+			num_vep_annos=int((len(vep_split)-1)/10)
+			vepvar_set=set()
+			snpeff_set=set()
+			for i in range(0,num_vep_annos):
+				this_vepvar=vep_split[i*10+1]
+				this_vepsnpeff=vep_split[i*10+2]
+				this_vepvar_split=this_vepvar.split("&")
+				for myvepvar in this_vepvar_split:
+					vepvar_set.add(myvepvar)
+				snpeff_set.add(this_vepsnpeff)
+			vepvar=','.join(str(s) for s in vepvar_set)
+			vepsnpeff=','.join(str(s) for s in snpeff_set)
+			print(vepvar)
+			print(vepsnpeff)
 			#this order matters -- will override if in both gene start and gene end window to record as gene start
 			#again will override if actually within gene instead
 			if(abs(int(pos)-gene_end) <= genewindow):
@@ -110,11 +127,11 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 				var_location="gene_start"
 			#if within gene
 			if((int(pos)>gene_start) and (int(pos)<gene_end)):
-				print("this is within the gene")
+				#print("this is within the gene")
 				#get if exon or intron
 				#while loop for speed.assuming sorting of both files.
 				while(gtf_start<gene_start):
-					print(str(gtf_start)+"<"+str(gene_start))
+					#print(str(gtf_start)+"<"+str(gene_start))
 					gtf_line=(gtf.readline()).split("\t")
 					gtf_start=int(gtf_line[1])
 				gtf_end=int(gtf_line[2])
@@ -122,13 +139,13 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 					var_location="exon"
 				else:
 					var_location="intron"
-				print("this is in a "+var_location)
-			print("choosing: " + var_location)
+				#print("this is in a "+var_location)
+			#print("choosing: " + var_location)
 			#print(str(gene_start)," and ",str(gene_end))
 			cadd_raw=line_split[len(line_split)-2]
 			cadd_phred=(line_split[len(line_split)-1]).strip()
 			if gnomad_split[0] == "NO_MATCH":
-				print("NO MATCH: ",ref,",",alt,",",gtex_maf)
+				#print("NO MATCH: ",ref,",",alt,",",gtex_maf)
 				#this prepares for cases where the reference allelse is actually teh minor allele
 				if ref == alt:
 					gnomad_maf_both=float(gtex_maf)
@@ -136,7 +153,7 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 					gnomad_maf_both=float(gtex_maf)
 				else:
 					gnomad_maf_both=float(0)		
-				print("both: ",gnomad_maf_both)
+				#print("both: ",gnomad_maf_both)
 			else:
 				vartype=(([col for col in gnomad_split if variant_type.match(col)])[0].split("="))[1]
 				if(vartype!="snv"):
@@ -152,7 +169,7 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			if(float(gnomad_maf_both)==0):
 				use_maf=gtex_maf
 			#print("\t".join([chr,pos,ensg, genetype,ind,sex,gtex_maf,str(gnomad_maf_both)]))
-			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex,var_location,str(cadd_raw),str(cadd_phred),str(geno),str(TSS),str(TES)]
+			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex,var_location,str(cadd_raw),str(cadd_phred),str(geno),str(TSS),str(TES),vepvar,vepsnpeff]
 			#must be seen in both
 			#length of dic will be two if has male and female!
 			if (len(seen_dic[pos])<2):
