@@ -51,6 +51,14 @@ CHRNUM=range(1,23) #16
 CHRNUM="7"
 COLLAPSEDTYPE=["collapsedbyTSS","collapsed"]
 VARLOCS=["","exon","genestart","geneend","intron"]
+VEPTYPES=["3-prime-UTR-variant","5-prime-UTR-variant","coding-sequence-variant",
+	 "downstream-gene-variant","incomplete-terminal-codon-variant","intergenic-variant",
+	 "intron-variant","missense-variant","NMD-transcript-variant","non-coding-transcript-exon-variant",
+	 "non-coding-transcript-variant","regulatory-region-variant","splice-acceptor-variant",
+	 "splice-donor-variant","splice-region-variant","start-lost","stop-gained","stop-lost",
+	 "synonymous-variant","TF-binding-site-variant","upstream-gene-variant"]
+
+
 #COLLAPSEDTYPE=["collapsed","collapsedbyVARLOCexon","collapsedbyVARLOCgene_start","collapsedbyVARLOCgene_end","collapsedbyVARLOCintron"]
 
 rule all:
@@ -59,10 +67,14 @@ rule all:
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/CADD/{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
 		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_aut.tsv.gz",
-		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{varloc}_chr{chrN}_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
-				cadd_min=CADD,varloc=VARLOCS,genewindow=GENEWINDOWS,this_type=filter_version,chrN=CHRNUM),
-		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{varloc}_x_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
-				cadd_min=CADD,varloc=VARLOCS,genewindow=GENEWINDOWS,this_type=filter_version_x)
+		##expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{varloc}_chr{chrN}_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
+		##		cadd_min=CADD,varloc=VARLOCS,genewindow=GENEWINDOWS,this_type=filter_version,chrN=CHRNUM),
+		##expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{varloc}_x_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
+		##		cadd_min=CADD,varloc=VARLOCS,genewindow=GENEWINDOWS,this_type=filter_version_x),
+		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{veptype}_chr{chrN}_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
+				cadd_min=CADD,veptype=VEPTYPES,genewindow=GENEWINDOWS,this_type=filter_version,chrN=CHRNUM),
+		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{veptype}_x_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
+				cadd_min=CADD,veptype=VEPTYPES,genewindow=GENEWINDOWS,this_type=filter_version_x)
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_aut_cadd{cadd_min}_window{genewindow}.txt.gz",
 		#	 cadd_min=CADD,collapsedTYPE=COLLAPSEDTYPE,genewindow=GENEWINDOWS,this_type=filter_version,chrN=CHRNUM),
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_aut_cadd{cadd_min}.txt.gz",
@@ -475,6 +487,21 @@ rule collapse_combined_x_byvarloc:
 		fi
 		python3 {input.myscript} --combined_file {input.combined} --out {output.outfile} --cadd_min {params.cadd_min} --vartype $varloc
 		"""
+rule collapse_combined_x_byveptype:
+	input:
+		myscript=config["SCRIPTSDIR"]+"/Features/collapsed_combined_variants_genes_veptype.py",
+		combined=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADD{this_type}_linc_prot_window{genewindow}.txt.gz"
+	params:
+		cadd_min="{cadd_min}",
+		veptype="{veptype}"
+	output:
+		outfile=config["RAREDIR"]+"/features_v8/Collapsed/collapsed{veptype}_x_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz"
+	shell:
+		"""
+		module load python3
+		veptype="{params.veptype}" #in case of renaming issue
+		python3 {input.myscript} --combined_file {input.combined} --out {output.outfile} --cadd_min {params.cadd_min} --vartype $veptype
+		"""
 rule collapse_combined_aut_byTSS:
 	input:
 		myscript=config["SCRIPTSDIR"]+"/Features/collapsed_combined_variants_genes_TSS.py",
@@ -536,6 +563,20 @@ rule collapse_combined_aut_varloc:
 			varloc="gene_end"
 		fi
 		python3 {input.myscript} --combined_file {input.combined} --out {output.outfile} --cadd_min {params.cadd_min} --vartype $varloc
+		"""
+rule collapse_combined_aut_byveptype:
+	input:
+		myscript=config["SCRIPTSDIR"]+"/Features/collapsed_combined_variants_genes_veptype.py",
+		combined=config["RAREDIR"]+"/features_v8/Combined/chr{chrN}_all_rvs_inds_CADD{this_type}_linc_prot_window{genewindow}.txt.gz"
+	params:
+		cadd_min="{cadd_min}",
+                veptype="{veptype}"
+	output:
+		outfile=config["RAREDIR"]+"/features_v8/Collapsed/collapsed{veptype}_chr{chrN}_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz"
+	shell:
+		"""
+		veptype="{params.veptype}"
+		python3 {input.myscript} --combined_file {input.combined} --out {output.outfile} --cadd_min {params.cadd_min} --vartype $veptype
 		"""
 rule collapse_combined_aut_all:
 	input:
@@ -842,7 +883,7 @@ rule combine_aut_rvs:
 		thiswindow="{genewindow}"
 	output:
 		outfile_all=config["RAREDIR"]+"/features_v8/Combined/chr{chrN}_all_rvs_inds_CADDtypesALL_linc_prot_window{genewindow}.txt.gz",
-		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/chr{chrN}_all_rvs_inds_CADDtypesSeenTwice_linc_prot_{genewindow}.txt.gz"
+		outfile_inboth=config["RAREDIR"]+"/features_v8/Combined/chr{chrN}_all_rvs_inds_CADDtypesSeenTwice_linc_prot_window{genewindow}.txt.gz"
 	shell:
 		"""
 		module load python3
