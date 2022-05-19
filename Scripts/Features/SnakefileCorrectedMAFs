@@ -30,10 +30,10 @@ for splitf in split_files:
 #print(IDS_VARTYPES)
 #CHRNUM=["13","18"]
 #CHRNUM="13"
-#CHRNUM="7"
+CHRNUM="7"
 #CHRNUM=[1]
 CHROMOSOMES=range(1,23)
-CHROMOSOMES="X"
+#CHROMOSOMES="X"
 #CHROMOSOMES=["13","18"]
 GROUPS=["m","f","both"]
 #filter_version=["types_filtsexdiff","types"]
@@ -45,10 +45,9 @@ filter_version=["typesSeenTwice","typesALL","typesBlacklistRemovedALL","typesBla
 filter_version=["typesALL"]
 filter_version_x=["typesGQ5BlacklistRemovedALL"]
 ##IDS_VARTYPES="GTEX-X4EO_SNPs"
-GENEWINDOWS=["100","500","1000","5000","10000"]
 CADD=["0","15"]
 CHRNUM=range(1,23) #16
-CHRNUM="7"
+#CHRNUM="7"
 COLLAPSEDTYPE=["collapsedbyTSS","collapsed"]
 VARLOCS=["","exon","genestart","geneend","intron"]
 VEPTYPES=["3-prime-UTR-variant","5-prime-UTR-variant","coding-sequence-variant",
@@ -57,37 +56,46 @@ VEPTYPES=["3-prime-UTR-variant","5-prime-UTR-variant","coding-sequence-variant",
 	 "non-coding-transcript-variant","regulatory-region-variant","splice-acceptor-variant",
 	 "splice-donor-variant","splice-region-variant","start-lost","stop-gained","stop-lost",
 	 "synonymous-variant","TF-binding-site-variant","upstream-gene-variant"]
+GENEWINDOWS=["100","500","1000","5000","10000"]
 
 
 #COLLAPSEDTYPE=["collapsed","collapsedbyVARLOCexon","collapsedbyVARLOCgene_start","collapsedbyVARLOCgene_end","collapsedbyVARLOCintron"]
 
+###DEFINE RULE ORDER
+ruleorder: collapse_combined_aut_varloc > collapse_combined_aut_byveptype > collapse_combined_x_byvarloc > collapse_combined_x_byveptype
+
 rule all:
 	input:
 		#expand(config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/exon_chr{chrN}.gtf",chrN=CHROMOSOMES)
+		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{veptype}_chr{chrN}_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
+		#		cadd_min=CADD,veptype=VEPTYPES,genewindow=GENEWINDOWS,this_type=filter_version,chrN=CHRNUM),
+		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{veptype}_x_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
+		#		cadd_min=CADD,veptype=VEPTYPES,genewindow=GENEWINDOWS,this_type=filter_version_x)
+		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{varloc}_chr{chrN}_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
+		#		cadd_min=CADD,varloc=VARLOCS,genewindow=GENEWINDOWS,this_type=filter_version,chrN=CHRNUM),
+		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrN}_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
+		expand(config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_aut_cadd{cadd_min}_window{genewindow}.txt.gz",
+				collapsedTYPE=COLLAPSEDTYPE,cadd_min=CADD,varloc=VARLOCS,genewindow=GENEWINDOWS,this_type=filter_version,chrN=CHRNUM)
+		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADDtypesGQ5BlacklistRemovedALL_linc_prot_window{genewindow}.txt.gz",
+		#		genewindow=GENEWINDOWS,this_type=filter_version_x),
+		##expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{varloc}_x_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
+		##		cadd_min=CADD,varloc=VARLOCS,genewindow=GENEWINDOWS,this_type=["typesGQ5BlacklistRemovedALL"])
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/CADD/{sample_vartype}_chr{chrN}_anno_genes_cadd.bed.gz",
 		#	chrN=CHRNUM,sample_vartype=IDS_VARTYPES)
 		#config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_aut.tsv.gz",
-		##expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{varloc}_chr{chrN}_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
-		##		cadd_min=CADD,varloc=VARLOCS,genewindow=GENEWINDOWS,this_type=filter_version,chrN=CHRNUM),
-		##expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{varloc}_x_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
-		##		cadd_min=CADD,varloc=VARLOCS,genewindow=GENEWINDOWS,this_type=filter_version_x),
-		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{veptype}_chr{chrN}_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
-				cadd_min=CADD,veptype=VEPTYPES,genewindow=GENEWINDOWS,this_type=filter_version,chrN=CHRNUM),
-		expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed{veptype}_x_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
-				cadd_min=CADD,veptype=VEPTYPES,genewindow=GENEWINDOWS,this_type=filter_version_x)
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_aut_cadd{cadd_min}_window{genewindow}.txt.gz",
 		#	 cadd_min=CADD,collapsedTYPE=COLLAPSEDTYPE,genewindow=GENEWINDOWS,this_type=filter_version,chrN=CHRNUM),
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_aut_cadd{cadd_min}.txt.gz",
 		##expand(config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_x_CADD{this_type}_cadd{cadd_min}_window{genewindow}.txt.gz",
 		##		cadd_min=CADD,collapsedTYPE=COLLAPSEDTYPE,genewindow=GENEWINDOWS,this_type=["typesGQ5BlacklistRemovedALL"]),
 		#expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADDtypesGQ5ALL_linc_prot_window{genewindow}.txt.gz",
+		##expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADD{this_type}_cadd{cadd_min}.txt.gz",cadd_min=CADD,this_type=filter_version),
 		###expand(config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_CADDtypesGQ5BlacklistRemovedALL_linc_prot_window{genewindow}.txt.gz",
 		###	genewindow=GENEWINDOWS),
 		#####expand(config["RAREDIR"]+"/features_v8/Combined/chr{chrN}_all_rvs_inds_CADDtypesALL_linc_prot_window{genewindow}.txt.gz",
 		#####	genewindow=GENEWINDOWS,chrN=CHRNUM)
 		#
 		#expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsedbyTSS_aut_cadd{cadd_min}.txt.gz",cadd_min=CADD),
-		##expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADD{this_type}_cadd{cadd_min}.txt.gz",cadd_min=CADD,this_type=filter_version),
 		##expand(config["RAREDIR"]+"/features_v8/bySiteXFIX/GeneAnnoProtCodLinc/CADD/FiltSexDiffGQ{sexdiff_val}/x_{sample_vartype}_chr{chrN}_anno_genes_cadd_redGQ_blacklisted_filt.bed.gz",
 		##	chrN="X",sample_vartype=IDS_VARTYPES,  sexdiff_val=SEXDIFF_VAL)
 		#expand(config["RAREDIR"]+"/features_v8/bySiteAutFIX/GeneAnnoProtCodLinc/CADD/{sample_vartype}_chr{chrN}_anno_genes_cadd_filt.bed.gz",
@@ -220,25 +228,42 @@ rule gtf_split_by_exon:
 	input:
 		genes=config["GTEX_GENES"]
 	params:
-		prefix=config["RAREDIR"]+"/features_v8/GTF/exon_", #include trailing
-		filt_name="exon"
+		filt_name="exon",
+		chr="chr{chrN}"
 	output:
-		gtf_split_log=config["RAREDIR"]+"/features_v8/GTF/combine_exons.log"
+		out=config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/exon_chr{chrN}.gtf"
 	shell:
 		"""
-		echo " Scripts/Features/gtf_by_chr.sh [genes] [outfile prefixes] [filtname]" > {output.gtf_split_log}
-		Scripts/Features/gtf_by_chr.sh {input.genes} {params.prefix} {params.filt_name} > {output.gtf_split_log}
+		mychr="{params.chr}"
+		if [[ "{params.chr}" == "x" || "{params.chr}" == "X" ]]
+		then
+			mychr="chrX"
+		fi
+		cat {input.genes} | grep $mychr | grep exon | grep 'protein_coding\|lincRNA'  > {output}
 		"""
+#rule gtf_split_by_exon:
+#	input:
+#		genes=config["GTEX_GENES"]
+#	params:
+#		prefix=config["RAREDIR"]+"/features_v8/GTF/exon_", #include trailing
+#		filt_name="exon"
+#	output:
+#		gtf_split_log=config["RAREDIR"]+"/features_v8/GTF/combine_exons.log"
+#	shell:
+#		"""
+#		echo " Scripts/Features/gtf_by_chr.sh [genes] [outfile prefixes] [filtname]" > {output.gtf_split_log}
+#		Scripts/Features/gtf_by_chr.sh {input.genes} {params.prefix} {params.filt_name} > {output.gtf_split_log}
+#		"""
 rule gtf_split_by_exon_lincRNA_protcod_only:
 	input:
-		gtf_split_log=config["RAREDIR"]+"/features_v8/GTF/combine_exons.log"
-	params:
-		gtf=config["RAREDIR"]+"/features_v8/GTF/exon_exon_chr{chrN}.gtf"
+		gtf=config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/exon_chr{chrN}.gtf"
+	#params:
+	#	gtf=config["RAREDIR"]+"/features_v8/GTF/exon_exon_chr{chrN}.gtf"
 	output:
-		config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/exon_chr{chrN}.gtf"
+		config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only/exon_chr{chrN}_protlinc.gtf"
 	shell:
 		"""
-		less -S {params.gtf} | sed 's/\"//g' | sed 's/;//g'  | awk -F"\t" '{{if ($12=="protein_coding" || $12=="lincRNA"){{print $0}}}}' > {output}
+		less -S {input.gtf} | sed 's/\"//g' | sed 's/;//g'  | awk -F"\t" '{{if ($12=="protein_coding" || $12=="lincRNA"){{print $0}}}}' > {output}
 		"""
 
 
@@ -530,7 +555,7 @@ rule collapse_combined_x:
 		"""
 rule collapse_combined_aut:
 	input:
-		myscript=ancient(config["SCRIPTSDIR"]+"/Features/collapsed_combined_variants_genes.py"),
+		myscript=(config["SCRIPTSDIR"]+"/Features/collapsed_combined_variants_genes.py"),
 		combined=config["RAREDIR"]+"/features_v8/Combined/chr{chrN}_all_rvs_inds_CADD{this_type}_linc_prot_window{genewindow}.txt.gz"
 	params:
 		cadd_min="{cadd_min}"
@@ -580,14 +605,13 @@ rule collapse_combined_aut_byveptype:
 		"""
 rule collapse_combined_aut_all:
 	input:
-		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/{{collapsedTYPE}}_chr{chrom}_CADDtypesALL_cadd{{cadd_min}}_window{{gene_window}}.txt.gz",
-			chrom=CHROMOSOMES)
+		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/{{collapsedTYPE}}_chr{chrom}_CADDtypesALL_cadd{{cadd_min}}_window{{genewindow}}.txt.gz",chrom=CHROMOSOMES)
 		#	collapsed_maf_f_aut_chr19_linc_prot.tsv.gz #_chr{chrN}_CADD{this_type}_cadd{cadd_min}.txt.gz
 	params:
 		cadd_min="{cadd_min}"
 		
 	output:
-		config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_aut_cadd{cadd_min}.txt.gz"
+		config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_aut_cadd{cadd_min}_window{genewindow}.txt.gz"
 	shell:
 		"""
 		zcat {input.aut} | gzip > {output}
@@ -595,12 +619,12 @@ rule collapse_combined_aut_all:
 		"""
 rule collapse_combined_aut_x_all:
 	input:
-		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrom}_CADDtypesALL_cadd{{cadd_min}}.txt.gz",chrom=CHROMOSOMES),
-		x=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADDtypesGQ5BlacklistRemovedALL_cadd{cadd_min}.txt.gz"
+		aut=expand(config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrom}_CADDtypesALL_cadd{{cadd_min}}_window{{genewindow}}.txt.gz",chrom=CHROMOSOMES),
+		x=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADDtypesGQ5BlacklistRemovedALL_cadd{cadd_min}_window{genewindow}.txt.gz"
 	params:
 		cadd_min="{cadd_min}"
 	output:
-		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_all_cadd{cadd_min}.txt.gz"
+		config["RAREDIR"]+"/features_v8/Collapsed/collapsed_all_cadd{cadd_min}_window{genewindow}.txt.gz"
 	shell:
 		"""
 		zcat {input.aut} {input.x} | gzip > {output}
