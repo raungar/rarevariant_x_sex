@@ -13,11 +13,7 @@ set -o nounset -o errexit -o pipefail
 
 #group=("m" "f" "both" "both.sex" "both.regress" "both_half" "both_half.sex" "both_half.regress" )
 #group=("m" "f" "both_half" "both")
-<<<<<<< HEAD
 group=("m" "f" "both_half" "both_half.sex_regress" "both" )
-=======
-group=("m" "f" "both_half" "both_half.sex_regress" )
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 
 for group in ${group[@]}
 do

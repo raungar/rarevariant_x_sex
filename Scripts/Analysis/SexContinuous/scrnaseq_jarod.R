@@ -2,15 +2,11 @@ library(data.table)
 library(Seurat)
 library(SeuratWrappers)
 library(tidyverse)
-<<<<<<< HEAD
 library(purrr)
 library(Matrix.utils) #aggregate.Matrix
 library(magrittr) #set_colnames
 library(glmnet)
 library(SingleCellExperiment)
-=======
-library(glmnet)
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 library("ggridges")
 library("caret")
 library("ggplot2")
@@ -18,10 +14,7 @@ sent_data<-readRDS("/oak/stanford/groups/smontgom/shared/TWC_ADRC_blood_scRNA/ad
 md=sent_data@meta.data
 #number of UMI reads detected per cell (nCount_RNA)
 summary(md$nCount_RNA)
-<<<<<<< HEAD
 count_data=sent_data@assays$RNA@counts
-=======
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 print(paste0("COUNTS (UMI): I will remove more than 2sd away from the median where the sd is ",sd(md$nCount_RNA), " and median is: ",median(md$nCount_RNA),
              ". So, anything greater than ", sd(md$nCount_RNA)*2+median(md$nCount_RNA), " or less than ",median(md$nCount_RNA)-sd(md$nCount_RNA)*2 ))
 #number of expressed (detected) genes per same cell (nFeature_RNA).
@@ -33,7 +26,6 @@ summary(md$percent.mt)
 #percentage
 colnames(md)[ncol(md)]
 set.seed(12345)
-<<<<<<< HEAD
 sce <- SingleCellExperiment(assays = list(counts = count_data ), 
                             colData = md)
 groups <- colData(sce)[, c("celltype", "Sample")]%>% as.data.frame%>%mutate(Sample=str_replace_all(Sample,"_","-"))
@@ -64,9 +56,6 @@ pseudobulked <- aggregate.Matrix(t(counts(sce)),
 # 
 # de_cluster_ids <- map(1:length(kids), get_cluster_ids) %>%
 #   unlist()
-=======
-
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 # ggplot(md %>% mutate(type="nFeature_RNA"),aes(x=type,y=nFeature_RNA))+geom_violin()
 #cells with a percentage of mitochondrial genes below 0.05% were included. Cells with the highest (top 0.2%) or lowest (bottom 0.2%) numbers of detected genes were considered as outliers and excluded from the downstream analyses
 #removed low-quality cells according to the standard, which is cells with fewer than 200 unique molecular identifiers (UMIs) or mitochondrial gene expression exceeding 60%. 
@@ -75,7 +64,6 @@ pseudobulked <- aggregate.Matrix(t(counts(sce)),
 #Cells that expressed more than 2,500 genes, more than 10,000 unique molecular identifiers (UMIs) and more than 10% mitochondrial genes were excluded. #https://www.nature.com/articles/s41586-019-1895-7#Sec2
 #Genes were excluded if they were expressed in fewer than 10 cells, and cells were excluded if they expressed fewer than 200 genes. 
 celltypes<-unique(md$celltype)
-<<<<<<< HEAD
 visits<-paste0("Y",unique(md$Visit))
 for(this_celltype in celltypes){
   for(this_visit in visits){
@@ -122,39 +110,6 @@ for(this_celltype in celltypes){
     coefs$alpha<-my.alpha
     write.table(coefs,file=paste0("/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/continuous/SingleCell/coefs_",this_celltype,"_Y",this_visit,".txt"),sep="\t",row.names=T,col.names=T, quote=FALSE)
   }
-=======
-for(this_celltype in celltypes){
-  red_data <- sent_data #subset(sent_data, subset = nFeature_RNA > 200 & nFeature_RNA < (2+median(md$nFeature_RNA)) & percent.mt <= 7)
-  red_data<-subset(red_data,idents=this_celltype)
-  red_data_visit1<-subset(red_data, subset = Visit == 1)
-  # red_data<-RunPCA(red_data)
-  # red_data_visit1<-RunPCA(red_data_visit1)
-  # DimPlot(red_data_visit1,reduction="pca",group.by = "Sex")
-  md_cd8=red_data_visit1@meta.data
-  rnaseq=red_data_visit1@assays$RNA
-  rnaseq_t<-t(rnaseq@data)
-  test_rows<-sample(1:nrow(rnaseq_t),nrow(rnaseq_t)/2)
-  train_rows<-(1:nrow(rnaseq_t))[!1:nrow(rnaseq_t) %in% test_rows]
-  rnaseq_test<-rnaseq_t[test_rows,]
-  md_test<-md_cd8[test_rows,]
-  rnaseq_train<-rnaseq_t[train_rows,]
-  md_train<-md_cd8[train_rows,]
-  
-  my.alpha=0.5
-  cvfit = cv.glmnet(rnaseq_train, md_train$Sex, 
-                    family="binomial", 
-                    alpha=my.alpha, nfolds = 6,type.measure="class",
-                    standardize=F)
-  preds_all <- predict(cvfit, newx=rnaseq_train, s="lambda.1se", type="response") #predict sex training
-  write.table(data.frame(preds_all),paste0("/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/continuous/SingleCell/preds_test_",this_celltype,".txt"))
-  preds_class_all <- sapply(predict(cvfit,  newx=rnaseq_train, s="lambda.1se", type="class"), as.numeric)
-  #all_acc <- sum(preds_class_all==data_all_lab)/length(data_all_lab) #accuracy
-  
-  tmp_coeffs<-coef(cvfit,s="lambda.1se")
-  coefs=data.frame(name = tmp_coeffs@Dimnames[[1]][tmp_coeffs@i + 1], coefficient = tmp_coeffs@x)
-  coefs$alpha<-my.alpha
-  write.table(coefs,file=paste0("/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/continuous/SingleCell/coefs_",this_celltype,".txt"),sep="\t",row.names=T,col.names=T, quote=FALSE)
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 }
 if(1 ==0){
 preds_test<-fread("/oak/stanford/groups/smontgom/raungar/Sex/Output/analysis_v8/continuous/SingleCell/preds_test_Dendritic cell.txt")

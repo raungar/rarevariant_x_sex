@@ -70,13 +70,9 @@ remove_global_outliers<-function(medz_data){
   qthres = q3 + 1.5*(q3-q1)
   indsRemove = unique(filter(medzCountAll, PropOut > qthres & Freq.x>onepercent_genes)$Var1)
   
-<<<<<<< HEAD
   medz_data = filter(medz_data, !(Ind %in% indsRemove)) %>% arrange(desc(abs(Z))) %>%
     relocate(Tissue, .after = last_col()) %>% relocate(Gene,.after=Ind) %>% 
     rename(ind=Ind)%>%rename(ensg=Gene)%>%rename(MedZ=Z)
-=======
-  medz_data = filter(medz_data, !(Ind %in% indsRemove))
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
   
 }
 
@@ -91,7 +87,6 @@ outliers_top_noglobal<-remove_global_outliers(outliers_top)
 write.outliers <- function(outliers, filename) {
   write.table(outliers, filename, sep = '\t', col.names = T, row.names = F, quote = F)
 }
-<<<<<<< HEAD
 
 if(chrtype!="x"){
   chrs_table=fread(chr_file,header = F)
@@ -106,8 +101,6 @@ if(chrtype=="x"){
 }
 
 
-=======
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 write.outliers(outliers_noglobal, outfile_any)
 write.outliers(outliers_top_noglobal, outfile_top)
 

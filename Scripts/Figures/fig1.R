@@ -113,17 +113,11 @@ risks_to_compare_side$padj<-p.adjust(risks_to_compare_side$p,method = "BH") #,n=
 all_risks_p<-merge(all_risks,risks_to_compare_side[,c("outlierType","exp_type","CATEGORY","z","nphen","cadd","chr","maxmaf","p","padj")])
 
 
-<<<<<<< HEAD
 inds_both_half=fread("/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8eqtl/gtex_2017-06-05_v8_individuals_passed_both_half.sex_regress.txt",header=F)%>%pull(V1)
-=======
-
-
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 
 ###fig 1a
 plot_fig1a=all_risks%>%dplyr::filter(CATEGORY=="all")%>%filter(cadd==15) %>%filter(maxmaf==0.01 & z==2.5)%>% 
   dplyr::filter(outlierType=="outliers")%>% dplyr::filter(sex=="both") %>% 
-<<<<<<< HEAD
   mutate(chr=fct_relevel(chr,"x","7","AllAut")) %>%
   mutate(chr=recode(chr,x="chrX","7"="chr7",AllAut="autosomes"))  %>% 
   mutate(outliers_per_ind=outliers_tested/length(inds_both_half)) %>%
@@ -139,27 +133,12 @@ dplyr::filter(chr=="chrX" | chr=="chr7")
   
   geom_bar(stat="identity", position=position_dodge())+
   xlab("chromosome") +ylab("Multi-Tissue Outliers")
-=======
-  mutate(chr=fct_relevel(chr,"x","7","AllAut")) %>% mutate(chr=recode(chr,x="chrX","7"="chr7",AllAut="autosomes"))  %>% dplyr::filter(exp_type=="all")  %>%
-# dplyr::filter(chr=="autosomes") 
-dplyr::filter(chr=="chrX" | chr=="chr7")
-ggplot(plot_fig1a,aes(x=as.factor(chr),y=outliers_tested, group=sex, fill=sex  ))+
-  scale_fill_manual(values=c("#296818","#dbab3b","#5d8596"))+  
-  theme_linedraw(base_size=12)+
-  # ggtitle("Number of outliers across chromosomes")+
-  geom_bar(stat="identity", position=position_dodge())+
-  xlab("chromosome") +ylab("Number of Outliers")
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 
 ###fig s1a
 plot_figs1a=all_risks%>%dplyr::filter(CATEGORY=="all")%>%filter(cadd==15) %>%filter(maxmaf==0.01 & z==2.5)%>% 
   dplyr::filter(outlierType=="outliers")%>% dplyr::filter(sex=="both") %>% 
   mutate(chr=fct_relevel(chr,"x","7","AllAut")) %>% mutate(chr=recode(chr,x="chrX","7"="chr7",AllAut="autosomes"))  %>% dplyr::filter(exp_type!="all")  %>%
-<<<<<<< HEAD
   #dplyr::filter(chr=="chrX" | chr=="chr7")
-=======
-  #dplyr::filter(chr=="chrX" | chr=="chr7") 
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
   dplyr::filter(chr=="autosomes") 
 ###s1a
 ggplot(plot_figs1a,aes(x=as.factor(exp_type),y=outliers_tested, group=sex, fill=exp_type ))+
@@ -174,15 +153,9 @@ ggplot(plot_figs1a,aes(x=as.factor(exp_type),y=outliers_tested, group=sex, fill=
 ###fig 1b
 
 plot_fig1b=all_risks_p%>%dplyr::filter(CATEGORY=="all")%>%filter(outlierType=="outliers") %>% mutate(is_sig=ifelse(Pval<0.01,T,F)) %>%
-<<<<<<< HEAD
   filter(cadd==15) %>% dplyr::filter(max_outliers==3) %>% dplyr::filter(sex=="both")  %>% dplyr::filter(z==2.5) %>%filter(exp_type=="all") %>%
   mutate(chr=fct_relevel(chr,"x","7","AllAut")) %>% mutate(chr=recode(chr,x="chrX","7"="chr7",AllAut="autosomes")) %>% dplyr::filter(chr !="8")
 ggplot(plot_fig1b,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=chr,color=chr,shape=chr,label=num_outliers)) + 
-=======
-  filter(cadd==15)  %>% dplyr::filter(sex=="both")  %>% dplyr::filter(z==2.5) %>%filter(exp_type=="all") %>%
-  mutate(chr=fct_relevel(chr,"x","7","AllAut")) %>% mutate(chr=recode(chr,x="chrX","7"="chr7",AllAut="autosomes"))
-ggplot(plot_fig1b,aes(x=(maxmaf),y=Risk,group=chr,color=chr,shape=chr,label=num_outliers)) + 
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
   theme(axis.text.x = element_text(angle = 45,  hjust=1))+
   geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.1,position=position_dodge(width=0.5)) +
   geom_line(position=position_dodge(width=0.5))+
@@ -195,7 +168,6 @@ ggplot(plot_fig1b,aes(x=(maxmaf),y=Risk,group=chr,color=chr,shape=chr,label=num_
                  ",nphen=",unique(to_plot$nphen),",z=",unique(to_plot$z),"), num outlier range [",
                  min(unique(to_plot$num_outliers)),",",max(unique(to_plot$num_outliers)),"]"))+
   # scale_fill_manual(values=c("#B1EAA2","#FCF5A9","#97D6F2"))+
-<<<<<<< HEAD
   scale_color_manual(values=c("#99176e","#926fa8","#47265c"))+
   # scale_color_manual(values=c("#c7bccf","#926fa8","#47265c","#99176e"))+
   
@@ -227,9 +199,3 @@ ggplot(plot_figs1b,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=ch
   #guides(colour=FALSE)+
   facet_wrap(~paste0(exp_type),ncol =3,scales="free_y")+
   geom_hline(yintercept=1,color="red",linetype="dashed")
-=======
-  scale_color_manual(values=c("#926fa8","#47265c","#99176e"))+  
-  #guides(colour=FALSE)+
-  facet_wrap(~paste0(exp_type),ncol =3) + #,scales="free_y"
-  geom_hline(yintercept=1,color="red",linetype="dashed")
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e

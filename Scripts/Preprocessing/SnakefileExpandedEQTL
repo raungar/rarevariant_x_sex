@@ -4,11 +4,8 @@ configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths
 #SEX_GROUPS=["both.sex","both.regress","both","m","f","both_half.sex","both_half.regress","both_half"]
 SEX_GROUPS=["both_half","m","f","both_half.sex_regress"]
 BOTH_TYPE=["both_half"] #,"both_half.sex_regress"]
-<<<<<<< HEAD
 BOTH_TYPE=["both"] #,"both_half.sex_regress"]
 SEX_GROUPS=["both"] #,"both.sex_regress"]
-=======
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 TYPES=["x","aut"]
 #SEX_GROUPS_TYPES={ 
 #	"sex_groups": ["both.sex","both.regress","both","m","f"],
@@ -140,11 +137,7 @@ rule get_eqtl_genotypes:
 
 rule process_eqtl_genotypes:
 	input:
-<<<<<<< HEAD
 		RAREDIR=ancient(config["RAREDIR"]),
-=======
-		RAREDIR=config["RAREDIR"],
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 		#inds="gtex_2017-06-05_v8_genotypes_cis_eQTLs.012.indv",
 		#pos="gtex_2017-06-05_v8_genotypes_cis_eQTLs.012.pos",
 		#genotype="gtex_2017-06-05_v8_genotypes_cis_eQTLs.012"
@@ -306,10 +299,7 @@ rule generate_gtf_bed:
 rule gather_filter_norm_expr:
 	input:
 		RAREDIR=ancient(config["RAREDIR"]+"/preprocessing_v8eqtl"),
-<<<<<<< HEAD
 		#indlog=config["RAREDIR"]+"/preprocessing_v8eqtl/get_tissue_by_individual_{this_group}.log",
-=======
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 		out_a=config["RAREDIR"]+"/preprocessing_v8eqtl/autosomal_proteincoding_lncrna.gtf" #for continuity
 		#ind_file=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_individuals_all_normalized_samples_{this_group}.txt",
 		#tissue_file=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_tissues_all_normalized_samples_{this_group}.txt"

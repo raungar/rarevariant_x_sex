@@ -1,5 +1,4 @@
 library(data.table) #for fread
-<<<<<<< HEAD
 library(dplyr)
 library(ggplot2)
 
@@ -10,16 +9,6 @@ dir="/Volumes/groups/smontgom/raungar/Sex/Output/outliers_v8eqtl/OutliersFiltere
 #sexdeg_v8/Outliers/outliers_noglobal_varAnnot_medz_zthresh2.5_nphen3_x_f_beta0.111_cadd15_x.txt.gz 
 groups=c("both","m","f","both.sex","both.regress", "both_half","both_half.sex","both_half.regress")
 groups=c("m","f","both","allboth")
-=======
-library(ggplot2)
-
-dir="/Volumes/groups/smontgom/raungar/Sex/Output/sexdeg_v8/Outliers"
-dir="/Volumes/groups/smontgom/raungar/Sex/Output/outliers_v8redo/Current"
-#dir="/Volumes/groups/smontgom/raungar/Sex/Output/en/Outliers"
-#sexdeg_v8/Outliers/outliers_noglobal_varAnnot_medz_zthresh2.5_nphen3_x_f_beta0.111_cadd15_x.txt.gz 
-groups=c("both","m","f","both.sex","both.regress", "both_half","both_half.sex","both_half.regress")
-groups=c("m","f","both")
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 
 types=c("aut","x")
 types="x"
@@ -29,11 +18,7 @@ for(this_z in zs){
 for (this_group in groups){
   for(this_type in types){
     this_file=paste0(dir,"/outliers_noglobal_medz_zthresh",this_z,"_nphen3_",
-<<<<<<< HEAD
                  this_type,"_",this_group,"_maxoutliers3.txt.gz")
-=======
-                 this_type,"_",this_group,".txt.gz")
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
     # this_file=paste0(dir,"/outliers_noglobal_varAnnot_medz_zthresh",this_z,"_nphen3_",
     #              this_type,"_",this_group,"_beta0.111_cadd15_",this_type,".txt.gz")
     # varname=paste0(this_type,"_",this_group,"_z",this_z)
@@ -49,7 +34,6 @@ for (this_group in groups){
   }
 }
 
-<<<<<<< HEAD
 rvdir="/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8eqtl/OutliersAndRVs"
 types=c("aut","x")
 cadds=c(0) #,15)
@@ -57,18 +41,11 @@ cadds=c(0) #,15)
 types_to_filt<-c("CADDtypesALL","CADDtypesGQ5BlacklistRemovedALL")
 names(types_to_filt)<-types
 sex=c("m","f","allboth")
-=======
-dir="/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8redo/OutliersAndRVs"
-this_chr="x"
-cadds=c(0) #,15)
-sex=c("m","f","both")
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 outliers_wrvs<-data.frame()
 for(this_z in zs){
   for(this_cadd in cadds){
   # for (this_group in groups){
     for(this_sex in sex){
-<<<<<<< HEAD
       for(this_type in types){
       #aut_outliersTOP_noglobal_medz_varAnnot_zthresh2.5_nphen5_m_CADDtypesALL_CADD15_linc_prot.txt
       #x_outliersTOP_noglobal_medz_varAnnot_zthresh2.5_nphen5_f_CADDtypesGQ5BlacklistRemovedALL_CADD15_linc_prot.txt
@@ -85,29 +62,16 @@ for(this_z in zs){
               this_sex,"_",types_to_filt[this_type],"_CADD15_linc_prot_maxoutliers3_window5000.txt.gz")
       # Output/enrichments_v8eqtl/OutliersAndRVs/aut_collapsed_outliers_noglobal_medz_varAnnot_zthresh2.5_nphen3_f_CADDtypesALL_CADD15_linc_prot_maxoutliers3.txt.gz
       
-=======
-      #aut_outliersTOP_noglobal_medz_varAnnot_zthresh2.5_nphen5_m_CADDtypesALL_CADD15_linc_prot.txt
-      #x_outliersTOP_noglobal_medz_varAnnot_zthresh2.5_nphen5_f_CADDtypesGQ5BlacklistRemovedALL_CADD15_linc_prot.txt
-      this_file=paste0(dir,"/",this_chr,"_outliers_noglobal_medz_varAnnot_zthresh",this_z,"_nphen3_",
-                       this_sex,"_","CADDtypesGQ5BlacklistRemovedALL_","CADD",this_cadd,"_linc_prot.txt.gz")
-      # this_file=paste0(dir,"/outliers_noglobal_varAnnot_medz_zthresh",this_z,"_nphen3_",
-      #              this_type,"_",this_group,"_beta0.111_cadd15_",this_type,".txt.gz")
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
       # varname=paste0(this_type,"_",this_group,"_z",this_z)
       print(this_file)
       df1<-fread(this_file)
       df1$z<-this_z
       df1$sex<-this_sex
-<<<<<<< HEAD
       df1$chr<-this_type
-=======
-      df1$chr<-this_chr
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
       outliers_wrvs<-rbind(outliers_wrvs,df1)
       # df2<-cbind(df1,"varname"=varname)
       # assign(varname,df2)
     # }
-<<<<<<< HEAD
       }
   }
   }
@@ -115,14 +79,6 @@ for(this_z in zs){
 myoutliers=outliers%>% dplyr::filter(Y=="outlier") %>% dplyr::filter(sex!="allboth") %>% 
   mutate(ensg=sapply(strsplit(Gene ,"\\."),"[[",1))
 myoutlier_table<-myoutliers$ensg %>% table() %>% sort()
-=======
-  }
-  }
-}
-myoutliers=outliers_wrvs%>% dplyr::filter(Y=="outlier") %>% dplyr::filter(sex!="both") %>% 
-  mutate(ensg=sapply(strsplit(ensg ,"\\."),"[[",1))
-myoutlier_table<-myoutliers$ensg %>% table()
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 gene_to_par<-fread("/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8redo/par_table.txt",header=F) %>% unique() %>% dplyr::filter(V2== "PAR1" | V2== "PAR2" | V2=="NONPAR")
 colnames(gene_to_par)<-c("ensg","par")
 gene_to_pardic<-gene_to_par$par
@@ -146,14 +102,10 @@ myoutliers$partype<-gene_to_pardic[myoutliers$ensg]
 myoutliers$stratatype<-gene_to_stratadic[myoutliers$ensg]
 myoutliers$prot_or_linc<-gene_to_vartypedic[myoutliers$ensg]
 myoutliers$xcitype<-gene_to_xcidic[myoutliers$ensg]
-<<<<<<< HEAD
 ggplot(myoutliers,aes(x=pos,y=MedZ,color=xcitype,shape=sex,alpha=0.8))+geom_point() +theme_bw()
 #+ scale_color_manual(values=c("#dbab3b","#5d8596"))
 
 tail(sort(table(myoutliers$ensg)))
-=======
-ggplot(myoutliers,aes(x=pos,y=MedZ,color=stratatype,shape=prot_or_linc,alpha=0.8))+geom_point() #+ scale_color_manual(values=c("#dbab3b","#5d8596"))
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 
 library(tidyverse)
 outliers_all<-(outliers) ##%>% rename(Ind=ind,Gene=ensg) #%>% dplyr::filter(AbsBetaSex != -Inf)
@@ -166,13 +118,8 @@ outliers_spread$zdiff_f_both<-outliers_spread$f-outliers_spread$both
 outliers_spread_x<-outliers_spread%>%dplyr::filter(aut_or_x=="x")
 outliers_spread_aut<-outliers_spread%>%dplyr::filter(aut_or_x=="aut")
 
-<<<<<<< HEAD
 outliers_m<-outliers %>% dplyr::filter(sex=="m") %>% select(Ind,Gene,AbsBetaSex,aut_or_x,sex) 
 outliers_f<-outliers %>% dplyr::filter(sex=="f") %>% select(Ind,Gene,AbsBetaSex,aut_or_x,sex)
-=======
-outliers_m<-outliers %>% dplyr::filter(sex=="m") %>% select(ind,ensg,AbsBetaSex,aut_or_x,sex) 
-outliers_f<-outliers %>% dplyr::filter(sex=="f") %>% select(ind,ensg,AbsBetaSex,aut_or_x,sex)
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 outliers_spread_x_m<-outliers_spread_x %>% dplyr::filter(!is.na(m))
 outliers_spread_x_f<-outliers_spread_x%>% dplyr::filter(!is.na(f))
 outliers_spread_aut_m<-outliers_spread_aut %>% dplyr::filter(!is.na(m))
@@ -184,19 +131,12 @@ aut_m_outliers_withDEGinfo=merge(outliers_spread_aut_m,outliers_m, by.x=c("Ind",
 aut_f_outliers_withDEGinfo=merge(outliers_spread_aut_f,outliers_f, by.x=c("Ind","Gene"),by.y=c("ind","ensg"))
 absmax <- function(x) { x[which.max( abs(x) )]}
 
-<<<<<<< HEAD
 
 
 x_m_outliers_withDEGinfo_beta=x_m_outliers_withDEGinfo%>% group_by(ensg) %>% summarise_at(c("AbsBetaSex"),absmax)
 aut_m_outliers_withDEGinfo_beta=aut_m_outliers_withDEGinfo%>% group_by(ensg) %>% summarise_at(c("AbsBetaSex"),absmax)
 x_f_outliers_withDEGinfo_beta=x_f_outliers_withDEGinfo%>% group_by(ensg) %>% summarise_at(c("AbsBetaSex"),absmax)
 aut_f_outliers_withDEGinfo_beta=aut_m_outliers_withDEGinfo%>% group_by(ensg) %>% summarise_at(c("AbsBetaSex"),absmax)
-=======
-x_m_outliers_withDEGinfo_beta=x_m_outliers_withDEGinfo%>% group_by(Gene) %>% summarise_at(c("AbsBetaSex"),absmax)
-aut_m_outliers_withDEGinfo_beta=aut_m_outliers_withDEGinfo%>% group_by(Gene) %>% summarise_at(c("AbsBetaSex"),absmax)
-x_f_outliers_withDEGinfo_beta=x_f_outliers_withDEGinfo%>% group_by(Gene) %>% summarise_at(c("AbsBetaSex"),absmax)
-aut_f_outliers_withDEGinfo_beta=aut_m_outliers_withDEGinfo%>% group_by(Gene) %>% summarise_at(c("AbsBetaSex"),absmax)
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 
 x_m_outliers_withDEGinfo_max<-x_m_outliers_withDEGinfo %>% mutate(zdiff_m_both=m-both) %>% group_by(Gene) %>% summarise_at(c("zdiff_m_both"),absmax) 
 x_m_outliers_withDEGinfo_max_beta<-merge(x_m_outliers_withDEGinfo_max,x_m_outliers_withDEGinfo_beta,by="Gene")
@@ -261,7 +201,6 @@ PUDP="ENSG00000130021"
 outliers_spread_x_m<-outliers_spread_x %>% dplyr::filter(!is.na(m)) %>% mutate(isGENE=ifelse(sapply(strsplit(Gene,"\\."),"[[",1)==PUDP,"PUDP","NO"))
 outliers_spread_x_f<-outliers_spread_x%>% dplyr::filter(!is.na(f)) %>% mutate(isGENE=ifelse(sapply(strsplit(Gene,"\\."),"[[",1)==PUDP,"PUDP","NO"))
 
-<<<<<<< HEAD
 
 outliers_spread_aut_genes<-outliers_spread_aut %>% 
   dplyr::filter(abs(zdiff_m_both)>0.5 | abs(zdiff_f_both>0.5 | abs(m)>2.5 | abs(f)>2.5)) %>% 
@@ -312,29 +251,10 @@ opposite_direction=to_plot %>% dplyr::filter(sign(within_sex)!=sign(both)& (abs(
 #ggplot(to_plot,aes(x=within_sex,y=both,color=interaction(sign(zdiff),is.na(m)),alpha=abs(zdiff)))+ #
 to_plot= outliers_spread_x_genes[sample(1:nrow(outliers_spread_x_genes)), ]
   ggplot(to_plot,aes(x=within_sex,y=allboth,color=interaction(is.na(m)),alpha=abs(zdiff)))+
-=======
-outliers_spread_x_genes<-outliers_spread_x %>% 
-  dplyr::filter(abs(zdiff_m_both)>0.5 | abs(zdiff_f_both>0.5 | abs(m)>2.5 | abs(f)>2.5)) %>% 
-  # mutate(isGENE=ifelse(sapply(strsplit(Gene,"\\."),"[[",1)==PUDP,"PUDP","NO")) %>%
-  mutate(zdiff=max(zdiff_m_both,zdiff_f_both,na.rm = T)) %>% mutate(within_sex=max(f,m,na.rm=T))
-outliers_spread_aut_genes<-outliers_spread_aut %>% 
-  dplyr::filter(abs(zdiff_m_both)>0.5 | abs(zdiff_f_both>0.5 | abs(m)>2.5 | abs(f)>2.5)) %>% 
-  # mutate(isGENE=ifelse(sapply(strsplit(Gene,"\\."),"[[",1)==PUDP,"PUDP","NO")) %>%
-  mutate(zdiff=max(zdiff_m_both,zdiff_f_both,na.rm = T)) %>% mutate(within_sex=max(f,m,na.rm=T))
-
-
-
-to_plot<-outliers_spread_x_genes %>% dplyr::filter(abs(zdiff_m_both)>0.5 | abs(m)>2.5 | abs(f)>2.5 | abs(both)>2.5 ) #| is_XIST=="PUDP")
-topguys=outliers_spread_aut_genes %>% dplyr::filter(zdiff != -Inf & (abs(within_sex)>2.5 | abs(both)>2.5) & (abs(m)>abs(both) | abs(f)>abs(both))) %>% arrange(-abs(zdiff))
-#to_plot<-outliers_spread_x_genes #%>% mutate(isGENE=ifelse(sapply(strsplit(Gene,"\\."),"[[",1)==PUDP,"PUDP","NO")) %>% dplyr::filter( isGENE=="PUDP") #,size=is_XIST,shape=is_XIST)
-#ggplot(to_plot,aes(x=within_sex,y=both,color=interaction(sign(zdiff),is.na(m)),alpha=abs(zdiff)))+ #
-  ggplot(outliers_spread_x_genes,aes(x=within_sex,y=both,color=interaction(is.na(m)),alpha=abs(zdiff)))+
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
   # geom_abline(linetype="dashed")+
   geom_hline(yintercept = c(-2.5,2.5),linetype="dashed",color="#6b0505")+
   geom_vline(xintercept =  c(-2.5,2.5),linetype="dashed",color="#6b0505")+
   # scale_alpha_continuous(range=c(0.2,1))+
-<<<<<<< HEAD
   geom_hline(yintercept = c(0),color="#515251")+
   geom_vline(xintercept =  c(0),color="#515251")+
   geom_point() + # xlim(c(-4.8,4.8))+ ylim(c(-4.8,4.8))+
@@ -342,13 +262,6 @@ topguys=outliers_spread_aut_genes %>% dplyr::filter(zdiff != -Inf & (abs(within_
     xlim(c(-9,9))+ylim(c(-9,9))+
     scale_alpha_continuous( range = c(0.45, 1))+
   ggtitle("Z-scores Across X")+
-=======
-  geom_hline(yintercept = c(0))+
-  geom_vline(xintercept =  c(0))+
-  geom_point() + # xlim(c(-4.8,4.8))+ ylim(c(-4.8,4.8))+
-  theme_bw()+
-  ggtitle("Z-scores Across Aut")+
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
  # scale_color_gradient(low="#296818",high="#5d8596")
   #scale_color_gradient(low="#296818",high="#dbab3b") #female
 # scale_color_gradient(values=c("#926fa8","#47265c","#99176e"))  
@@ -375,7 +288,6 @@ gene_LINC01545<-outliers_spread_x %>% dplyr::filter(Gene=="ENSG00000204904.7")
 gene_ADGRG7<-outliers_spread_aut %>% dplyr::filter(Gene=="ENSG00000144820.7")
 gene_NPIPA8<-outliers_spread_aut %>% dplyr::filter(Gene=="ENSG00000214940.8") #GTEX-1GMRU 
 gene_ZFX<-outliers_spread_x %>% dplyr::filter(Gene=="ENSG00000005889.15") #GTEX-1GMRU 
-<<<<<<< HEAD
 gene_PUDP<-outliers_spread_x %>% dplyr::filter(Gene=="ENSG00000130021.13") #GTEX-11EMC
 gene_XIST<-outliers_spread_x %>% dplyr::filter(str_detect(Gene,"ENSG00000229807")) #GTEX-1A32A
 gene_AWAT2<-outliers_spread_x %>% dplyr::filter(str_detect(Gene,"ENSG00000147160")) #GTEX-T5JC
@@ -389,15 +301,10 @@ gene_UCP1<-outliers_spread_aut_genes %>% dplyr::filter(str_detect(Gene,"ENSG0000
 gene_OSBPL8<-outliers_spread_aut_genes %>% dplyr::filter(str_detect(Gene,"ENSG00000091039")) #GTEX-1B8SF
 #ENSG00000109424 
 
-=======
-gene_PUDP<-outliers_spread_x %>% dplyr::filter(Gene=="ENSG00000130021.13") #GTEX-1GMRU 
-gene_XIST<-outliers_spread_x %>% dplyr::filter(str_detect(Gene,"ENSG00000229807")) #GTEX-1GMRU 
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 
 #largediff<-outliers_spread_x %>% dplyr::filter(abs(zdiff_m_both)>2 | abs(zdiff_f_both)> 2)
 largediff<-outliers_spread_x %>% dplyr::filter(abs(zdiff_m_both)>2 | abs(zdiff_f_both)> 2)
 
-<<<<<<< HEAD
 this_ind="GTEX-Q2AG"
 this_gene="INTS6L"
 to_plot<-gather(gene_INTS6L,sex,zval,both:zdiff_f_both) %>%
@@ -415,20 +322,6 @@ ggplot(to_plot,aes(color=sex,x=zval,fill=sex,alpha=0.1))+ geom_density()+
                                          is.na(to_plot[to_plot$Ind == this_ind,][1,"use_maf"]),
                                        "common",
                                        round(to_plot[to_plot$Ind == this_ind,][1,"use_maf"],6))))
-=======
-
-to_plot<-gather(gene_XIST,sex,zval,both:zdiff_f_both) %>%
-  dplyr::filter(sex=="both" | sex=="m" | sex =="f")
-ggplot(to_plot,aes(color=sex,x=zval,fill=sex,alpha=0.1))+ geom_density()+
-  ggtitle("XIST")+ 
-  theme_bw()+
-  scale_color_manual(values=c("#296818","#dbab3b","#5d8596"))+
-  scale_fill_manual(values=c("#296818","#dbab3b","#5d8596"))+
-  xlim(c(-5,5)) #+
-  #geom_jitter(data = to_plot[to_plot$Ind == "GTEX-X585" | to_plot$Ind == "GTEX-16XZZ"| to_plot$Ind == "GTEX-OHPN",],
-                  geom_point(data = to_plot[to_plot$Ind == "GTEX-11EMC",],
-                              aes(zval,y=0,shape=Ind),height=0.1,size=5,alpha=1)
->>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 
 
 
