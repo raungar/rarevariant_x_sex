@@ -21,8 +21,13 @@ genewindow=int(args.genewindow)
 
 #open gtf fiel for reading, reading line by line (sorting is assumed for speed)
 gtf=open(args.gtf,"r")
+<<<<<<< HEAD
 gtf_line=(gtf.readline()).split("\t")
 gtf_start=int(gtf_line[3])
+=======
+gene_line=(gtf.readline()).split("\t")
+gtf_start=int(gene_line[1])
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 
 #get sex per individual
 sex_convert_key={}
@@ -103,8 +108,13 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 				#while loop for speed.assuming sorting of both files.
 				while(gtf_start<gene_start):
 					gtf_line=(gtf.readline()).split("\t")
+<<<<<<< HEAD
 					gtf_start=int(gtf_line[3])
 				gtf_end=int(gtf_line[4])
+=======
+					gtf_start=int(gtf_line[1])
+				gtf_end=int(gtf_line[2])
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 				if((int(pos)>gtf_start) and (int(pos)<gtf_end)):
 					var_location="exon"
 				else:
@@ -159,7 +169,11 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 			if(float(gnomad_maf_both)==0):
 				use_maf=gtex_maf
 			#print("\t".join([chr,pos,ensg, genetype,ind,sex,gtex_maf,str(gnomad_maf_both)]))
+<<<<<<< HEAD
 			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex,var_location,str(cadd_raw),str(cadd_phred),str(geno),str(TSS),str(TES),vepvar,vepsnpeff]
+=======
+			myline=[chr,pos,pos,gtex_maf,str(gnomad_maf_both),use_maf,ind,"SNPs",ensg, genetype,sex,var_location,str(cadd_raw),str(cadd_phred),str(geno),str(TSS),str(TES),,vepvar,vepsnpeff]
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 			# print(myline)
 			#must be seen in both
 			#length of dic will be two if has male and female!

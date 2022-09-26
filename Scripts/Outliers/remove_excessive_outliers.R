@@ -21,6 +21,7 @@ outfile <- as.character(opt$outfile)
 max_outliers <- as.numeric(opt$max_outliers)
 
 # infile="/Volumes/groups/smontgom/raungar/Sex/Output/outliers_v8/Current/outliers_noglobal_medz_zthresh3_nphen3_x_f.txt.gz"
+<<<<<<< HEAD
 #infile="/Volumes/groups/smontgom/raungar/Sex/Output/outliers_v8eqtl/Current/outliersSkin-Sun-Exposed-Lower-leg_noglobal_medz_zthresh3_nphen1_x_both.txt.gz"
  #max_outliers=3
 
@@ -30,6 +31,14 @@ outliers<-fread(infile)
 colnames(outliers)[c(1,2)]<-c("Ind","Gene")
 outliers_red<-(outliers) %>% group_by(Gene, Y) %>% mutate(n_genes=n()) %>% 
   mutate(filter_me=ifelse(n_genes>=max_outliers & Y=="outlier","filter","ok")) %>% 
+=======
+# max_outliers=2
+
+
+outliers<-fread(infile)
+outliers_red<-(outliers) %>% group_by(Gene, Y) %>% mutate(n_genes=n()) %>% 
+  mutate(filter_me=ifelse(n_genes<=max_outliers & Y=="outlier","filter","ok")) %>% 
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
   dplyr::filter(filter_me=="ok") %>% select(-n_genes,-filter_me)
 fwrite(outliers_red,  file=outfile,quote=F,sep="\t")
 

@@ -2,16 +2,25 @@
 
 library(data.table)
 library(ggplot2)
+<<<<<<< HEAD
 library(tidyverse)
 library(reshape)
 library(scales)
 library(purrr)
+=======
+library(dplyr)
+library(reshape)
+library(scales)
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 require(RColorBrewer)
 library(epitools)
 library(optparse)
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 option_list = list(
                 make_option(c("--infile"), type = 'character', default = NULL, help = "path of input file"),
                 make_option(c("--out_rdata_relative"), type = 'character', default = NULL, help = "path of output file (RDATA) relative risk"),
@@ -20,8 +29,13 @@ option_list = list(
                 make_option(c("--gtf_code_file"), type = 'character', default = NULL, help = "gtf_code_file preprocessing"),
                 
                 make_option(c("--sex"), type = 'character', default = NULL, help = "ind sex"),
+<<<<<<< HEAD
                 make_option(c("--maf_min"), type = 'numeric', default = NULL, help = "min MAF"),
                 make_option(c("--maf_max"), type = 'numeric', default = NULL, help = "max MAF"),
+=======
+                make_option(c("--min_maf"), type = 'numeric', default = NULL, help = "min MAF"),
+                make_option(c("--max_maf"), type = 'numeric', default = NULL, help = "max MAF"),
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
                 make_option(c("--cadd_min"), type = 'numeric', default = NULL, help = "min cadd score")
 )
 
@@ -36,6 +50,7 @@ nphen <- as.numeric(opt$nphen)
 sex <- as.character(opt$sex)
 gtf_code_file<-as.character(opt$gtf_code_file)
 
+<<<<<<< HEAD
 min_maf<-as.numeric(opt$maf_min)
 max_maf<-as.numeric(opt$maf_max)
 # 
@@ -43,16 +58,32 @@ max_maf<-as.numeric(opt$maf_max)
 # infile<-"/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8redo/OutliersAndRVs/aut_outliers_noglobal_medz_varAnnot_zthresh2.5_nphen3_both_CADDtypesALL_CADD0_linc_prot.txt.gz"
  # infile="/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8eqtl/OutliersAndRVs/x_collapsed_outliersSkin-Sun-Exposed-Lower-leg_noglobal_medz_varAnnot_zthresh2.5_nphen1_both_CADDtypesGQ5BlacklistRemovedALL_CADD15_linc_prot_maxoutliers3_window10000.txt.gz"
 # infile="/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8eqtl/OutliersAndRVs/7_sub_collapsed_outliers_noglobal_medz_varAnnot_zthresh2.5_nphen3_aut_allboth_linc_prot_CADDtypesALL_CADD15_maxoutliers3_window5000.txt.gz"
+=======
+min_maf<-as.numeric(opt$min_maf)
+max_maf<-as.numeric(opt$max_maf)
+
+# infile<-"/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8redo/OutliersAndRVs/aut_outliers_noglobal_medz_varAnnot_zthresh2.5_nphen3_both_CADDtypesGQ5BlacklistRemovedALL_CADD15_linc_prot.txt.gz"
+# infile<-"/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8redo/OutliersAndRVs/aut_outliers_noglobal_medz_varAnnot_zthresh2.5_nphen3_both_CADDtypesALL_CADD0_linc_prot.txt.gz"
+# # infile="/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8/OutliersAndRVs/all_outliers_noglobal_medz_varAnnot_zthresh3_nphen5_f_CADDtypesALL_linc_prot.txt.gz"
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 # gtf_code_file<-"/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8/aut_proteincoding_lncrna.gtf"
 # zscore<-2.5
 # my_zscore<-2.5
 # min_maf<-0
 # nphen=3
+<<<<<<< HEAD
 # max_maf<-0.01
 # sex="f"
 # cadd_min=15
 
 # if(file.exists(out_rdata_relative)){stop("outfile - relative exists")}
+=======
+# max_maf<-0.05
+# sex="f"
+# cadd_min=0
+
+if(file.exists(out_rdata_relative)){stop("outfile - relative exists")}
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 #if(file.exists(out_rdata_continuous)){stop("outfile - continuous exists")}
 
 ### expression
@@ -64,6 +95,7 @@ exp_data = fread(infile,data.table=F)
 #exp_data = dplyr::filter(exp_data,sv_v7==1)
 #new_cats = sapply(1:nrow(exp_data), function(x) ifelse(exp_data$variant_cat[x] == 'splice', exp_data$tier2[x], exp_data$variant_cat[x]))
 #exp_data$variant_cat = ind	ensg	N	Df	MedZ	Y	chr	pos	vartype	sex	ref	alt	varswitch	gtex_maf	gnomad_maf_both	gnomad_maf_m	gnomad_maf_f	genetype	gnomad_maf_diff	num_rvs
+<<<<<<< HEAD
 if("Tissue" %in% colnames(exp_data)){
   colnames(exp_data)<-c("ind","ensg","MedZ","Df","Y","Tissue","chr","chrNum","start","end","vartype","sex","var_location",
                         "gtex_maf","gnomad_maf","use_maf","genetype","cadd_raw","cadd_phred","geno","veptype","vepconsq","numrv")
@@ -75,6 +107,11 @@ if("Tissue" %in% colnames(exp_data)){
 	colnames(exp_data)<-c("ind","ensg","N","Df","MedZ","Y","chr","chrNum","start","end","vartype","sex","var_location",
                      "gtex_maf","gnomad_maf","use_maf","genetype","cadd_raw","cadd_phred","geno","veptype","vepconsq","numrv")
 }
+=======
+colnames(exp_data)<-c("ind","ensg","N","Df","MedZ","Y","chr","chrNum","start","end","vartype","sex",
+                     "gtex_maf","gnomad_maf","use_maf","genetype","cadd_raw","cadd_phred","geno","numrv")
+
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 exp_data$cadd_phred<-as.numeric(exp_data$cadd_phred)
 exp_data$cadd_phred[is.na(exp_data$cadd_phred)] <- 0
 # exp_data$OutlierValue = -log10(2*pnorm(-abs(exp_data$MedZ)))
@@ -119,12 +156,20 @@ print(head(exp_data))
 exp_controls = exp_data %>% dplyr::filter(Y=="control")
 exp_outliers = exp_data %>% dplyr::filter(Y=="outlier")
 exp_outliers_over = exp_data %>% dplyr::filter(Y=="outlier") %>% dplyr::filter(MedZ>0)#was just expdata
+<<<<<<< HEAD
 exp_controls_over = exp_data %>% dplyr::filter(Y=="control") %>% dplyr::filter(MedZ>0)#was just expdata
 exp_outliers_under = exp_data %>% dplyr::filter(Y=="outlier") %>% dplyr::filter(MedZ<0)#was just expdata
 exp_controls_under = exp_data %>% dplyr::filter(Y=="control") %>% dplyr::filter(MedZ<0)#was just expdata
 
 
 veptypes=c(na.omit(unique(unlist(strsplit(exp_data$veptype,",")))),"all")
+=======
+exp_outliers_under = exp_data %>% dplyr::filter(Y=="outlier") %>% dplyr::filter(MedZ<0)#was just expdata
+
+
+
+
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 
 print("relative risk")
 ### Relative risk
@@ -134,6 +179,7 @@ risks = data.frame(Risk = numeric(), Lower = numeric(), Upper = numeric(), Pval 
                   sex=character(),z=numeric(),nphen=numeric(),Type=character())
 vcats = na.omit(unique(exp_data$variant_cat))
 exp_types=c("all","over","under")
+<<<<<<< HEAD
 varlocations=as.character(na.omit(c("all",unique(exp_data$var_location))))
 
 for(this_var_location in varlocations){
@@ -255,6 +301,95 @@ for(this_var_location in varlocations){
     }
   }
 }
+=======
+
+
+for(exp_type in exp_types){
+  if(exp_type=="all"){
+    this_exp_outliers<-exp_outliers
+    
+  }else if(exp_type=="over"){
+    this_exp_outliers<-exp_outliers_over
+    
+  }else if(exp_type=="under"){
+    this_exp_outliers<-exp_outliers_under
+    
+  }else{stop("ERROR: INVALID EXP TYPE")}  
+  for (vcat in (vcats)) {
+     print(vcat)
+     print(cadd_min)
+      exp_nn = nrow(exp_controls %>% dplyr::filter(variant_cat == vcat) %>% dplyr::filter( has_variant != "rare"))  #%>% dplyr::filter(cadd_phred>cadd_min))
+      exp_ny = nrow(exp_controls %>% dplyr::filter(variant_cat == vcat) %>% dplyr::filter(has_variant == "rare"))  #%>% dplyr::filter(cadd_phred>cadd_min))
+      exp_yn = nrow(this_exp_outliers %>% dplyr::filter(variant_cat == vcat) %>% dplyr::filter(has_variant != "rare"))  #%>% dplyr::filter(cadd_phred>cadd_min))
+      exp_yy = nrow(this_exp_outliers %>% dplyr::filter(variant_cat == vcat) %>% dplyr::filter(has_variant == "rare")) # %>% dplyr::filter(cadd_phred>cadd_min))
+  	print(paste0("the following: ",exp_nn," and ",exp_ny," and ",exp_yn," and ",exp_nn))
+  	if(exp_nn==0 & exp_ny==0){print("NO NON OUTLIERS")}
+  	else if(exp_nn==1 | exp_ny == 1){print("don't swap for no reason.")}
+  	else if(exp_nn==0){exp_nn=1;exp_ny=exp_ny-1}
+  	else if(exp_ny==0){exp_ny=1;exp_nn=exp_nn-1}
+  	else{print("No zeros, no worries")}
+  	if(exp_yn==0 & exp_yy==0){print("NO OUTLIERS")}
+  	else if(exp_yn==1 | exp_yy == 1){print("don't swap for no reason.")}
+  	else if(exp_yn==0){exp_yn=1;exp_yy=exp_yy-1}
+  	else if(exp_yy==0){exp_yy=1;exp_yn=exp_yn-1}
+  	else{print("No zeros, no worries")}
+     #exp_nn = nrow(this_exp_outliers %>% dplyr::filter(variant_cat == vcat) %>% dplyr::filter( has_variant == "rare"))
+     #exp_ny = nrow(this_exp_outliers %>% dplyr::filter(variant_cat == vcat) %>% dplyr::filter(has_variant != "rare"))
+     #exp_yn = nrow(exp_controls %>% dplyr::filter(variant_cat == vcat) %>% dplyr::filter(has_variant== "rare"))
+     #exp_yy = nrow(exp_controls %>% dplyr::filter(variant_cat == vcat) %>% dplyr::filter(has_variant != "rare"))
+     exptable = rbind(c(exp_nn,exp_ny),c(exp_yn,exp_yy))
+     print(exptable)
+     err = epitab(exptable, method = 'riskratio')
+     risks = rbind(risks, data.frame(Risk = err$tab[2,5],
+                                     Lower = err$tab[2,6],
+                                     Upper = err$tab[2,7],
+                                     Pval = err$tab[2,8],
+                                     Cat = vcat,
+                                     exp_nn=exp_nn,
+                                     exp_ny=exp_ny,
+                                     exp_yn=exp_yn,
+                                     exp_yy=exp_yy,
+                                     num_outliers=nrow(this_exp_outliers%>% dplyr::filter(variant_cat == vcat)),
+                                     sex=sex,z=my_zscore,nphen=nphen,cadd=cadd_min,
+                                     exp_type=exp_type,Type = 'All'))   
+  }
+  
+   exp_nn_all=nrow(dplyr::filter(exp_controls,has_variant != "rare"))  #%>% dplyr::filter(cadd_phred>cadd_min))
+   exp_ny_all=nrow(dplyr::filter(exp_controls,has_variant == "rare")) #%>% dplyr::filter(cadd_phred>cadd_min))
+   exp_yn_all=nrow(dplyr::filter(this_exp_outliers,has_variant != "rare"))  #%>% dplyr::filter(cadd_phred>cadd_min))
+   exp_yy_all=nrow(dplyr::filter(this_exp_outliers,has_variant == "rare"))  #%>% dplyr::filter(cadd_phred>cadd_min))
+   if(exp_nn_all==0 & exp_ny_all==0){print("NO NON OUTLIERS")}
+   else if(exp_nn_all==1 | exp_ny_all == 1){print("don't swap for no reason.")}
+   else if(exp_nn_all==0){exp_nn_all=1;exp_ny_all=exp_ny_all-1}
+   else if(exp_ny_all==0){exp_ny_all=1;exp_nn_all=exp_nn_all-1}
+   else{print("No zeros, no worries")}
+   if(exp_yn_all==0 & exp_yy_all==0){print("NO OUTLIERS")}
+   else if(exp_yn_all==1 | exp_yy_all == 1){print("don't swap for no reason.")}
+   else if(exp_yn_all==0){exp_yn_all=1;exp_yy_all=exp_yy_all-1}
+   else if(exp_yy_all==0){exp_yy_all=1;exp_yn_all=exp_yn_all-1}
+   else{print("No zeros, no worries")}
+  #exp_nn_all = nrow(this_exp_outliers %>% dplyr::filter( has_variant == "rare"))
+  #exp_ny_all = nrow(this_exp_outliers %>% dplyr::filter(has_variant != "rare"))
+  #exp_yn_all = nrow(exp_controls %>% dplyr::filter(has_variant== "rare"))
+  #exp_yy_all = nrow(exp_controls  %>% dplyr::filter(has_variant != "rare"))
+  exptable_all = rbind(c(exp_nn_all,exp_ny_all),c(exp_yn_all,exp_yy_all))
+  colnames(exptable_all)<-c("control","outliers")
+  rownames(exptable_all)<-c("common","rare")
+  err_all = epitab(exptable_all, method = 'riskratio')
+  risks = rbind(risks, data.frame(Risk = err_all$tab[2,5],
+                                  Lower = err_all$tab[2,6],
+                                  Upper = err_all$tab[2,7],
+                                  Pval = err_all$tab[2,8],
+                                  Cat = "all",
+                                  exp_nn=exp_nn_all,
+                                  exp_ny=exp_ny_all,
+                                  exp_yn=exp_yn_all,
+                                  exp_yy=exp_yy_all,
+                                  num_outliers=nrow(this_exp_outliers),
+                                  sex=sex,z=my_zscore,nphen=nphen,cadd=cadd_min,
+                                  exp_type=exp_type,Type = 'All'))  
+  }
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 risks = risks %>% arrange(by=Risk) 
 risks$Cat = factor(risks$Cat, levels=unique(risks$Cat))
 # risks$Type = factor(risks$Type, levels=c('ASE','Splicing', 'Total expression'))

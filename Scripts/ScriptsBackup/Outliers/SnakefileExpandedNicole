@@ -1,0 +1,80 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+GROUPS=["both","m","f"]
+TYPES=["x","aut"]
+
+#rule all:#
+#	output: expand(config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.{type}.{group}.txt.gz", type=TYPES, group=GROUPS)
+#	input: expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.{type}.{group}.txt.gz", type=TYPES, group=GROUPS)
+
+rule all:
+	input: expand(config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.{type}.{group}.txt.gz", type=TYPES, group=GROUPS)
+
+rule call_outliers:
+	input:
+		ZSCORES=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.{type}.{group}.txt.gz"
+	params:
+		ZTHRESH=2,
+		NPHEN=5,
+		outdir=config["RAREDIR"]+"/outliers_v8/"
+	output:
+		config["RAREDIR"] + "/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.{type}.{group}.txt.gz"
+	run:
+		print("INPUT ZSCORE")		
+		for item in {input.ZSCORES}:
+			zscore_list=item
+			print(zscore_list)
+			loop_len=len(item)
+		for item2 in {output.outfile}:
+			outfile_list=item2
+			print(outfile_list)
+		
+		for i in range(loop_len):
+			shell(""" echo "HI"; echo {i}; echo zscore_list[{i}]; echo {zscore_list}{[i]}; echo outfile_list[{i}]; echo  """)
+
+# rule call_outliers:
+# 	input:
+# 		ZSCORES=expand(config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.{type}.{group}.txt.gz",
+# 			type=TYPES, group=GROUPS)
+# 	params:
+# 		ZTHRESH=2,
+# 		NPHEN=5,
+# 		outdir=config["RAREDIR"]+"/outliers_v8/"
+# 	output:
+# 		outfile=expand(config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.{type}.{group}.txt",
+# 			type=TYPES,group=GROUPS)
+# 	run:
+# 		print("INPUT ZSCORE")		
+# 		for item in {input.ZSCORES}:
+# 			zscore_list=item
+# 			print(zscore_list)
+# 			loop_len=len(item)
+# 		for item2 in {output.outfile}:
+# 			outfile_list=item2
+# 			print(outfile_list)
+		
+# 		for i in range(loop_len):
+# 			shell(""" echo "HI"; echo {i}; echo zscore_list[{i}]; echo {zscore_list}{[i]}; echo outfile_list[{i}]; echo  """)
+#	run:
+#		shell("""
+#			for i in {input.ZSCORES}
+#			do 
+#				echo $i
+#			done
+#			#echo "Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers.R \
+#			#--Z.SCORES {input.ZSCORES}  --outfile {output.outfile} \
+#			#--ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} --outdir {params.outdir}" 
+#		""")
+#
+rule identify_global_outliers_both:
+	input:
+		outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_both.medz.txt"
+	params:
+		method="proportion"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_both_globalOutliersRemoved.txt"
+	shell:
+		"""
+		Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/identify_global_outliers.R \
+			--OUTLIERS {input.outlier_file} --METHOD {params.method} --outfile {output.outfile}
+		"""

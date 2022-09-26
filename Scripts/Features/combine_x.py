@@ -22,7 +22,11 @@ genewindow=int(args.genewindow)
 #open gtf fiel for reading, reading line by line (sorting is assumed for speed)
 gtf=open(args.gtf,"r")
 gene_line=(gtf.readline()).split("\t")
+<<<<<<< HEAD
 gtf_start=int(gene_line[3])
+=======
+gtf_start=int(gene_line[1])
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 
 #get sex per individual
 sex_convert_key={}
@@ -131,11 +135,18 @@ for this_f in glob.glob(args.indir+"/*"+args.filename_match):
 				#get if exon or intron
 				#while loop for speed.assuming sorting of both files.
 				while(gtf_start<gene_start):
+<<<<<<< HEAD
 					print(str(gtf_start)+"<"+str(gene_start))
 					gtf_line=(gtf.readline()).split("\t")
 					gtf_start=int(gtf_line[3])
 				gtf_end=int(gtf_line[4])
 				print(str(gtf_start)+"-"+str(gtf_end)+ " vs pos:"+pos)
+=======
+					#print(str(gtf_start)+"<"+str(gene_start))
+					gtf_line=(gtf.readline()).split("\t")
+					gtf_start=int(gtf_line[1])
+				gtf_end=int(gtf_line[2])
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 				if((int(pos)>gtf_start) and (int(pos)<gtf_end)):
 					var_location="exon"
 				else:

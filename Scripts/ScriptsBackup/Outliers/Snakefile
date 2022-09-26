@@ -1,0 +1,175 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+groups=["both","m","f"]
+
+rule call_outliers_aut_both:
+	input:
+		ZSCORES=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.aut.both.txt.gz "
+	params:
+		ZTHRESH=2,
+		NPHEN=5,
+		outdir=config["RAREDIR"]+"/outliers_v8/"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.aut.both.txt"
+	shell:
+		"""
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers.R \
+			--Z.SCORES {input.ZSCORES}  --outfile {output.outfile} \
+			--ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} --outdir {params.outdir}
+		"""
+rule call_outliers_x_both:
+	input:
+		ZSCORES=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.x.both.txt.gz "
+	params:
+		ZTHRESH=2,
+		NPHEN=5,
+		outdir=config["RAREDIR"]+"/outliers_v8/"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.x.both.txt"
+	shell:
+		"""
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers.R \
+			--Z.SCORES {input.ZSCORES}  --outfile {output.outfile} \
+			--ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} --outdir {params.outdir}
+		"""
+
+rule call_outliers_aut_m:
+	input:
+		ZSCORES=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.aut.m.txt.gz "
+	params:
+		ZTHRESH=2,
+		NPHEN=5,
+		outdir=config["RAREDIR"]+"/outliers_v8/"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.aut.m.txt"
+	shell:
+		"""
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers.R \
+			--Z.SCORES {input.ZSCORES}  --outfile {output.outfile} \
+			--ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} --outdir {params.outdir}
+		"""
+rule call_outliers_x_m:
+	input:
+		ZSCORES=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.x.m.txt.gz "
+	params:
+		ZTHRESH=2,
+		NPHEN=5,
+		outdir=config["RAREDIR"]+"/outliers_v8/"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.x.m.txt"
+	shell:
+		"""
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers.R \
+			--Z.SCORES {input.ZSCORES}  --outfile {output.outfile} \
+			--ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} --outdir {params.outdir}
+		"""
+rule call_outliers_aut_f:
+	input:
+		ZSCORES=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.aut.f.txt.gz "
+	params:
+		ZTHRESH=2,
+		NPHEN=5,
+		outdir=config["RAREDIR"]+"/outliers_v8/"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.aut.f.txt"
+	shell:
+		"""
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers.R \
+			--Z.SCORES {input.ZSCORES}  --outfile {output.outfile} \
+			--ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} --outdir {params.outdir}
+		"""
+rule call_outliers_x_f:
+	input:
+		ZSCORES=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_normalized_expression_subset.x.f.txt.gz "
+	params:
+		ZTHRESH=2,
+		NPHEN=5,
+		outdir=config["RAREDIR"]+"/outliers_v8/"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.x.f.txt"
+	shell:
+		"""
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers.R \
+			--Z.SCORES {input.ZSCORES}  --outfile {output.outfile} \
+			--ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} --outdir {params.outdir}
+		"""
+
+
+rule identify_global_outliers_aut_both:
+	input:
+		outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.aut.both.txt"
+	params:
+		method="proportion"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_globalOutliersRemoved.aut.both.txt"
+	shell:
+		"""
+		Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/identify_global_outliers.R \
+			--OUTLIERS {input.outlier_file} --METHOD {params.method} --outfile {output.outfile}
+		"""
+
+rule identify_global_outliers_x_both:
+	input:
+		outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.x.both.txt"
+	params:
+		method="proportion"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_globalOutliersRemoved.x.both.txt"
+	shell:
+		"""
+		Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/identify_global_outliers.R \
+			--OUTLIERS {input.outlier_file} --METHOD {params.method} --outfile {output.outfile}
+		"""
+
+rule identify_global_outliers_aut_m:
+	input:
+		outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.aut.m.txt"
+	params:
+		method="proportion"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_globalOutliersRemoved.aut.m.txt"
+	shell:
+		"""
+		Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/identify_global_outliers.R \
+			--OUTLIERS {input.outlier_file} --METHOD {params.method} --outfile {output.outfile}
+		"""
+
+rule identify_global_outliers_x_m:
+	input:
+		outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.x.m.txt"
+	params:
+		method="proportion"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_globalOutliersRemoved.x.m.txt"
+	shell:
+		"""
+		Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/identify_global_outliers.R \
+			--OUTLIERS {input.outlier_file} --METHOD {params.method} --outfile {output.outfile}
+		"""
+
+rule identify_global_outliers_aut_f:
+	input:
+		outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.aut.f.txt"
+	params:
+		method="proportion"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_globalOutliersRemoved.aut.f.txt"
+	shell:
+		"""
+		Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/identify_global_outliers.R \
+			--OUTLIERS {input.outlier_file} --METHOD {params.method} --outfile {output.outfile}
+		"""
+
+rule identify_global_outliers_x_f:
+	input:
+		outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.x.f.txt"
+	params:
+		method="proportion"
+	output:
+		outfile=config["RAREDIR"]+"/outliers_v8/outliers_both_zthresh2_nphen5_globalOutliersRemoved.x.f.txt"
+	shell:
+		"""
+		Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/identify_global_outliers.R \
+			--OUTLIERS {input.outlier_file} --METHOD {params.method} --outfile {output.outfile}
+		"""
+

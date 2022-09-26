@@ -1,0 +1,64 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+import os, glob
+
+GROUPS=["m","f"]
+FILES = [ os.path.basename(x) for x in glob.glob(config["FILESDIR"]+"/SexDEGs/*csv") ]
+TISSUES=  sorted(list(set([ "".join(((x.split("-")[1]).split("."))[0]) for x in FILES])))
+files_other_tissues = [ os.path.basename(x) for x in glob.glob(config["RAREDIR"]+"/preprocessing_v8/PEER_v8/*both*.peer.ztrans.txt") ]
+tissues_expression=  sorted(list(set([x.split(".")[0] for x in files_other_tissues])))
+#be able to convert between full tissue name, and gtex shortened tissue name
+#since this is sexdegs, only looks at tissues in both groups :) 
+tissue_dic={}
+for i in range(len(TISSUES)):
+	tissue_dic[TISSUES[i]]=tissues_expression[i]
+
+
+rule all:
+	input: 
+		expand(config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111_{tissue}_{group}_linc_prot_summary.txt",
+			group=GROUPS,tissue=TISSUES),
+		config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111.all.txt",
+		config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111_all_summary.txt"
+
+rule get_chr_rvs:
+	input:
+		sex_degfile=config["RAREDIR"]+"/sexdeg_v8/CombinedSingleTissue/aut_beta0.111_{tissue}_{group}_linc_prot.txt.gz",
+		this_script=config["SCRIPTSDIR"]+"/Analysis/SexContinuous/create_ranks_sexdegs.R"
+	params:
+		tissue="{tissue}",
+		sex="{group}"
+	output:
+		outfile=config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111_{tissue}_{group}_linc_prot_summary.txt"
+	shell:
+		"""
+		module load R
+		Rscript {input.this_script} \
+			--infile {input.sex_degfile} \
+			--tissue {params.tissue} --sex {params.sex} \
+			--outfile {output.outfile}
+		"""
+
+rule combine_all:
+	input:
+		files=expand(config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111_{tissue}_{group}_linc_prot_summary.txt",tissue=TISSUES,group=GROUPS)
+	output:
+		config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111.all.txt"
+	shell:
+		"""
+		awk '(NR == 1) || (FNR > 1)'  {input} > {output}
+		"""
+
+	
+rule get_across_tiss:
+	input:
+		file=config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111.all.txt",
+		this_script=config["SCRIPTSDIR"]+"/Analysis/SexContinuous/create_ranksAcrossTissues_sexdegs.R"
+	output:
+		outfile=config["RAREDIR"]+"/analysis_v8/continuous/Ranks/aut_beta0.111_all_summary.txt"
+	shell:
+		"""
+		module load R
+		Rscript {input.this_script} \
+			--infile {input.file} \
+			--outfile {output.outfile}
+		"""

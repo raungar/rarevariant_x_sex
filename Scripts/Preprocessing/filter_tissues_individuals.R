@@ -111,16 +111,23 @@ meta$Id = apply(str_split_fixed(meta$Sample, '-', 6)[, c(1:2)], 1, paste, collap
 expr = fread(norm_expr_file, header=T,fill = TRUE)
 #expr2 = fread(norm_expr_file, header=T)
 print("EXPR") #Adipose_Subcu
+<<<<<<< HEAD
 print(head(expr))
 
+=======
+#print(head(expr))
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 tissue_dic<-as.character(sort(unique(meta$Tissue)))
 print("tissue dic pre becoming a dictionary so it's just vals")
 print(tissue_dic)
 print("len meta than expr tissue")
 print(length(unique(meta$Tissue)))
 print(length(unique(expr$Tissue)))
+<<<<<<< HEAD
 expr$Tissue<-sapply(strsplit(expr$Tissue,"\\."),"[[",1)
 head(expr$Tissue)
+=======
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 names(tissue_dic)<-as.character(sort(unique(expr$Tissue)))
 print("tissue_dic!!")
 print(tissue_dic)
@@ -197,6 +204,7 @@ write.table(exp.design, paste0(dir, '/gtex_2017-06-05_v8_design_passed_',my_grou
 ## Subset the normalized expression file to the individuals and tissues selected
 print("EXPR TISSUE IN FINAL")
 #print(expr$Tissue)
+<<<<<<< HEAD
 print(head(expr))
 print(unique(expr$Tissue))
 #print(unique(tissues.final))
@@ -206,6 +214,15 @@ expr.subset = expr[which(expr$Tissue %in% tissues.final),]
 
 print("expr subset tissue")
 print(head(expr.subset))
+=======
+#print(head(expr))
+print(unique(expr$Tissue))
+#print(unique(tissues.final))
+
+expr.subset = expr[which(expr$Tissue %in% tissues.final),]
+
+print("expr subset tissue")
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 print(unique(expr.subset$Tissue))
 #head(expr.subset)
 # rm(expr)
@@ -247,6 +264,7 @@ print(head(x.selected))
 genes.counts = table(expr.subset$Gene)
 #print(genes.counts)
 #genes.keep = names(genes.counts)[which(genes.counts == length(tissues.final))]
+<<<<<<< HEAD
 print(" head expr subset plz")
 print(head(expr.subset))
 genes.keep=expr.subset$Gene
@@ -255,6 +273,11 @@ print("GENES KEEP")
 print(head(genes.keep))
 print("selected")
 print(head(x.selected$gene))
+=======
+genes.keep=expr.subset$Gene
+
+print("GENES KEEP")
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 #print(length(genes.keep))
 #print(length(genes.keep))
 #print("AUTOSOMAL SELEcTED")
@@ -271,6 +294,7 @@ print(table(x.selected$gene %in% genes.keep))
 
 genes.keep.a = genes.keep[which(genes.keep %in% autosomal.selected$gene)]
 #print(length(genes.keep.a))
+<<<<<<< HEAD
 print("subset 1")
 expr.subset.a = expr.subset[which(expr.subset$Gene %in% genes.keep.a), ]
 print("subset 2")
@@ -279,6 +303,13 @@ expr.subset.a = as.data.frame(expr.subset.a)
 print("Subset 3")
 expr.subset.a[, 3:ncol(expr.subset.a)] = t(scale(t(expr.subset.a[, 3:ncol(expr.subset.a)])))
 print("HIIIIII")
+=======
+expr.subset.a = expr.subset[which(expr.subset$Gene %in% genes.keep.a), ]
+## finally restandardize and output subsetted expression matrix
+expr.subset.a = as.data.frame(expr.subset.a)
+expr.subset.a[, 3:ncol(expr.subset.a)] = t(scale(t(expr.subset.a[, 3:ncol(expr.subset.a)])))
+
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 print("HERE")
 print(length(x.selected$gene))
 genes.keep.x = genes.keep[which(genes.keep %in% x.selected$gene)]

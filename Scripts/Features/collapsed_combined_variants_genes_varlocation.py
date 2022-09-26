@@ -62,14 +62,21 @@ with gzip.open(combined_file,"r") as f_read:
 		cadd_raw=line_split[12]
 		cadd_phred=line_split[13].strip()
 		geno=line_split[14].strip()
+<<<<<<< HEAD
 		veptype=line_split[17]
 		vepconsq=line_split[18].strip()
+=======
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 		if(cadd_phred=="NA"):
 			cadd_phred=0
 		#if homo dom, dont consider
 		if(int(geno) == 0):
 			continue
+<<<<<<< HEAD
 		store_line=[chrom,start,end,ensg, vartype,ind,sex,var_location, maf_gtex, maf_gnomad,maf_use,genetype,cadd_raw,cadd_phred,geno,veptype,vepconsq]
+=======
+		store_line=[chrom,start,end,ensg, vartype,ind,sex,var_location, maf_gtex, maf_gnomad,maf_use,genetype,cadd_raw,cadd_phred,geno]
+>>>>>>> 202c5a6ea887360d6e510761cb21611ce0d6089e
 		print(ensg)
 		#if there is already a RV recorded for this gene
 		if ind not in this_inds_dic:
