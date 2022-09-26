@@ -15,7 +15,8 @@ peerdir=$1 #${RAREDIR}/preprocessing_v8/PEER_v8
 scriptdir=$2 #`dirname \$(readlink -f "\$0")`
 gtex_v8_eqtl_dir=$3 #${GTEXv8}/eqtl/GTEx_Analysis_v8_eQTL
 RAREDIR=$4
-md=$5
+pcs=$5
+md=$6
 #parallel="parallel -N 1 --delay .2 -j 10 --joblog parallel_joblog --resume"
 #parallel --jobs 10 runPeer ::: ${peerdir}/*.log2.ztrans*.txt
 #$srun sh $scriptdir/calculate_PEER.sh $1 $2 $3 $4 ::: ${peerdir}/Adipose_Subcutaneous.log2.ztrans*.txt
@@ -24,8 +25,8 @@ md=$5
 
 for file in `ls ${peerdir}/*log2.ztrans*.txt`
 do
-	sbatch $scriptdir/calculate_PEER.sh $1 $2 $3 $4 $file $5
-	echo "$scriptdir/calculate_PEER.sh $1 $2 $3 $4 $file $5"
+	sbatch $scriptdir/calculate_PEER.sh $1 $2 $3 $4 $file $5 $6
+	echo "$scriptdir/calculate_PEER.sh $1 $2 $3 $4 $file $5 $6"
 	#break
 done
 

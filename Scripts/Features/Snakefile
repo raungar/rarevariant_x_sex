@@ -1,0 +1,65 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+rule all:
+	input:
+		#config["RAREDIR"]+"/Features/run_features_variant_beds.log"
+		#config["RAREDIR"]+"/Features/run_vcf2bed.log"
+		config["RAREDIR"]+"/Features/run_features_variant_beds.log"
+
+#first run to prepare files
+rule vcf2bed:
+	input:
+		RAREDIR=config["RAREDIR"],
+		GTEX_WGSv8_flagged=config["GTEX_WGSv8_flagged"],
+		GTEX_WGSv8=config["GTEX_WGSv8"],
+		GTEX_SUBJECTSv8=config["GTEX_SUBJECTSv8"]
+	params:
+		scriptdir="/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Features"
+	output:
+		euro_ids=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_euro_VCFids.txt",
+		log=config["RAREDIR"]+"/Features/run_vcf2bed.log"
+	shell:
+		"""sh /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Features/vcf2bedfiles.sh \
+		{input.RAREDIR} {input.GTEX_WGSv8_flagged} {input.GTEX_WGSv8} {params.scriptdir} \
+		{output.euro_ids} {input.GTEX_SUBJECTSv8} > {output.log}"""
+rule add_features_variant_beds:
+	input:
+		RAREDIR=config["RAREDIR"],
+		KG_AF_SNPS=config["KG_AF_SNPS"],
+		GNOMAD_SNPS=config["GNOMAD_SNPS"],
+		KG_AF_INDELS=config["KG_AF_INDELS"],
+		GNOMAD_INDELS=config["GNOMAD_INDELS"],
+		AF_SVs=config["AF_SVs"]
+	params:
+		scriptdir="Scripts/Features",
+		STATEDIR=config["STATEDIR"],
+		TFDIR=config["TFDIR"],
+		CONSOLIDATED=config["CONSOLIDATED"]
+	output:
+		this_log=config["RAREDIR"]+"/Features/run_features_variant_beds.log"
+
+	shell:
+		"""
+		sh /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Features/run_add_features_variant_beds.sh \
+		{input.RAREDIR} {params.scriptdir} {input.KG_AF_SNPS} {input.GNOMAD_SNPS} {input.KG_AF_INDELS} {input.GNOMAD_INDELS} \ 
+		{input.AF_SVs} {params.CONSOLIDATED} {params.TFDIR} {params.STATEDIR} > {output.this_log}
+		#bash /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Features/run_add_features_variant_beds.sh a b c d e f g h i j k
+		echo "{params.CONSOLIDATED}"
+		echo "^^CONSOLIDATED PATH"
+
+		"""
+rule add_enhancers_variant_beds:
+	input: 
+		RAREDIR=config["RAREDIR"],
+		GNOMAD_SNPS=config["GNOMAD_SNPS"],
+		GNOMAD_INDELS=config["GNOMAD_INDELS"],
+		AF_SVs=config["AF_SVs"]
+	params:
+		scriptdir="/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Features"
+	output:
+		outlog=config["RAREDIR"]+"/Features/run_add_enhancers_variant_beds.log"
+	shell:
+		"""sh  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Features/run_add_enhancers_variant_beds.sh  \
+		{input.RAREDIR}	{params.scriptdir} {input.GNOMAD_SNPS} {input.GNOMAD_INDELS} {input.AF_SVs} \
+		> {output.outlog} """
+

@@ -1,0 +1,51 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+rule all:
+	input: 
+		config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/chrX.vcf",
+		config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/chrX_MQ.txt",
+		config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/chrX_GQ_MAF.txt"
+
+rule get_chr_rvs:
+	input:
+		wgs=config["GTEX_WGSv8_full"]
+	output:
+		output_vcf=config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/chrX.vcf"
+		
+	shell:
+		"""
+		module load bcftools
+		bcftools view {input} --regions chrX > {output}
+		"""
+
+rule mapq_only:
+	input:
+		config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/chrX.vcf"
+	output:
+		config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/chrX_MQ.txt"
+	shell:
+		"""
+		cat {input} | \
+			awk -F"[\t|;]" '{{ if(!($1 ~ /^#/)){{printf $2"\t"; for(i=10; i<30; i++){{if($i ~ /^MQ/){{print $i;break}}}}}}}}' | \
+			sed 's/MQ=//g' > {output}
+		#cat {input} | awk -F"[\t|;]" '{{ if(!($1 ~ /^#/)){{print $2"\t"$17}}}}' | sed 's/MQ=//g' > {output}
+		"""
+
+rule get_gq_df:
+	input:
+		config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/chrX.vcf"
+	output:
+		config["RAREDIR"]+"/analysis_v8/genomic_only/qualitychecks/chrX_GQ_MAF.txt"
+
+	shell:
+		"""
+		#header
+		grep "#CHROM" {input}  | head -1 | \
+			awk -F"\t" '{{printf $1"\t"$2"\t"; for(i=9; i<NF; i++){{printf $i"\t"}}; print ""}}' > {output}
+		#get gq finally
+		cat {input} | \
+			awk -F"[\t|;]" '{{ if(!($1 ~ /^#/)){{printf $1"\t"$2"\t"$9"\t"; for(i=NF-838;i<NF; i++){{printf $i"\t"}}; print ""}}}}' | \
+			awk -F"[:|\t]" '{{ printf $1"\t"$2"\t"$3"\t"; for(i=12; i<NF; i=i+5){{printf $i"\t"}} print ""}}' | \
+			sed 's/AF=//g' >> {output}
+
+		"""
