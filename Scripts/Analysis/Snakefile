@@ -1,0 +1,39 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+ZMIN=["2.5"] #,"3"]
+NPHEN_MIN=["3"]
+GROUPS=["allboth"] #,"m","f","both"]
+TYPES=["x"]
+MAF_MIN=["0"]
+MAF_MAX=["0.01"]
+MAXOUTLIERS=["3"]
+CADD=["0","15"]
+GENEWINDOWS=["5000"]
+
+
+rule all:
+    input:
+        expand(config["RAREDIR"]+"/analysis_v8eqtl/VarProp/x_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz",
+        collapsedTYPE=["collapsed"],outlierType=["outliers"],zmin=ZMIN,nphen=NPHEN_MIN,
+        group=GROUPS,this_filt=["CADDtypesGQ5BlacklistRemovedALL"],cadd_min=CADD,max_outliers=MAXOUTLIERS,
+        genewindow=GENEWINDOWS,maf_min=MAF_MIN,maf_max=MAF_MAX)
+
+rule get_underlying_var_proportions:
+    input:
+        outlier_file=config["RAREDIR"]+"/outliers_v8eqtl/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_{group}_maxoutliers{max_outliers}.txt.gz",
+        combined_file=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_{this_filt}_linc_prot_window{genewindow}.txt.gz"
+    params:
+        cadd_min="{cadd_min}",
+        maf_min="{maf_min}",
+        maf_max="{maf_max}"
+    output:
+        config["RAREDIR"]+"/analysis_v8eqtl/VarProp/x_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz"
+    shell:
+        """
+        python Scripts/Features/get_variants_under_outliers.py \
+         --combined_file {input.combined_file} \
+         --outlierfile {input.outlier_file} \
+         --outfile {output} \
+         --maf_min {params.maf_min} --maf_max {params.maf_max} \
+         --cadd_min {params.cadd_min}
+        """
