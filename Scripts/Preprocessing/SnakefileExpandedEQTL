@@ -159,19 +159,23 @@ rule get_peer_factors:
 		for_order=config["RAREDIR"]+"/preprocessing_v8eqtl/tpm_diff_file.txt",
 		RAREDIR=ancient(config["RAREDIR"]),
 		peerdir=ancient(config["RAREDIR"]+"/preprocessing_v8eqtl/PEER_v8"),
-		scriptdir=ancient("/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing")
+		#scriptdir=ancient("/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing")
+	params:
+		myscript="/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER_factors.R"
 	output:
 		log=config["RAREDIR"]+"/preprocessing_v8eqtl/get_peer_factors.log"
 
 	shell:
 		"""
+		module load R
+		Rscript {params.myscript}
 		#for file in `ls {input.peerdir}/*reads.txt`
-		for file in `ls {input.peerdir}/*log2.ztrans*.txt`
-		do
-			echo $file >> {output.log}
-			sbatch /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER_factors.sh \
-			{input.peerdir} {input.scriptdir}  {input.RAREDIR} $file >> {output.log}
-		done
+		#for file in `ls {input.peerdir}/*log2.ztrans*.txt`
+		#do
+		#	echo $file >> {output.log}
+		#	sbatch /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER_factors.sh \
+		#	{input.peerdir} {input.scriptdir}  {input.RAREDIR} $file >> {output.log}
+		#done
 		"""
 
 ###outputs both_half.sex_regress

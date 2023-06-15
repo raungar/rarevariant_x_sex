@@ -3,13 +3,66 @@ library(tidyverse)
 library(data.table)
 library("forcats")
 #file<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/relative_risk_aut_both.regress.RData"
+#####Outliers
+sexes=c("m","f","both") #,"allboth")
+chrtypes=c("aut","x")
+zs=c(2.5)
+mydir="/Volumes/groups/smontgom/raungar/Sex/Output/outliers_v8eqtl/OutliersFiltered"
+all_outliers=data.frame()
+for(this_sex in sexes){
+  for(this_chrtype in chrtypes){
+    for(this_zthresh in zs){
+      this_outliers=fread(paste0(mydir,"/outliers_noglobal_medz_zthresh",this_zthresh,
+             "_nphen3_",this_chrtype,"_",this_sex,"_maxoutliers3.txt.gz"))
+      all_outliers=rbind(all_outliers,
+                         cbind(this_outliers,sex=this_sex,chrtype=this_chrtype,zthresh=this_zthresh))
+    }
+  }
+}
 
+##plot distribution of outliers per individual
+all_outliers=all_outliers%>%group_by(Ind,chrtype,sex,zthresh)%>%mutate(num_outliers_ind=sum(Y=="outlier"))
+all_outliers_summ=all_outliers%>%group_by(Ind,chrtype,sex,zthresh)%>%summarise(num_outliers_ind=sum(Y=="outlier"))
+ggplot(all_outliers_summ%>%dplyr::filter(zthresh==2.5),aes(x=num_outliers_ind,color=sex,alpha=0.9))+
+  facet_wrap(~chrtype,scales="free")+
+  geom_density()+
+  xlab("Number of outliers for a given individual")+
+  scale_x_continuous(trans=scales::pseudo_log_trans(base = 10))+
+  scale_color_manual(values=c("#296818","#dbab3b","#5d8596"))+ 
+  theme_classic(base_size=14)
+###number of outliers by z thresholding
+all_outliers_summ_pergroup=all_outliers%>%group_by(chrtype,sex,zthresh)%>%summarise(num_outliers=sum(Y=="outlier"), num_nonoutliers=sum(Y!="outlier"))
+ggplot(all_outliers_summ_pergroup,aes(y=num_outliers,fill=as.factor(zthresh),x=sex))+
+  facet_wrap(~chrtype,scales = "free_y")+
+  geom_bar(stat="identity",position = 'dodge')+
+  scale_fill_manual(values=c("#ed85d6","#c445a8","#850368"))+
+  theme_classic(base_size=18)
+
+###fishers test
+ft_all=all_outliers_summ_pergroup%>%dplyr::filter((sex=='m'| sex =='f')&zthresh==2.5)
+ft_all_contigencytable_x=ft_all%>%dplyr::filter(chrtype=='aut')%>%ungroup%>%select(sex,num_outliers,num_nonoutliers)%>%as.data.frame()
+rownames(ft_all_contigencytable_x)=ft_all_contigencytable_x[,'sex']; ft_all_contigencytable_x=ft_all_contigencytable_x%>%select(-sex)
+fisher.test(ft_all_contigencytable_x)
+
+ft_all_contigencytable_aut=ft_all%>%dplyr::filter(chrtype=='aut')%>%ungroup%>%select(sex,num_outliers,num_nonoutliers)%>%as.data.frame()
+rownames(ft_all_contigencytable_aut)=ft_all_contigencytable_aut[,'sex']; ft_all_contigencytable_aut=ft_all_contigencytable_aut%>%select(-sex)
+fisher.test(ft_all_contigencytable_aut)
+
+all_outliers_summ_pergroup_overunder=all_outliers%>%mutate(over_under=ifelse(MedZ>0,"over","under"))%>%
+  group_by(chrtype,sex,zthresh,over_under)%>%summarise(num_outliers=sum(Y=="outlier"), num_nonoutliers=sum(Y!="outlier"))
+ft_all_overunder=all_outliers_summ_pergroup_overunder%>%dplyr::filter((sex=='f'| sex =='m')&zthresh==2.5)
+ft_all_contigencytable_x_under=ft_all_overunder%>%dplyr::filter(chrtype=='aut'&over_under=='over')%>%ungroup%>%select(sex,num_outliers,num_nonoutliers)%>%as.data.frame()
+rownames(ft_all_contigencytable_x_under)=ft_all_contigencytable_x_under[,'sex']; ft_all_contigencytable_x_under=ft_all_contigencytable_x_under%>%select(-sex)
+fisher.test(ft_all_contigencytable_x_under)
+
+
+####
 # mydir="/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/RR"
 mydir="/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8eqtl/RR"
 mydir="/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8eqtl/RR"
 
 #groups=c("m","f","both_half.regress") #, "both_half","both_half.sex","both_half.regress")
-groups=c("m","f","both") #, "both_half","both_half.sex","both_half.regress
+groups=c("m","f","both","allboth") #, "both_half","both_half.sex","both_half.regress
 my_cat=c("xci","par","strata","")
 #my_cat=c(".xci",".par",".strata")
 my_cat=""
@@ -35,11 +88,15 @@ filter_version=c("typesBlacklistRemovedALL","typesBlacklistRemovedSeenTwice",
 filter_version=c("typesGQ5BlacklistRemovedALL")
 filter_version=c("typesALL")
 outlier_types=c("outliersTOP","outliers")
+outlier_types=c("outliers")
 maxmaf<-c("0.1","0.05","0.01","0.001","0.0001") #,"0.001","0.0001")
 maxtomin_dic<-c("0.05","0.01","0.001","0.0001","0")
- maxtomin_dic<-c("0","0","0","0","0")
+ # maxtomin_dic<-c("0","0","0","0","0")
 names(maxtomin_dic)<-as.factor(maxmaf)
 maxoutliers=c("3") #,"4")
+windows=c(500,5000,10000)
+max_outliers=3
+collapsetypes="collapsed"
 all_risks<-data.frame(matrix(nrow=0,ncol=10))
 colnames(all_risks)<-c("Risk","Lower","Upper" ,"Pval","Cat","Type" , "z","nphen","chr","sex")
 
@@ -50,73 +107,58 @@ inds_m=fread("/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8eqtl/g
 
 
 for(this_cat in my_cat){
-  for(this_outlier in outlier_types){
-    print(this_outlier)
-    for(this_maxmaf in maxmaf){
-      for (this_group in groups){
-        for(this_chr in chr_types){
-          for(this_nphen in nphen){
-            for(this_z in z){
-              for(this_filt in filter_version){
-                for(cadd_min in CADD){
-                  for(max_outlier in maxoutliers){
-                    # if(this_chr=="x"){
-                    #   file=paste0(mydir,"/relative_risk_x_",this_outlier,"_z",this_z,"_nphen",this_nphen,"_",this_chr,"_",this_group,
-                    #               "_min0max",this_maxmaf,"_CADD","typesGQ5BlacklistRemovedALL","_CADD",cadd_min,"_linc_prot",this_cat,".csv")
-                    #   #relative_risk_x_outliers_z2.5_nphen5_x_both_min0max0.001_CADDtypesGQ5BlacklistRemovedALL_CADD15_linc_prot.csv
-                    #   this_filt="GQ5BlacklistRemovedALL"
-                    # }else{
-                    # file=paste0(mydir,"/relative_risk_",this_outlier,"_z",this_z,"_nphen",this_nphen,"_",this_group,"_",this_chr,
-                    #             "_min0max",this_maxmaf,"_CADD",this_filt,"_CADD",cadd_min,"_linc_prot",this_cat,".txt")
-                    # } 
-                    if(this_chr=="x"){
-                      file=paste0(mydir,"/relative_risk_x_",this_outlier,"_z",this_z,"_nphen",this_nphen,
-                                  "_x_",this_group,"_min",maxtomin_dic[this_maxmaf],"max",this_maxmaf,"_CADDtypesGQ5BlacklistRemovedALL_CADD",
-                                  cadd_min,"_linc_prot_maxoutliers",max_outlier,".csv")
-                      this_filt="GQ5BlacklistRemovedALL"
-                      #_min0max",this_maxmaf,"_",this_chr,"_",this_outlier,"_cadd",cadd_min,"_noglobal_medz-zthresh",this_z,
-                      #"-nphen",this_nphen,"-",this_sex,"-",this_regresstype,"-",
-                      #this_isnull,"-",use_chrgroup,"-binary.txt.gz")
-                    }else{
-                      file=paste0(mydir,"/relative_risk_",this_outlier,"_z",this_z,"_nphen",this_nphen,
-                                  "_",this_group,"_",this_chr,"_min",maxtomin_dic[this_maxmaf],"max",this_maxmaf,"_CADDtypesALL_CADD",cadd_min,
-                                  "_linc_prot_maxoutliers",max_outlier,".txt")
+  for(this_collapsetype in collapsetypes){
+    for(this_outlier in outlier_types){
+      for(this_maxmaf in maxmaf){
+        print(this_maxmaf)
+        for (this_group in groups){
+          for(this_chr in chr_types){
+            for(this_nphen in nphen){
+              for(this_z in z){
+                for(this_filt in filter_version){
+                  for(cadd_min in CADD){
+                    for(this_window in windows){
+                      if(this_chr=="x"){
+                        file=paste0(mydir,"/relative_risk_x_",this_collapsetype,"_",this_outlier,"_z",this_z,"_nphen",this_nphen,
+                                    "_x_",this_group,"_min",maxtomin_dic[this_maxmaf],"max",this_maxmaf,"_CADDtypesGQ5BlacklistRemovedALL_CADD",
+                                    cadd_min,"_linc_prot_maxoutliers",max_outliers,"_window",this_window,".csv")
+                        this_filt="GQ5BlacklistRemovedALL"
+                      }else if(grepl("sub",this_chr)){
+                        file=paste0(mydir,"/relative_risk_",this_chr,"_",this_collapsetype,"_",this_outlier,"_z",this_z,"_nphen",this_nphen,
+                                    "_x_",this_group,"_min",maxtomin_dic[this_maxmaf],"max",this_maxmaf,"_CADDtypesALL_CADD",
+                                    cadd_min,"_linc_prot_maxoutliers",max_outliers,"_window",this_window,".csv")
+                      } else{
+                        file=paste0(mydir,"/relative_risk_",this_collapsetype,"_",this_outlier,"_z",this_z,"_nphen",this_nphen,
+                                    "_",this_group,"_",this_chr,"_min",maxtomin_dic[this_maxmaf],"max",this_maxmaf,"_CADDtypesALL_CADD",cadd_min,
+                                    "_linc_prot_maxoutliers",max_outliers,"_window",this_window,".txt")
+                      }
+                      risks=tryCatch({read.csv(file[1])},
+                                     error=function(err){return("ERROR FILE NOT FOUND")},
+                                     warnings=function(war){return("ERROR FILE NOT FOUND")})
+                      if(risks=="ERROR FILE NOT FOUND"){
+                        print(paste0(file[1], " WAS NOT FOUND"))
+                        next
+                      }
+                      #load(file)
+                      risks$z<-this_z
+                      risks$nphen<-this_nphen
+                      risks$chr<-this_chr
+                      risks$sex<-this_group
+                      risks$maxmaf<-this_maxmaf
+                      risks$filt<-this_filt
+                      risks$cadd<-cadd_min
+                      risks$collapse_method<-this_collapsetype
+                      risks$thiscat<-this_cat
+                      risks$outlierType<-this_outlier
+                      risks$gene_window<-this_window
+                      risks$max_outliers<-max_outliers
+                      risks$real_or_null<-"real"
+                      risks$discrete_or_continuous<-"discrete"
+                      colnames(risks)[6]<-"CATEGORY"
+                      all_risks<-rbind(all_risks,risks)
                     }
-                    
-                    risks=read.csv(file[1])
-                    #load(file)
-                    risks$z<-this_z
-                    risks$nphen<-this_nphen
-                    risks$max_outliers<-max_outlier
-                    risks$chr<-this_chr
-                    risks$sex<-this_group
-                    risks$maxmaf<-this_maxmaf
-                    risks$filt<-this_filt
-                    risks$cadd<-cadd_min
-                    risks$nphen<-this_nphen
-                    risks$thiscat<-this_cat
-                    risks$outlierType<-this_outlier
-                    risks$real_or_null<-"real"
-                    risks$discrete_or_continuous<-"discrete"
-                    colnames(risks)[6]<-"CATEGORY"
-                    #assign(varname,risks)
-                    #print(varname)
-                    risks$outliers_tested<-risks$exp_yn+risks$exp_yy
-                    if(this_group=="both"){
-                      num_inds=length(inds_both_half)
-                    }else if(this_group=="m"){
-                      num_inds=length(inds_f)
-                      
-                    }else if(this_group=="f"){
-                      num_inds=length(inds_m)
-                      
-                    }else{stop("ERROR!!!!")}
-                    risks$outliers_per_ind=risks$outliers_tested/num_inds
-  
-                    all_risks<-rbind(all_risks,risks)
                   }
-                 }
-                # break
+                }
               }
             }
           }
@@ -126,14 +168,13 @@ for(this_cat in my_cat){
   }
 }
 
-
 all_risks$outliers_tested<-all_risks$exp_yn+all_risks$exp_yy
 #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1125071/ following this
-risks_to_compare<-all_risks %>% group_by(outlierType,CATEGORY,z,nphen,cadd,chr,sex,maxmaf,real_or_null,exp_type,var_location,veptype,gene_window) %>% 
+risks_to_compare<-all_risks %>% group_by(outlierType,CATEGORY,z,nphen,cadd,chr,sex,maxmaf,real_or_null,exp_type,var_location,veptype,gene_window,max_outliers) %>% 
   dplyr::summarise(across(c(Risk,Lower,Upper),log)) %>%
   mutate(SE=abs(Lower-Upper)/(2*1.96))%>%dplyr::filter(sex=="m" | sex=="f")
 risks_to_compare_side<-pivot_wider(risks_to_compare,names_from=c(sex),
-                                   id_cols=c(outlierType,CATEGORY,z,nphen,cadd,chr,maxmaf,real_or_null,exp_type,var_location,veptype,gene_window) ,
+                                   id_cols=c(outlierType,CATEGORY,z,nphen,cadd,chr,maxmaf,real_or_null,exp_type,var_location,veptype,gene_window,max_outliers) ,
                                    values_from=c(Risk,SE)) #id_cols=, names_from=,
 risks_to_compare_side$RiskDiff<-risks_to_compare_side$Risk_f-risks_to_compare_side$Risk_m
 risks_to_compare_side$SEDiff<-sqrt(risks_to_compare_side$SE_f**2+risks_to_compare_side$SE_m**2)
@@ -264,25 +305,25 @@ ggplot(to_plot,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=sex,co
   facet_wrap(~paste0("z_type=",exp_type)*paste0("z=",z)*paste0("chr=",chr)*paste0("cadd=",cadd),ncol =3,scales="free_y")+
   geom_hline(yintercept=1,color="red",linetype="dashed") 
   
-
+##by sex
+to_plot=all_risks%>%dplyr::filter(CATEGORY=="all") %>% #%>%filter(outlierType=="outliers") %>% dplyr::filter(z==2.5) 
+  dplyr::filter(outlierType=="outliers"&var_location=="all"&veptype=="all"&sex!='allboth'&exp_type!='all'&gene_window==5000) %>%filter(cadd==15) %>%
+  mutate(is_sig=ifelse(Pval<0.01,T,F))#%>% # dplyr::filter(exp_type=="all")   
+to_plot=to_plot%>%mutate(adj.pval=Pval*nrow(to_plot))mutate(is_sig=ifelse(adj.pval<0.01,T,F)) 
+#filter(chr=="AllAut") #filter(maxmaf==0.001)  
 ##by over/under
 ggplot(to_plot,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=sex,color=sex,shape=sex,label=num_outliers)) + 
-  theme(axis.text.x = element_text(angle = 45,  hjust=1))+
   geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.1,position=position_dodge(width=0.5)) +
+  theme_bw()+
   geom_line(position=position_dodge(width=0.5))+
   theme_bw(base_size=5)+
-  geom_point(aes(size=is_sig),position=position_dodge(width=0.5))+
+  geom_point(aes(size=is_sig),position=position_dodge(width=0.5))+ #,
   xlab("MAF")+
   ylab("Relative Risk")+ #xlim(c(0,0.1))+
   labs(fill="Group")+
-  ggtitle(paste0("Relative Risk: (outlierType=",unique(to_plot$outlierType),", CADD=", unique(to_plot$cadd),
-                 ",nphen=",unique(to_plot$nphen),",z=",unique(to_plot$z),"), num outlier range [",
-                 min(unique(to_plot$num_outliers)),",",max(unique(to_plot$num_outliers)),"]"))+
-  # scale_fill_manual(values=c("#B1EAA2","#FCF5A9","#97D6F2"))+
-  geom_text(aes(label=paste0("RR=",round(Risk,2), "\n(n=",outliers_tested,")")), size=2, position = position_dodge(width = 1), vjust=-1.25) +
-  
-  scale_color_manual(values=c("#296818","#dbab3b","#5d8596"))+ #"#296818",
-  facet_wrap(~paste0("z_type=",exp_type)*paste0("z=",z)*paste0("chr=",chr)*paste0("cadd=",cadd),ncol =3,scales="free_y")+
+  scale
+  scale_color_manual(values=c("#296818","#dbab3b","#5d8596"))+
+  facet_wrap(~paste0(exp_type)*paste0("z=",z)*paste0("chr=",chr),ncol =3,scales="free_y")+
   geom_hline(yintercept=1,color="red",linetype="dashed") 
 
 
