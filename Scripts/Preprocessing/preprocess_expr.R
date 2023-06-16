@@ -173,7 +173,7 @@ ztrans.tissue = function(tissue, indir,outdir, covs, read.filt = 6, tpm.filt = 0
       write.table(tpm.out.f, paste0(outdir,"/", tissue, '.log2.ztrans.f.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
       
       #Both
-      print(paste0("WRITING BOTH:",outdir ,"/",tissue, '.log2.ztrans.both.txt'))
+      print(paste0("WRITING BOTH:",outdir ,"/",tissue, '.log2.ztrans.allboth.txt'))
       tpm.both = tpm[, c(covs.both), with = F]
       reads.covs = reads[, c(covs.both), with = F]
       ind.filt.both = round(0.2*ncol(tpm.both)) #20% of people
@@ -183,11 +183,11 @@ ztrans.tissue = function(tissue, indir,outdir, covs, read.filt = 6, tpm.filt = 0
       tpm.cut.both = tpm.both[indices.keep.both, -1]
       tpm.out.both = scale(t(log2(tpm.cut.both + 2))) #log and z transform
       colnames(tpm.out.both) = genes[indices.keep.both]
-      write.table(tpm.out.both, paste0(outdir,"/", tissue, '.log2.ztrans.both.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
+      write.table(tpm.out.both, paste0(outdir,"/", tissue, '.log2.ztrans.allboth.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
 
 
       #Both half
-      print(paste0("WRITING BOTH HALF:",outdir, tissue, '.log2.ztrans.both_half.txt'))
+      print(paste0("WRITING BOTH HALF:",outdir, tissue, '.log2.ztrans.both.txt'))
       tpm.both.half = tpm[, c(covs.both.half), with = F]
       reads.covs = reads[, c(covs.both.half), with = F]
       ind.filt.both.half = round(0.2*ncol(tpm.both.half)) #20% of people
@@ -203,7 +203,7 @@ ztrans.tissue = function(tissue, indir,outdir, covs, read.filt = 6, tpm.filt = 0
       tpm.cut.both.half = tpm.both.half[indices.keep.both.half, -1]
       tpm.out.both.half = scale(t(log2(tpm.cut.both.half + 2))) #log and z transform
       colnames(tpm.out.both.half) = genes[indices.keep.both.half]
-      write.table(tpm.out.both.half, paste0(outdir,"/", tissue, '.log2.ztrans.both_half.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
+      write.table(tpm.out.both.half, paste0(outdir,"/", tissue, '.log2.ztrans.both.txt'), quote = F, sep = '\t', row.names = T, col.names = T)
       
       ##OPTIONAL DEPENDING ON INPUT
       #write to a file if indicated how the tpm subsetting changed number of genes
@@ -242,8 +242,7 @@ opt_parser<-get_opt_parser()
 args<-parse_args(opt_parser)
 
 #read in files
-randomize_sex=as.character(args$randomize_sex)
-outdir = paste0(as.character(args$indir),randomize_sex,"/PEER_v8") 
+
 indir = paste0(as.character(args$indir)) 
 pc.file = as.character(args$GTEX_PCv8)
 subject.file = as.character(args$SUBJECTSv8) 
@@ -251,12 +250,14 @@ sample.file = as.character(args$SAMPLESv8)
 map_file = as.character(args$map_file) 
 GTEX_RNAv8=as.character(args$GTEX_RNAv8)
 do_tissues=as.logical(args$do_tissues)
+print(paste0("DO TISSUES: ",do_tissues))
 tpm_reads_dir=as.character(args$tpm_reads_dir)
 tpm_dif_file=as.character(args$TPM_DIF_FILE)
 euro_file=as.character(args$euro_file)
 euro_df<-read_tsv(euro_file,col_names = F)
 euro<-euro_df$X1 
-
+randomize_sex=as.character(args$randomize_sex)
+outdir = paste0(as.character(args$indir),randomize_sex,"/PEER_v8") 
 # randomize_sex=''
 # indir = "/oak/stanford/groups/smontgom/raungar/Sex/Output"
 # outdir=paste0(indir,"/preprocessing_v8",randomize_sex)
@@ -287,6 +288,11 @@ command = paste("cat ", sample.file ," | tail -n+2",
 system(command)
 }
 
+  pcs = read.table(pc.file, header = T, stringsAsFactors = F)
+  ## shorten names: e.g., only keep GTEX-1117F of GTEX-1117F-0003-SM-6WBT7
+  pcs$SUBJID = apply(str_split_fixed(pcs$IID, '-', 5)[, c(1,2)], 1, paste, collapse = '-')
+  pcs = pcs[, -c(1,2)]
+
 if(do_tissues){
   ## Split the RPKM and read matrices into matrices for each tissue
   # DONE SEPARATELY
@@ -300,10 +306,7 @@ if(do_tissues){
   print(tpm_reads_dir)
   ind_table<-get_ind(tissues, tpm_reads_dir,euro)
   # Read in data for covariates and build the covariate matrix
-  pcs = read.table(pc.file, header = T, stringsAsFactors = F)
-  ## shorten names: e.g., only keep GTEX-1117F of GTEX-1117F-0003-SM-6WBT7
-  pcs$SUBJID = apply(str_split_fixed(pcs$IID, '-', 5)[, c(1,2)], 1, paste, collapse = '-')
-  pcs = pcs[, -c(1,2)]
+
   sex = read.csv(subject.file, header = T, stringsAsFactors = F, sep = '\t')[,c("SUBJID","SEX")]
   sex=sex%>%dplyr::filter(SUBJID%in%names(ind_table))
   print(paste0("random sex value: ",randomize_sex))
@@ -343,7 +346,9 @@ if(do_tissues){
 	###system(make.split.command('tpm', map.file, peer.dir, GTEX_RNAv8))
 	###system(make.split.command('reads', map.file, peer.dir, GTEX_RNAv8))
 
-	# Output the covariates matrix
-	write.table(covariates, paste0(outdir, '/covariates.txt'),
+	# # Output the covariates matrix
+	# write.table(covariates, paste0(outdir, '/covariates.txt'),
+  #       	    col.names = T, row.names = F, quote = F, sep = '\t')
+  	write.table(pcs, paste0(outdir, '/covariates.txt'),
         	    col.names = T, row.names = F, quote = F, sep = '\t')
 }
