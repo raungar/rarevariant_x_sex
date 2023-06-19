@@ -198,7 +198,7 @@ rule get_resids_ztrans:
 		sex_continuous="F",
 		gtex_v8_eqtl_dir=config["GTEXv8"]+"/eqtl/GTEx_Analysis_v8_eQTL"
 	output:
-           	log=config["RAREDIR"]+"/preprocessing_v8eqtl/get_resids_ztrans.{this_group}.log"
+        log=config["RAREDIR"]+"/preprocessing_v8eqtl/get_resids_ztrans.{this_group}.log"
 
 	run:
 		shell("""
