@@ -92,7 +92,7 @@ rule gather_tissues:
 		outfile=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/tissues_{sex}.txt"
 	shell:
 		"""
-		cat {params} > {output}
+		echo {params} > {output}
 		"""
 rule gather_samples:
 	input: 
@@ -105,11 +105,12 @@ rule gather_samples:
 		"""
 rule gather_filter_norm_expr:
 	input:
-		RAREDIR=ancient(config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}")
-	params:
+		RAREDIR=ancient(config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}"),
 		ind_file=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/samples_{sex}.txt",
-		mygroup="{sex}",
-		tissue_file=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/tissues_{sex}.txt"
+		tissue_file=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/tissues_{sex}.txt",
+		peer_files_to_gather=expand(config["RAREDIR"]+"/preprocessing_v8eqtl{{randomize_sex}}/PEER_v8/{tissue}.{{sex}}.peer.v8ciseQTL.ztrans.txt",tissue=TISSUES)
+	params:
+		mygroup="{sex}"
 	output:
 		outpath=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gtex_2017-06-05_normalized_expression_gathered_{sex}.txt.gz",
 		log=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gather_filter_norm_expr_{sex}.log"
