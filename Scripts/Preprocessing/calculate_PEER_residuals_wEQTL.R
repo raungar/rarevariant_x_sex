@@ -18,14 +18,14 @@ if (length(args) < 6) {
 ## Define arguments
 expr_file = args[1]
 covs_file = args[2]
-tissue_dir = args[3] #ex: /preprocessing/PEER_v8/Whole_Blood_Factors35
-eqtl_call_file=args[4]
-eqtl_geno_file=args[5]
-out_file = args[6]
-metadata_file=args[7]
-factors_type=args[8] #either factors or factors_sexregress
-incl_sex=args[9]
-sex_continuous=args[10]
+# tissue_dir = args[3] #ex: /preprocessing/PEER_v8/Whole_Blood_Factors35
+eqtl_call_file=args[3]
+eqtl_geno_file=args[4]
+out_file = args[5]
+metadata_file=args[6]
+peer_factors=args[7] #either factors or factors_sexregress
+incl_sex=args[8]
+sex_continuous=args[9]
 
 print("OUTFILE HERE")
 print(out_file)
@@ -52,10 +52,11 @@ covs = covs[, c("PC1","PC2","PC3")]
 
 
 ## Read in PEER factors, fix subject names, and make column order match expression rows
-peer_file<-paste0(tissue_dir,"/",factors_type,".tsv")
-print("PEER FILE: ")
-print(peer_file)
-peer = t(read.table(peer_file, header = T, sep = '\t', row.names = 1))
+# peer_file<-paste0(tissue_dir,"/",factors_type,".tsv")
+# print("PEER FILE: ")
+# print(peer_file)
+peer = t(read.table(peer_factors, header = T, sep = '\t', row.names = 1))
+# peer = t(read.table(peer_file, header = T, sep = '\t', row.names = 1))
 rownames(peer) = gsub('\\.', '-', rownames(peer))
 peer = peer[rownames(expr), ]
 ## Combine covariates and PEER factors
