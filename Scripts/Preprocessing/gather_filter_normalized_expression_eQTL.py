@@ -80,7 +80,7 @@ print("BEGINNING TO PROCESS")
 
 for tissue in tissues:
 
-	filename = exprdir + tissue #+ '.' + my_group+ '.peer.v8ciseQTL.ztrans.txt'
+	filename = exprdir + tissue + '.' + my_group+ '.peer.v8ciseQTL.ztrans.txt'
 	print(filename)
 
 	# read in header and figure out which columns to keep
