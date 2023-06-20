@@ -5,6 +5,9 @@ rm(list = ls())
 require(data.table)
 require(plyr)
 require(dplyr)
+library(tidyverse)
+library("readr")
+
 
 #-------------- MAIN
 print("ENTERING R SCRIPT...")
@@ -42,9 +45,16 @@ if(grepl("pinal_cord",eqtl_call_file,fixed=T)){
 }
 
 ## Read in expression and covariate matrices
-expr = read.table(expr_file, header = T, sep = '\t', row.names = 1)
-covs = read.table(covs_file, header = T, sep = '\t', row.names = 1)
-
+# expr = read.table(expr_file, header = T, sep = '\t', row.names = 1)
+# covs = read.table(covs_file, header = T, sep = '\t', row.names = 1)
+expr = fread(expr_file)%>%as.data.frame()
+covs = fread(covs_file)%>%as.data.frame()
+rownames(expr)=expr[,1]
+expr=expr[,-1]
+print(head(expr[1:5,1:5]))
+#print("expr^^, covs below")
+rownames(covs)<-sapply(strsplit(covs[,1],"-"),function(x){paste0(x[1],'-',x[2])})
+#print(head(covs[1:5,1:5]))
 ## Reorder and subset rows in covariates file to match expression matrix rows
 ## Also only keep first 3 genotype PCs and sex (if applicable)
 covs = covs[rownames(expr), ]
@@ -55,9 +65,15 @@ covs = covs[, c("PC1","PC2","PC3")]
 # peer_file<-paste0(tissue_dir,"/",factors_type,".tsv")
 # print("PEER FILE: ")
 # print(peer_file)
-peer = t(read.table(peer_factors, header = T, sep = '\t', row.names = 1))
+# peer = t(read.table(peer_factors, header = T, sep = '\t', row.names = 1))
+peer = t(fread(peer_factors))
+colnames(peer)<-paste0("Factor",1:ncol(peer))
 # peer = t(read.table(peer_file, header = T, sep = '\t', row.names = 1))
+print(rownames(expr))
 rownames(peer) = gsub('\\.', '-', rownames(peer))
+print(rownames(peer))
+print(head(peer))
+
 peer = peer[rownames(expr), ]
 ## Combine covariates and PEER factors
 covs = cbind(covs, peer)
@@ -97,14 +113,25 @@ expr = expr[inds_to_keep, ]
 print(paste0("reading eqtl_calls: ",eqtl_call_file))
 eqtl_calls = read.table(eqtl_call_file, sep = '\t', header = T) %>% select(Gene = gene_id, Chrom = chr, Pos = variant_pos, Qval = qval)
 print(paste0("reading eqtl geno file: ",eqtl_geno_file))
-eqtl_genos = as.data.frame(fread(eqtl_geno_file,header=T))
+#eqtl_genos = as.data.frame(fread(eqtl_geno_file,header=T))
+#gc() #memory issues trying this
+#eqtl_genos = read.csv(eqtl_geno_file,header=T)
+eqtl_genos=read_delim(eqtl_geno_file,'\t',col_names=TRUE)
+print(head(eqtl_genos))
+#eqtl_genos = readRDS(eqtl_geno_file)
+#eqtl_genos = read.csv(eqtl_geno_file,header=T)
+# gc() #memory issues trying this
+# eqtl_genos = fread(eqtl_geno_file,header=T)
+#eqtl_genos = (read.table(eqtl_geno_file))
+print(0)
 eqtl_genos = eqtl_genos[,c("Chrom", "Pos", rownames(expr))] %>%
 			merge(., eqtl_calls)
-
+print(1)
 
 ## For each gene in the expression file, perform a linear regression 
 ## Keep residuals
 resids = matrix(, ncol = ncol(expr), nrow = nrow(expr))
+print(2)
 rownames(resids) = rownames(expr)
 colnames(resids) = colnames(expr)
 print("performing regression")
