@@ -5,7 +5,7 @@
 
 ## Load required package
 require(peer)
-
+library(data.table)
 ##------------- FUNCTIONS
 
 GetPeerModel <- function(m1, MaxFactorsN, MaxIterations, a_pa, a_pb, e_pa, e_pb){
@@ -75,7 +75,7 @@ WritePeerDataCore <- function(m, samples_id_v, transcript_id_v, out_file_name_ta
 	m = data.frame(samples_id_v, m, stringsAsFactors = F)
 	colnames(m) = c("ID", transcript_id_v)
 	m = t(m)
-	write.table(m, file = sprintf("%s.tsv", out_file_name_tag), sep = "\t", col.names = F, quote = F)
+	fwrite(m, file = sprintf("%s.tsv", out_file_name_tag), sep = "\t", col.names = F, quote = F)
 }
 
 
@@ -190,8 +190,8 @@ PEER_update(model)
 ### Getting results
 cat("writing data\n")
 WritePeerData(m1, model, MaxIterations, a_pa, a_pb, e_pa, e_pb, MaxFactorsN)
-PlotFactorsVariance(PEER_getAlpha(model), PlotPrefix)
-PlotFactorsWeights(model, PlotPrefix)
+##PlotFactorsVariance(PEER_getAlpha(model), PlotPrefix)
+#PlotFactorsWeights(model, PlotPrefix)
 #FactorsNComparison(m1, MaxIterations, a_pa, a_pb, e_pa, e_pb, 1:10)
 #EpsPriorComparison(m1, MaxIterations, a_pa, a_pb, MaxFactorsN)
 
