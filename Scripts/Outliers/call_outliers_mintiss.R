@@ -86,10 +86,25 @@ call.outliers <- function(data, min_num_tiss, zthresh,nphen,metric) {
   #print(head(data.melted))
 
   my_med=data.melted[, MedZ := median(Z, na.rm = TRUE), by = list(Ind,Gene)]
-  test.stats=my_med%>%group_by(Ind,Gene)%>%mutate(Df=sum(!is.na(Z)))%>%select(-Z,-Tissue)%>%unique()%>%
-                      mutate(Y=ifelse(MedZ>zthresh&Df>nphen,"outlier","control"))%>%
-                      arrange(desc(abs(MedZ)))%>% group_by(Gene) %>%
+  print("MedZ calculated")
+  #test.stats=my_med%>%group_by(Ind,Gene)%>%mutate(Df=sum(!is.na(Z)))
+  test.stats=my_med[,Df:=sum(!is.na(Z)),by=list(Ind,Gene)]
+  print(head(test.stats))
+  print('Df calculated')
+  #test.stats=test.stats%>%select(-Z,-Tissue)
+  # test.stats=test.stats[,c("Z","Tissue"):=NULL]
+  colsToDelete=c("Z","Tissue")
+  set(test.stats, , colsToDelete, NULL)
+  print("remove columns")
+  test.stats=unique(test.stats)
+  print('uniqued')
+  test.stats=test.stats%>% mutate(Y=ifelse(MedZ>zthresh&Df>nphen,"outlier","control"))
+  print('get outlier/cnotrol')
+  test.stats=test.stats%>%arrange(desc(abs(MedZ)))
+  print('arranged')
+  test.stats=test.stats%>% group_by(Gene) %>%
     mutate(N = n())
+    print('n=n()')
 
   print(head(test.stats%>%dplyr::filter(!is.na(MedZ))))
 
