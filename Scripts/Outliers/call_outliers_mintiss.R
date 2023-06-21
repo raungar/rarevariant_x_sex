@@ -44,11 +44,13 @@ pick.outliers <- function(test.stats, nphen, zthresh,medz){
         out = this.test.stats %>% arrange(desc(abs(MedZ))) %>%
             mutate(Y = ifelse(abs(MedZ) > zthresh, 'outlier', 'control')) %>%
             ungroup() %>% select(Ind, Gene, N, Df, MedZ, Y)
+        print("outliers all done")
         out_topgene <- out %>% 
           group_by(Gene) %>% mutate(maxMedZ = max(abs(MedZ))) %>% 
           mutate(topOutlier=ifelse(abs(MedZ)==maxMedZ & abs(MedZ)>zthresh,"outlier","control")) %>%ungroup()%>% 
         select(Ind, Gene, N, Df, MedZ, topOutlier)
         colnames(out_topgene)[6]<-"Y"
+        print("outliers top done")
     return(list(out,out_topgene))
 }
 
@@ -80,6 +82,7 @@ call.outliers <- function(data, min_num_tiss, zthresh,nphen,metric) {
   # data.melted = melt(data, id.vars = names(data)[1:2], variable.name = 'Ind', value.name = 'Z')
   data.melted<-melt.data.table(data,id.vars = names(data)[1:2], variable.name = 'Ind', value.name = 'Z')
   colnames(data.melted)[3:4] = c('Ind', 'Z')
+  print("melted data")
   head(data.melted)
 
   # my.summs=function(x) list(MedZ=median(x,na.rm=T))
@@ -93,6 +96,7 @@ call.outliers <- function(data, min_num_tiss, zthresh,nphen,metric) {
     group_by(Gene) %>%
     mutate(N = n()) %>% 
     select(Ind, Gene, N, Df, MedZ,MedZthreshpass, Y)
+  print("MedZ calculated")
   # head(test.stats)
   outliers = pick.outliers(test.stats, min_num_tiss, zthresh, medz = T)
   return(outliers)
@@ -109,14 +113,15 @@ print(paste0("ZSCORES: ", zscore))
 
 ## Read in the normalized data
 data = (fread( zscore))
+print("call outliers")
 outliers_medz = call.outliers(data, min_num_tiss, zthresh,nphen,metric = 'mintis')
 #outliers_medz_top = pick.outliers(outliers_medz, min_num_tiss, zthresh)
 outliers<-outliers_medz[[1]]
 outliers_top<-outliers_medz[[2]] ### outlier is only top gene + zthresh
-
+print("remove global outliers")
 
 outliers_noglobal<-remove_global_outliers(outliers)
-
+print("write outliers")
 write.outliers <- function(outliers, filename) {
     write.table(outliers, filename, sep = '\t', col.names = T, row.names = F, quote = F)
 }

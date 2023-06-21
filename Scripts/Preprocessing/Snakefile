@@ -15,8 +15,8 @@ TISSUES=["Adipose_Subcutaneous","Adipose_Visceral_Omentum","Adrenal_Gland","Arte
 
 
 #TISSUES=["Adipose_Subcutaneous"]
-#RANDOMIZE_SEX=["1"]
-#SEX_GROUPS=["m"]
+RANDOMIZE_SEX=["2"]
+#SEX_GROUPS=["both"]
 
 rule all:
 	input: 
@@ -102,44 +102,42 @@ rule gather_tissues:
 		"""
 		echo {params}  | sed 's/\[//g' | sed 's/\]//g' | tr "," '\n' | sed s'/ //g' > {output}
 		"""
-rule gather_samples:
-	input: 
-		expand(config["RAREDIR"]+"/preprocessing_v8eqtl{{randomize_sex}}/PEER_v8/{tissue}.{{sex}}.peer.v8ciseQTL.ztrans.txt",tissue=TISSUES)
-	output:
-		outfile=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/samples_{sex}.txt"
-	shell:
-		"""
-		grep Id {input} | tr '\t' '\n' | grep -v Id | sort | uniq > {output}
-		"""
+# rule gather_samples:
+# 	input: 
+# 		expand(config["RAREDIR"]+"/preprocessing_v8eqtl{{randomize_sex}}/PEER_v8/{tissue}.{{sex}}.peer.v8ciseQTL.ztrans.txt",tissue=TISSUES)
+# 	output:
+# 		outfile=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/samples_{sex}.txt"
+# 	shell:
+# 		"""
+# 		grep Id {input} | tr '\t' '\n' | grep -v Id | sort | uniq > {output}
+# 		"""
 rule gather_filter_norm_expr:
 	input:
 		RAREDIR=ancient(config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}"),
-		ind_file=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/samples_{sex}.txt",
+		ind_file=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_v8_samples_tissues.txt",
 		tissue_file=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/tissues_{sex}.txt",
 		peer_files_to_gather=expand(config["RAREDIR"]+"/preprocessing_v8eqtl{{randomize_sex}}/PEER_v8/{tissue}.{{sex}}.peer.v8ciseQTL.ztrans.txt",tissue=TISSUES)
 	params:
 		mygroup="{sex}"
 	resources:
-		mem_mb=25000
+		mem_mb=30000
 	output:
-		outpath=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gtex_2017-06-05_normalized_expression_gathered_{sex}.txt.gz",
-		log=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gather_filter_norm_expr_{sex}.log"
+		outpath=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gtex_2017-06-05_normalized_expression_gathered_{sex}.txt.gz" #,
+		#log=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gather_filter_norm_expr_{sex}.log"
 	shell:
 		"""
-		module load python numpy
-		python /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/gather_filter_normalized_expression_eQTL.py \
-			--RAREDIR {input.RAREDIR} --outpath {output.outpath} --ind_file {input.ind_file} \
-			--tissue_file {input.tissue_file} --group {params.mygroup}  > {output.log}
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/gather_filter_norm_expr.R {output} {input.peer_files_to_gather}
 		"""
 #only here do you split things up!
 rule filter_tissues_individuals:
 	input:
 		RAREDIR=ancient(config["RAREDIR"]+"/preprocessing_v8eqtl"),
-		sample_file=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/samples_{sex}.txt",
+		sample_file=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_v8_samples_tissues.txt",
 		norm_expr_file=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gtex_2017-06-05_normalized_expression_gathered_{sex}.txt.gz",
 		x_gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/x_proteincoding_lncrna.gtf",
-		a_gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/autosomal_proteincoding_lncrna.gtf",
-		log=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gather_filter_norm_expr_{sex}.log"
+		a_gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/autosomal_proteincoding_lncrna.gtf" #,
+		#log=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gather_filter_norm_expr_{sex}.log"
 	output:
 		outfile_x=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gtex_2017-06-05_normalized_expression_subsetted_x_{sex}.txt.gz",
 		outfile_a=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gtex_2017-06-05_normalized_expression_subsetted_aut_{sex}.txt.gz"
