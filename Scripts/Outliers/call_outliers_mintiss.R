@@ -83,20 +83,31 @@ call.outliers <- function(data, min_num_tiss, zthresh,nphen,metric) {
   data.melted<-melt.data.table(data,id.vars = names(data)[1:2], variable.name = 'Ind', value.name = 'Z')
   colnames(data.melted)[3:4] = c('Ind', 'Z')
   print("melted data")
-  head(data.melted)
+  #print(head(data.melted))
+
+  my_med=data.melted[, MedZ := median(Z, na.rm = TRUE), by = list(Ind,Gene)]
+  test.stats=my_med%>%group_by(Ind,Gene)%>%mutate(Df=sum(!is.na(Z)))%>%select(-Z,-Tissue)%>%unique()%>%
+                      mutate(Y=ifelse(MedZ>zthresh&Df>nphen,"outlier","control"))%>%
+                      arrange(desc(abs(MedZ)))%>% group_by(Gene) %>%
+    mutate(N = n())
+
+  print(head(test.stats%>%dplyr::filter(!is.na(MedZ))))
+
 
   # my.summs=function(x) list(MedZ=median(x,na.rm=T))
-  test.stats = data.melted %>% group_by(Ind, Gene) %>%
-    summarise(MedZ = median(Z, na.rm = T), 
-               Df = sum(!is.na(Z)),
-               MedZthreshpass=median(data.melted$Z[which(data.melted$Z>zthresh)]))%>%
-    mutate(Y=ifelse(table(data.melted$Z>zthresh)["TRUE"]>min_num_tiss & Df>nphen,
-                      "outlier","control"))%>%
-    arrange(desc(abs(MedZ)))%>%
-    group_by(Gene) %>%
-    mutate(N = n()) %>% 
-    select(Ind, Gene, N, Df, MedZ,MedZthreshpass, Y)
-  print("MedZ calculated")
+  # test.stats = head(data.melted,500)%>% group_by(Ind, Gene) %>%
+  #   summarise(MedZ = median(Z, na.rm = T), 
+  #              Df = sum(!is.na(Z)),
+  #              MedZthreshpass=median(data.melted$Z[which(data.melted$Z>zthresh)]))%>%
+  #   mutate(Y=ifelse(table(data.melted$Z>zthresh)["TRUE"]>min_num_tiss & Df>nphen,
+  #                     "outlier","control"))%>%
+  #   arrange(desc(abs(MedZ)))%>%
+  #   group_by(Gene) %>%
+  #   mutate(N = n()) %>% 
+  #   select(Ind, Gene, N, Df, MedZ,MedZthreshpass, Y)
+  # print("MedZ calculated")
+  # print(head(test.stats))
+  # stop("FOR NOW")
   # head(test.stats)
   outliers = pick.outliers(test.stats, min_num_tiss, zthresh, medz = T)
   return(outliers)
