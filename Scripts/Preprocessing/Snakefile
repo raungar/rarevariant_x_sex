@@ -1,6 +1,6 @@
 configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
 
-SEX_GROUPS=["both","m","f"] #,"allboth"]
+SEX_GROUPS=["both","m","f","allboth"]
 RANDOMIZE_SEX=["1","2","3","4","5"]
 TISSUES=["Adipose_Subcutaneous","Adipose_Visceral_Omentum","Adrenal_Gland","Artery_Aorta","Artery_Coronary","Artery_Tibial",
 "Brain_Amygdala","Brain_Anterior_cingulate_cortex_BA24","Brain_Caudate_basal_ganglia","Brain_Cerebellar_Hemisphere", #"Bladder"
@@ -15,7 +15,7 @@ TISSUES=["Adipose_Subcutaneous","Adipose_Visceral_Omentum","Adrenal_Gland","Arte
 
 
 #TISSUES=["Adipose_Subcutaneous"]
-RANDOMIZE_SEX=["2"]
+#RANDOMIZE_SEX=["2"]
 #SEX_GROUPS=["both"]
 
 rule all:
@@ -120,7 +120,7 @@ rule gather_filter_norm_expr:
 	params:
 		mygroup="{sex}"
 	resources:
-		mem_mb=30000
+		mem_mb=80000
 	output:
 		outpath=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gtex_2017-06-05_normalized_expression_gathered_{sex}.txt.gz" #,
 		#log=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gather_filter_norm_expr_{sex}.log"
@@ -138,6 +138,8 @@ rule filter_tissues_individuals:
 		x_gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/x_proteincoding_lncrna.gtf",
 		a_gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/autosomal_proteincoding_lncrna.gtf" #,
 		#log=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gather_filter_norm_expr_{sex}.log"
+	resources:
+		mem_mb=80000
 	output:
 		outfile_x=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gtex_2017-06-05_normalized_expression_subsetted_x_{sex}.txt.gz",
 		outfile_a=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/gtex_2017-06-05_normalized_expression_subsetted_aut_{sex}.txt.gz"
