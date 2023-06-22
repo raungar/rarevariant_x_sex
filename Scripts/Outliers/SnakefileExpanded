@@ -3,7 +3,7 @@ configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths
 #GROUPS=["both.sex","both.regress","both","m","f","both_half.sex","both_half.regress","both_half"]
 TYPES=["x","aut"] #,"7","8"]
 #TYPES=["x"]
-GROUPS=["allboth","m","f","both"]
+GROUPS=["m","f","both"]
 #GROUPS=["m","f","both"]
 #TYPES=["x"]
 #CHRS=range(1,23)
@@ -17,8 +17,8 @@ MAXOUTLIERS=["3"]
 min_num_tiss=["3","5"]
 min_num_tiss=['3']
 ZMIN=['2.5']
-RANDOMIZE_SEX=["1"]
-GROUPS=['m']
+RANDOMIZE_SEX=["1","2","3","4","5"]
+# GROUPS=['m']
 
 TISSUES=["Adipose-Subcutaneous","Adipose-Visceral-Omentum","Adrenal-Gland","Artery-Aorta","Artery-Coronary","Artery-Tibial","Brain-Caudate-basal-ganglia",
 	"Brain-Cerebellar-Hemisphere","Brain-Cerebellum","Brain-Cortex","Brain-Nucleus-accumbens-basal-ganglia","Breast-Mammary-Tissue",
