@@ -3,6 +3,7 @@
 print("RUN FILTER TISSUES")
 library(stringr)
 library(data.table)
+library(tidyverse)
 library(optparse)
 
 option_list = list(
@@ -108,19 +109,22 @@ meta$Id = apply(str_split_fixed(meta$Sample, '-', 6)[, c(1:2)], 1, paste, collap
 ## (this is a subset because it only includes individuals that were genotyped)
 #expr = read.table(gzfile(paste0(dir,'/gtex_2017-06-05_normalized_expression_v8ciseQTLs_removed.txt.gz')), header=T)
 #expr = read.table(gzfile(norm_expr_file), header=T)
+print("EXPR") #Adipose_Subcu
 expr = fread(norm_expr_file, header=T,fill = TRUE)
 #expr2 = fread(norm_expr_file, header=T)
-print("EXPR") #Adipose_Subcu
-print(head(expr))
+colnames(expr)[1:2]<-c('Gene','Tissue')
 
+print(head(expr[1:4,1:4]))
+#expr=expr%>%select(-Id)
 tissue_dic<-as.character(sort(unique(meta$Tissue)))
 print("tissue dic pre becoming a dictionary so it's just vals")
 print(tissue_dic)
 print("len meta than expr tissue")
 print(length(unique(meta$Tissue)))
-print(length(unique(expr$Tissue)))
+print(length(unique(expr$tissue)))
 expr$Tissue<-sapply(strsplit(expr$Tissue,"\\."),"[[",1)
-head(expr$Tissue)
+print(head(expr$Tissue))
+
 names(tissue_dic)<-as.character(sort(unique(expr$Tissue)))
 print("tissue_dic!!")
 print(tissue_dic)
@@ -248,7 +252,7 @@ genes.counts = table(expr.subset$Gene)
 #print(genes.counts)
 #genes.keep = names(genes.counts)[which(genes.counts == length(tissues.final))]
 print(" head expr subset plz")
-print(head(expr.subset))
+print(head(expr.subset[1:4,1:5]))
 genes.keep=expr.subset$Gene
 
 print("GENES KEEP")
@@ -270,13 +274,16 @@ print(table(x.selected$gene %in% genes.keep))
 #print(paste0(head(genes.keep), " IN x: ", head(x.selected$gene)))
 
 genes.keep.a = genes.keep[which(genes.keep %in% autosomal.selected$gene)]
-#print(length(genes.keep.a))
+print(length(genes.keep.a))
 print("subset 1")
+print(expr.subset[1:4,1:4])
 expr.subset.a = expr.subset[which(expr.subset$Gene %in% genes.keep.a), ]
 print("subset 2")
+print(expr.subset.a[1:4,1:4])
 ## finally restandardize and output subsetted expression matrix
 expr.subset.a = as.data.frame(expr.subset.a)
 print("Subset 3")
+print(expr.subset.a[1:6,1:6])
 expr.subset.a[, 3:ncol(expr.subset.a)] = t(scale(t(expr.subset.a[, 3:ncol(expr.subset.a)])))
 print("HIIIIII")
 print("HERE")
