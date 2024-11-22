@@ -1,0 +1,368 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+#SEX_GROUPS=["both.sex","both.regress","both","m","f","both_half.sex","both_half.regress","both_half"]
+SEX_GROUPS=["both","m","f"] #,"both.sex_regress"]
+BOTH_TYPE=["both"] #,"both_half.sex_regress"]
+TYPES=["x","aut"]
+#SEX_GROUPS_TYPES={ 
+#	"sex_groups": ["both.sex","both.regress","both","m","f"],
+#	"types": ["x","aut"]
+#}
+
+print(SEX_GROUPS)
+
+rule all:
+	input: 
+		config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_v8_samples_tissues.txt",
+		config["RAREDIR"]+"/preprocessing_v8all/get_peer_factors.log",
+           	#config["RAREDIR"]+"/preprocessing_v8all/get_resids_ztrans.log",
+		config["RAREDIR"]+"/preprocessing_v8all/log_reads.log",
+		config["RAREDIR"]+"/preprocessing_v8all/log_tpm.log",
+		#expand(config["RAREDIR"]+"/preprocessing_v8all/regress_sex.{both_type}.log",
+		#	both_type=BOTH_TYPE),
+		config["RAREDIR"]+"/preprocessing_v8all/tpm_dif_file.txt",
+		expand(config["RAREDIR"]+"/preprocessing_v8all/peer_correct_sex_{both_type}.log",both_type=BOTH_TYPE),
+		#config["RAREDIR"]+"/preprocessing_v8all/regress_sex.txt.log",
+		config["RAREDIR"]+"/preprocessing_v8all/get_tissue_by_individual.log",
+		expand(config["RAREDIR"]+"/preprocessing_v8all/get_resids_ztrans.{this_group}.log",
+			this_group=SEX_GROUPS),
+		#config["RAREDIR"]+"/preprocessing_v8all/get_resids_NOztrans.f.log",
+		expand(config["RAREDIR"]+"/preprocessing_v8all/gather_filter_norm_expr_all{this_group}.log",this_group=SEX_GROUPS),
+		expand(config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_normalized_expression_subsetted_aut_all{this_group}.txt.gz",this_group=SEX_GROUPS)
+
+#first run to prepare files
+rule get_samples_tissues:
+	input:
+ 		GTEX_PCv8=config["GTEX_PCv8"],
+		GTEX_SUBJECTSv8=config["GTEX_SUBJECTSv8"],
+		GTEX_SAMPLESv8=config["GTEX_SAMPLESv8"],
+		euro_file=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_v8_euro_VCFids_notambiguous.txt",
+		GTEX_RNAv8=config["GTEX_RNAv8"]
+	params:
+		RAREDIR=ancient(config["RAREDIR"]+"/preprocessing_v8all/PEER_v8"),
+		map_file_prefix="gtex_2017-06-05_v8_samples_tissues.txt",
+		do_tissues="F"		
+	output:
+		out=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_v8_samples_tissues.txt"
+	shell:
+		""" 
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/preprocess_expr.R --RAREDIR {params.RAREDIR} \
+			--GTEX_PCv8 {input.GTEX_PCv8} --SUBJECTSv8 {input.GTEX_SUBJECTSv8} --SAMPLESv8 {input.GTEX_SAMPLESv8}  \
+			--GTEX_RNAv8 {input.GTEX_RNAv8} --do_tissues {params.do_tissues} --map_file_prefix {output.out} --euro_file {input.euro_file}
+		"""
+
+#split these tissues up
+rule split_tissues_reads:
+	input: 
+ 		gtex=config["GTEX_RNAv8"]+"/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct.gz", #GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct.gz
+		sample=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_v8_samples_tissues.txt"
+	params:
+		end=".reads.txt",
+		out=config["RAREDIR"]+"/preprocessing_v8all/PEER_v8"
+	output:
+		log=config["RAREDIR"]+"/preprocessing_v8all/log_reads.log"
+	shell:
+		"""
+		module load python
+		echo "python /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/split_expr_by_tissues.py --gtex {input.gtex} --out {params.out} --sample {input.sample} --end {params.end}" >{output.log}
+		python /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/split_expr_by_tissues.py --gtex {input.gtex} --out {params.out} --sample {input.sample} --end {params.end}
+
+		"""
+
+rule split_tissues_tpm:
+	input: 
+		gtex=config["GTEX_RNAv8"]+"/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct.gz",
+		sample=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_v8_samples_tissues.txt"
+	params:
+		end=".tpm.txt",
+		out=config["RAREDIR"]+"/preprocessing_v8all/PEER_v8"
+	output:
+		log=config["RAREDIR"]+"/preprocessing_v8all/log_tpm.log"
+	shell:
+		"""
+		module load python
+		echo " python /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/split_expr_by_tissues.py --gtex {input.gtex} --out {params.out} --sample {input.sample} --end {params.end} " > {output.log}
+		python /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/split_expr_by_tissues.py --gtex {input.gtex} --out {params.out} --sample {input.sample} --end {params.end}
+		"""
+
+#actually get the counts split up by sex proeprly
+rule split_counts:
+	input:
+		#RAREDIR=ancient(config["RAREDIR"]+RAREDIR=ancient(config["RAREDIR"]+"/preprocessing_v8all/PEER_v8"),
+		GTEX_PCv8=config["GTEX_PCv8"],
+		GTEX_SUBJECTSv8=config["GTEX_SUBJECTSv8"],
+		GTEX_SAMPLESv8=config["GTEX_SAMPLESv8"],
+		GTEX_RNAv8=config["GTEX_RNAv8"],
+		euro_file=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_v8_euro_VCFids_notambiguous.txt",
+		log_tpm=config["RAREDIR"]+"/preprocessing_v8all/log_tpm.log",
+		log_reads=config["RAREDIR"]+"/preprocessing_v8all/log_reads.log"
+	params:
+		RAREDIR=ancient(config["RAREDIR"]+"/preprocessing_v8all/PEER_v8"),
+		map_file_prefix="gtex_2017-06-05_v8_samples_tissues.txt",
+		do_tissues="T"
+	output:
+		TPM_DIF_FILE=config["RAREDIR"]+"/preprocessing_v8all/tpm_dif_file.txt"
+
+	shell:
+		""" 
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/preprocess_expr_nofilt.R --RAREDIR {params.RAREDIR} \
+			--GTEX_PCv8 {input.GTEX_PCv8} --SUBJECTSv8 {input.GTEX_SUBJECTSv8} --SAMPLESv8 {input.GTEX_SAMPLESv8} \
+			--GTEX_RNAv8 {input.GTEX_RNAv8} --do_tissues {params.do_tissues} --map_file_prefix {params.map_file_prefix} \
+			--TPM_DIF_FILE {output.TPM_DIF_FILE} --euro_file {input.euro_file}
+		"""
+rule get_eqtl_genotypes:
+	input:
+		GTEX_WGSv8=config["GTEX_WGSv8"],
+		egenes_path=config["GTEXv8"]+"/eqtl/GTEx_Analysis_v8_eQTL/"
+	output:
+		GTEX_WGSv8_sorted=temp(config["RAREDIR"]+"/preprocessing_v8/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased_sorted.vcf.gz"),
+		out_vcf_path=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_genotypes_cis_eQTLs.vcf",
+		out_cis_eqtl_path=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_genotypes_cis_eQTLs"
+	params:
+		out_bed_path=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_cis_eQTLs.bed"
+	shell:
+		""" 
+		echo "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/get_eqtl_genotypes.sh \
+			{input.egenes_path} {input.GTEX_WGSv8} {params.out_bed_path} \
+			{output.out_vcf_path} {output.out_cis_eqtl_path} {output.GTEX_WGSv8_sorted}" 
+		sh /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/get_eqtl_genotypes.sh \
+			{input.egenes_path} {input.GTEX_WGSv8} {params.out_bed_path} \
+			{output.out_vcf_path} {output.out_cis_eqtl_path} {output.GTEX_WGSv8_sorted} 
+		"""
+
+rule process_eqtl_genotypes:
+	input:
+		RAREDIR=config["RAREDIR"],
+		#inds="gtex_2017-06-05_v8_genotypes_cis_eQTLs.012.indv",
+		#pos="gtex_2017-06-05_v8_genotypes_cis_eQTLs.012.pos",
+		#genotype="gtex_2017-06-05_v8_genotypes_cis_eQTLs.012"
+		inds=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_genotypes_cis_eQTLs.012.indv",
+		pos=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_genotypes_cis_eQTLs.012.pos",
+		genotype=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_genotypes_cis_eQTLs.012"
+	output:
+		out=config["RAREDIR"]+"/preprocessing_v8/gtex_2017-06-05_v8_genotypes_cis_eQTLs_012_processed.txt"
+		#out="05_v8_genotypes_cis_eQTLs_012_processed.txt"
+	shell:
+		"""Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/process_gtex_v8_cis_eqtl_genotypes.R \
+			--RAREDIR {input.RAREDIR} --inds {input.inds} --pos {input.pos} --genotype {input.genotype} --out {output.out}"""
+
+
+
+rule get_peer_factors:
+	input:
+		for_order=config["RAREDIR"]+"/preprocessing_v8all/tpm_dif_file.txt",
+		scriptdir=ancient("/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing")
+	params:
+		peerdir=ancient(config["RAREDIR"]+"/preprocessing_v8all/PEER_v8"),
+		RAREDIR=ancient(config["RAREDIR"])
+	output:
+		log=config["RAREDIR"]+"/preprocessing_v8all/get_peer_factors.log"
+
+	shell:
+		"""
+		#for file in `ls {params.peerdir}/*reads.txt`
+		for file in `ls {params.peerdir}/*log2.ztrans*.txt`
+		do
+			echo $file >> {output.log}
+			sbatch /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER_factors.sh \
+			{params.peerdir} {input.scriptdir}  {params.RAREDIR} $file >> {output.log}
+		done
+		"""
+
+###outputs both_half.sex_regress
+rule get_resids_ztrans:
+	input:
+		log=config["RAREDIR"]+"/preprocessing_v8all/get_peer_factors.log",
+		RAREDIR=ancient(config["RAREDIR"]),
+		peerdir=ancient(config["RAREDIR"]+"/preprocessing_v8all/PEER_v8"),
+		scriptdir=ancient("/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing"),
+		covs="/oak/stanford/groups/smontgom/raungar/Sex/Files/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze_20genotPCs.txt",
+		metadata_file=config["GTEX_SUBJECTSv8"]
+	wildcard_constraints:
+		this_group="[^.]*"
+	params:
+		factors_type="factors",
+		logfile="log.residuals.tsv",
+		inclsex="F",
+		this_sex="{this_group}",
+		sex_continuous="F"
+	output:
+           	log=config["RAREDIR"]+"/preprocessing_v8all/get_resids_ztrans.{this_group}.log"
+
+	run:
+		shell("""
+		for file in `ls {input.peerdir}/*log2.ztrans*{params.this_sex}.txt`
+		do
+			echo $file > {output.log}
+			sbatch /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER_residuals.sh \
+			{input.peerdir} {input.scriptdir} {input.RAREDIR} {input.covs} \
+			{input.metadata_file} {params.factors_type} {params.logfile} {params.inclsex} {params.sex_continuous} $file
+			#break
+		done
+		""")
+rule get_resids_NOztrans:
+	input:
+		log=config["RAREDIR"]+"/preprocessing_v8all/get_peer_factors.log",
+		RAREDIR=config["RAREDIR"],
+		peerdir=config["RAREDIR"]+"/preprocessing_v8all/PEER_v8",
+		scriptdir="/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing",
+		covs="/oak/stanford/groups/smontgom/raungar/Sex/Files/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze_20genotPCs.txt",
+		metadata_file=config["GTEX_SUBJECTSv8"]
+	params:
+		factors_type="factors",
+		logfile="log.residuals.tsv",
+		inclsex="F"
+	output:
+           	log=config["RAREDIR"]+"/preprocessing_v8all/get_resids_NOztrans.f.log"
+
+	run:
+		shell("""
+		for file in `ls {input.peerdir}/*log2.ztrans*.f.txt`
+		do
+			echo $file > {output.log}
+			sbatch /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER_residuals_NOTRANSFORM.sh \
+			{input.peerdir} {input.scriptdir} {input.RAREDIR} {input.covs} \
+			{input.metadata_file} {params.factors_type} {params.logfile} {params.inclsex} $file
+			#break
+		done
+		""")
+
+###protects sex
+##outfile is sfuffix for each tiss
+rule peer_correct_sex:
+	input:
+		#log=expand(config["RAREDIR"]+"/nullshuffled_v8/get_resids_ztrans.{this_group}.log",mysex=SEX_GROUPS),
+		log=config["RAREDIR"]+"/preprocessing_v8all/get_resids_ztrans.{both_type}.log", #,mysex=SEX_GROUPS),
+		dir_peer=ancient(config["RAREDIR"]+"/preprocessing_v8all/PEER_v8"),
+		metadata_file=config["GTEX_SUBJECTSv8"],
+		script=ancient("Scripts/Preprocessing/get_residuals_peer_by_sex.R")
+	params:
+		outfile="factors_sexregress.tsv", ### this is what is used as the output
+		both_type="{both_type}"
+	output:
+		log=config["RAREDIR"]+"/preprocessing_v8all/peer_correct_sex_{both_type}.log"
+	run:
+		#for file in `ls {input.dir_peer}/*both.peer*txt`
+		shell("""
+		#for file in `ls {input.dir_peer}/*/factors.tsv`
+		module load R
+		for file in `ls {input.dir_peer}/*{params.both_type}/factors.tsv`
+		do
+			echo "this file: $file" >> {output.log}
+			sbatch /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/get_residuals_peer_by_sex.sh \
+			{input.dir_peer} {input.metadata_file} {input.script} $file {params.outfile}; 
+		done
+		""")
+###same as nicoles paper, remove sex
+##outputs .both_half.peer.ztrans.
+rule get_resids_ztrans_regresssex:
+	input:
+		log=config["RAREDIR"]+"/preprocessing_v8all/peer_correct_sex_{both_type}.log",
+		RAREDIR=ancient(config["RAREDIR"]),
+		peerdir=ancient(config["RAREDIR"]+"/preprocessing_v8all/PEER_v8"),
+		scriptdir=ancient("/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing"),
+		covs="/oak/stanford/groups/smontgom/raungar/Sex/Files/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze_20genotPCs.txt",
+		metadata_file=config["GTEX_SUBJECTSv8"]
+	params:
+		factors_type="factors_sexregress",
+		logfile="log.residuals_sexregress.tsv",
+		inclsex="T",
+		sex_continuous="F",
+		both_type="{both_type}"
+	output:
+		config["RAREDIR"]+"/preprocessing_v8all/regress_sex.{both_type}.log"
+	run:
+		#"""sh /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER.sh \
+		shell("""
+		#for file in `ls {input.peerdir}/*log2*ztrans*both*half.txt`
+		module load R
+		for file in `ls {input.peerdir}/*log2*ztrans*both*half.txt`
+		do
+			echo $file >> {output}
+			sbatch /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/calculate_PEER_residuals.sh \
+			{input.peerdir} {input.scriptdir} {input.RAREDIR} {input.covs} \
+			{input.metadata_file} {params.factors_type} {params.logfile} {params.inclsex} {params.sex_continuous} $file
+			#break;
+		done
+		""")
+
+rule get_tissue_by_individual:
+	input:
+		RAREDIR=ancient(config["RAREDIR"]+"/preprocessing_v8all"),
+		log=expand(config["RAREDIR"]+"/preprocessing_v8all/peer_correct_sex_{both_type}.log",both_type=BOTH_TYPE),
+		prev_rule=expand(config["RAREDIR"]+"/preprocessing_v8all/regress_sex.{both_type}.log",both_type=BOTH_TYPE)
+	wildcard_constraints:
+		this_sex="[^.]*$"
+	output:
+		log=config["RAREDIR"]+"/preprocessing_v8all/get_tissue_by_individual.log"
+	shell:
+		"""
+		sh /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/get_tissue_by_individual.sh {input.RAREDIR} > {output}
+		"""
+
+rule generate_gtf_bed:
+	input:
+		gtf=config["GTEX_GENES"],
+		outdir=ancient(config["RAREDIR"]+"/preprocessing_v8all/"),
+		log=ancient(config["RAREDIR"]+"/preprocessing_v8all/get_tissue_by_individual.log")
+	output:
+		out_a=config["RAREDIR"]+"/preprocessing_v8all/autosomal_proteincoding_lncrna.gtf",
+		out_x=config["RAREDIR"]+"/preprocessing_v8all/x_proteincoding_lncrna.gtf",
+		bed_a=config["RAREDIR"]+"/preprocessing_v8all/autosomal_gtf_protclinc_padded10kb.bed",
+		bed_x=config["RAREDIR"]+"/preprocessing_v8all/x_gtf_protclinc_padded10kb.bed"
+	shell:
+		"sh /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/subset_gtf.sh \
+			{input.gtf} {output.out_a} {output.out_x} \
+			{output.bed_a} {output.bed_x} {input.outdir}"
+
+rule gather_filter_norm_expr:
+	input:
+		RAREDIR=ancient(config["RAREDIR"]+"/preprocessing_v8all/"),
+		out_a=config["RAREDIR"]+"/preprocessing_v8all/autosomal_proteincoding_lncrna.gtf" #for continuity
+		#ind_file=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_individuals_all_normalized_samples_{this_group}.txt",
+		#tissue_file=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_tissues_all_normalized_samples_{this_group}.txt"
+
+	params:
+		ind_file=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_individuals_all_normalized_samples_{this_group}.txt",
+		tissue_file=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_tissues_all_normalized_samples_{this_group}.txt",
+		#this_group=SEX_GROUPS_TYPES[wildcards.sex_groups]
+		#this_group=SEX_GROUPS_TYPES["sex_groups"]
+		mygroup="{this_group}"
+
+	output:
+		outpath=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_normalized_expression_gathered_all{this_group}.txt.gz",
+		log=config["RAREDIR"]+"/preprocessing_v8all/gather_filter_norm_expr_all{this_group}.log"
+
+	shell:
+		"""
+		module load python numpy
+		python /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/gather_filter_normalized_expression.py \
+			--RAREDIR {input.RAREDIR} --outpath {output.outpath} --ind_file {params.ind_file} \
+			--tissue_file {params.tissue_file} --group {params.mygroup}  > {output.log}"""
+
+
+#only here do you split things up!
+rule filter_tissues_individuals:
+	input:
+		RAREDIR=ancient(config["RAREDIR"]+"/preprocessing_v8all"),
+		sample_file=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_v8_samples_tissues.txt",
+		norm_expr_file=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_normalized_expression_gathered_all{this_group}.txt.gz",
+		x_gtf_file=config["RAREDIR"]+"/preprocessing_v8all/x_proteincoding_lncrna.gtf",
+		a_gtf_file=config["RAREDIR"]+"/preprocessing_v8all/autosomal_proteincoding_lncrna.gtf",
+		log=config["RAREDIR"]+"/preprocessing_v8all/gather_filter_norm_expr_all{this_group}.log"
+	output:
+		outfile_x=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_normalized_expression_subsetted_x_all{this_group}.txt.gz",
+		outfile_a=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_normalized_expression_subsetted_aut_all{this_group}.txt.gz"
+	params:
+		my_group="{this_group}"
+	shell:
+		""" 
+			module load R
+			Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/filter_tissues_individuals.R \
+			--RAREDIR {input.RAREDIR} --sample_file {input.sample_file} --norm_expr_file {input.norm_expr_file} \
+			--x_gtf_file {input.x_gtf_file} --a_gtf_file {input.a_gtf_file} \
+			--outfile_x {output.outfile_x} --outfile_a {output.outfile_a} --group {params.my_group}
+		"""
+

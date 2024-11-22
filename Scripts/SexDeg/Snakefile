@@ -1,0 +1,526 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+import os, glob
+
+FILES = [ os.path.basename(x) for x in glob.glob(config["FILESDIR"]+"/SexDEGs/*csv") ]
+TISSUES=  (list(set([ "".join(((x.split("-")[1]).split("."))[0]) for x in FILES])))
+files_other_tissues = [ os.path.basename(x) for x in glob.glob(config["RAREDIR"]+"/preprocessing_v8eqtl/PEER_v8/*both*peer*ztrans*.txt") ]
+tissues_expression=  (list(set([x.split(".")[0] for x in files_other_tissues])))
+#be able to convert between full tissue name, and gtex shortened tissue name
+#since this is sexdegs, only looks at tissues in both groups :) 
+tissue_dic={}
+for i in range(len(TISSUES)):
+	tissue_dic[TISSUES[i]]=tissues_expression[i]
+tissue_dic={'ADPSBQ': 'Adipose_Subcutaneous', 'ADPVSC': 'Adipose_Visceral_Omentum', 'ADRNLG': 'Adrenal_Gland', 'ARTAORT': 'Artery_Aorta', 'ARTCRN': 'Artery_Coronary', 'ARTTBL': 'Artery_Tibial','BRNACC': 'Brain_Anterior_cingulate_cortex_BA24', 'BRNAMY': 'Brain_Amygdala', 'BRNCDT': 'Brain_Caudate_basal_ganglia', 'BRNCHA': 'Brain_Cerebellum', 'BRNCHB': 'Brain_Cerebellar_Hemisphere', 'BRNCTXA': 'Brain_Cortex', 'BRNCTXB': 'Brain_Frontal_Cortex_BA9', 'BRNHPP': 'Brain_Hippocampus', 'BRNHPT': 'Brain_Hypothalamus', 'BRNNCC': 'Brain_Nucleus_accumbens_basal_ganglia', 'BRNPTM': 'Brain_Putamen_basal_ganglia', 'BRNSNG': 'Brain_Substantia_nigra', 'BRNSPC': 'Brain_Spinal_cord_cervical_c1','BREAST': 'Breast_Mammary_Tissue', 'CLNSGM': 'Colon_Sigmoid', 'CLNTRN': 'Colon_Transverse', 'ESPGEJ': 'Esophagus_Gastroesophageal_Junction', 'ESPMCS': 'Esophagus_Mucosa', 'ESPMSL': 'Esophagus_Muscularis', 'FIBRBLS': 'Cells_Cultured_fibroblasts', 'HRTAA': 'Heart_Atrial_Appendage', 'HRTLV': 'Heart_Left_Ventricle', 'KDNCTX': 'Kidney_Cortex', 'LCL': 'Cells_EBV-transformed_lymphocytes', 'LIVER': 'Liver', 'LUNG': 'Lung', 'MSCLSK': 'Muscle_Skeletal', 'NERVET': 'Nerve_Tibial', 'PNCREAS': 'Pancreas', 'PTTARY': 'Pituitary', 'SKINS': 'Skin_Sun_Exposed_Lower_leg', 'SKINNS': 'Skin_Not_Sun_Exposed_Suprapubic', 'SLVRYG': 'Minor_Salivary_Gland', 'SNTTRM': 'Small_Intestine_Terminal_Ileum', 'SPLEEN': 'Spleen', 'STMACH': 'Stomach', 'THYROID': 'Thyroid', 'WHLBLD': 'Whole_Blood'}
+print(tissue_dic)
+SEXGROUPS=["m","f","both"] #,"both_half_regress"]
+#GROUPS="both"
+#GROUPS="both\_half\_regress"
+#CHR=[str(x) for x in list(range(1,23))]+"x"
+CHRNUM=list(map(str,range(1,23)))
+CHRNUM.append("x")
+#MINMAF=["0.1"]
+#MAXMAF=["0.2"]
+MINMAF=["0"]
+MAXMAF=["0.01","0.001","0.0001"]
+#MAXMAF=["0.001"]
+beta_min="0.111"
+#beta_min=["0.04954","0.111"] #,"0.10842"]
+ZMIN=["2","2.5","3"]
+ZMIN=["2.5"]
+#ZMIN=["2.5","2","3"] #,4]
+#NPHEN=[2,3,4,5]
+NPHEN=[3]
+CADD=["0","15"]
+
+CHRGROUP=["x","aut"]
+CHRS=["x","aut"]
+#TISSUES="BREAST"
+#GROUPS=["m"]
+#ZMIN="2.5"
+CADD=["0","15"]
+#MAXMAF="0.001"
+OUTLIERTYPE=["outliersTOP","outliers"]
+OUTLIERTYPE=["outliers"]
+
+rule all:
+	input: 
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_beta{beta_min}_{tissue}_forcombine.txt",
+		#	tissue=TISSUES,beta_min=beta_min)
+		#expand(config["RAREDIR"] + "/sexdeg_v8eqtl/Outliers/outliers_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}.txt.gz",
+		#	 zip,chrNUM=CHRS,chrgroup=CHRGROUP),
+		#	outlierType=OUTLIERTYPE,z_min=ZMIN,nphen_min=["3"],beta_min=beta_min,chrgroup=CHRGROUP,sexgroup=SEXGROUPS,chrNUM=CHRS,caddNUM=CADD,maf_max=MAXMAF,maf_min=MINMAF)
+		#expand(expand(config["RAREDIR"]+"/sexdeg_v8eqtl/Outliers/{{outlierType}}_noglobal_varAnnot_medz_zthresh{{z_min}}_nphen{{nphen_min}}_{chrgroup}_{{sexgroup}}_beta{{beta_min}}_cadd{{caddNUM}}_{chrNUM}.txt.gz",
+		#expand(expand(config["RAREDIR"]+"/sexdeg_v8eqtl/Outliers/{{outlierType}}_noglobal_varAnnot_medz_zthresh{{z_min}}_nphen{{nphen_min}}_{chrgroup}_{{sexgroup}}_beta{{beta_min}}_cadd{{caddNUM}}_{chrNUM}.txt.gz",
+		expand(expand(config["RAREDIR"]+"/sexdeg_v8eqtl/RR/rr_{{outlierType}}_noglobal_varAnnot_medz_zthresh{{z_min}}_nphen{{nphen_min}}_{chrgroup}_{{sexgroup}}_beta{{beta_min}}_cadd{{caddNUM}}_{chrNUM}_{{beta_min}}_min{{maf_min}}max{{maf_max}}.txt.gz",
+			zip,chrNUM=CHRS,chrgroup=CHRGROUP),
+			outlierType=OUTLIERTYPE,z_min=ZMIN,nphen_min=["3"],beta_min=beta_min,chrgroup=CHRGROUP,sexgroup=SEXGROUPS,chrNUM=CHRS,caddNUM=CADD,maf_max=MAXMAF,maf_min=MINMAF)
+		#expand(expand(config["RAREDIR"]+"/sexdeg_v8eqtl/RR/rrNoSexDEGs_{{outlierType}}_noglobal_varAnnot_medz_zthresh{{z_min}}_nphen{{nphen_min}}_{chrgroup}_{{sexgroup}}_beta{{beta_min}}_cadd{{caddNUM}}_{chrNUM}_{{beta_min}}_min{{maf_min}}max{{maf_max}}.txt.gz",
+		#	zip,chrNUM=CHRS,chrgroup=CHRGROUP),
+		#	outlierType=OUTLIERTYPE,z_min=ZMIN,nphen_min=["3"],beta_min=beta_min,chrgroup=CHRGROUP,sexgroup=SEXGROUPS,chrNUM=CHRS,caddNUM=CADD,maf_max=MAXMAF,maf_min=MINMAF)
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/RR/rr_{outlierType}_noglobal_varAnnot_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}_cadd{caddNUM}_{chrNUM}_{beta_min}_min{maf_min}max{maf_max}.txt.gz",
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/RR/rr_{outlierType}_noglobal_varAnnot_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}_cadd{caddNUM}_{chrNUM}_{beta_min}_min{maf_min}max{maf_max}.txt.gz",
+		#	outlierType=OUTLIERTYPE,z_min=ZMIN,nphen_min=["3"],beta_min=beta_min,chrgroup=CHRGROUP,sexgroup=SEXGROUPS,chrNUM=CHRS,caddNUM=CADD,maf_max=MAXMAF,maf_min=MINMAF)
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/alltissues_genes_sexDEGs_beta{beta_min}.txt.gz",beta_min=beta_min)
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/CombinedSingleTissue/{chrNUM}_beta"+beta_min+"_{tissue}_{sexgroup}_cadd{cadd}_linc_prot.txt.gz",
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/RR_SingleTissue/rr_{chrNUM}_beta"+beta_min+"_{tissue}_z{zmin}_{sexgroup}_{minmaf}_{maxmaf}_cadd{cadd}.txt",
+		#		tissue=TISSUES,minmaf=MINMAF,maxmaf=MAXMAF,group=GROUPS,chrNUM=CHR,cadd=CADD,zmin=ZMIN)
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/CombinedSingleTissue/aut_beta"+beta_min+"_{tissue}_{sexgroup}_linc_prot.txt.gz",
+		#	tissue=TISSUES,minmaf=MINMAF,maxmaf=MAXMAF,group=GROUPS)
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/RR_SingleTissue/rr_aut_beta"+beta_min+"_{tissue}_z{zmin}_{sexgroup}_{minmaf}_{maxmaf}.txt",
+		#	tissue=TISSUES,minmaf=MINMAF,maxmaf=MAXMAF,group=GROUPS,zmin=ZMIN)
+		#config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_chr.txt",
+		#config["RAREDIR"]+"/sexdeg_v8eqtl/combined_sexdegs.txt.gz"
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_rvs_"+beta_min+"_{tissue}_{minmaf}_{maxmaf}.log",
+		#expand(config["RAREDIR"]+"/SexDeg/aut_beta"+beta_min+"_{tissue}_z{zmin}_nphen{nphen}_{sexgroup}_linc_prot.txt.gz",
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/RR/rr_aut_beta"+beta_min+"_{tissue}_z{zmin}_nphen{nphen}_{sexgroup}_{minmaf}_{maxmaf}.txt",
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/Combined/aut_beta"+beta_min+"_{tissue}_z{zmin}_nphen{nphen}_both_linc_prot.txt.gz",
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/Combined/aut_beta"+beta_min+"_{tissue}_z{zmin}_nphen{nphen}_{sexgroup}_linc_prot.txt.gz",
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/RR/rr_aut_beta"+beta_min+"_{tissue}_z{zmin}_nphen{nphen}_{sexgroup}_{minmaf}_{maxmaf}.txt",
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/RR/rr_aut_beta"+beta_min+"_{tissue}_z{zmin}_nphen{nphen}_both_{minmaf}_{maxmaf}.txt",
+		#	tissue=TISSUES,minmaf=MINMAF,maxmaf=MAXMAF,zmin=ZMIN,nphen=NPHEN)	
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_rvs_{tissue}.txt.gz",
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/rr_{beta_min}_{tissue}_{minmaf}_{maxmaf}_{chr}.txt",
+		#		tissue=TISSUES,chr=CHR,minmaf=MINMAF,maxmaf=MAXMAF,beta_min=beta_min),
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_rvs_"+beta_min+"_{tissue}_{minmaf}_{maxmaf}.txt.gz",
+		#		tissue=TISSUES,chr=CHR,minmaf=MINMAF,maxmaf=MAXMAF)
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_rvs_{tissue}.txt.gz",
+		#expand(config["RAREDIR"]+"/sexdeg_v8eqtl/smg_{tissue}.txt",tissue=TISSUES)
+
+rule combine_gather:
+	input:
+		aut=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_normalized_expression_subsetted_aut_m.txt.gz",
+		x=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_normalized_expression_subsetted_aut_m.txt.gz"
+	output:
+		temp(config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_normalized_expression_gathered_all_both.txt.gz")
+	shell:
+		"""
+		zcat {input.aut} {input.x} > {output}
+		"""
+rule get_genes:
+	input:
+		config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_normalized_expression_gathered_all_both.txt.gz"
+	output:
+		config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes.txt"
+	shell:
+		"""
+		less {input} | awk -F"\t" 'NR>1 {{print $2}}' | sort | uniq | grep -v "Gene" > {output}
+		"""
+rule get_chr:
+	input:
+		genelist=config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes.txt",
+		gtf=config["GTEX_GENES"],
+		script=config["SCRIPTSDIR"]+"/SexDeg/gtf_to_genes_chr.py"
+	output:
+		outfile=config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_chr.txt"
+	shell:
+		"""
+		python3 {input.script} --infile {input.genelist} --gtf {input.gtf} --outfile {output.outfile}
+		"""
+
+rule overlap_genes_sexdegs:
+	input:
+		genes=config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_chr.txt",
+		sexdegs=config["FILESDIR"]+"/SexDEGs/sexDEGS-{tissue}.csv",
+		myscript=config["SCRIPTSDIR"]+"/SexDeg/combine_allgenes_sexdegs.sh"
+	params:
+		abs_beta_min="{beta_min}"
+	output:
+		config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_beta{beta_min}_{tissue}.txt"
+	shell:
+		"""
+		#echo "DN"
+		sh {input.myscript} {input.genes} {input.sexdegs} {output} {params}
+		"""
+rule red_overlap_reformat:
+	input:
+		config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_beta{beta_min}_{tissue}.txt"
+	params:
+		tissue_convert=lambda wildcards: tissue_dic[wildcards.tissue]
+	output:
+		temp(config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_beta{beta_min}_{tissue}_forcombine.txt")
+	shell:
+		"""
+		###make file smaller by only givving ones that pass
+		echo "{params.tissue_convert}"
+		awk -F"\t" -v tiss={params.tissue_convert} '{{if($3 != 0){{print tiss"\t"$0}}}}' {input} > {output}
+		"""
+rule combine_sexdegs_reformatted:
+	input:
+		expand(config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_beta{{beta_min}}_{tissue}_forcombine.txt",tissue=TISSUES)
+	output:
+		config["RAREDIR"]+"/sexdeg_v8eqtl/alltissues_genes_sexDEGs_beta{beta_min}.txt.gz"
+	shell:
+		"""
+		cat {input} | gzip -c > {output}
+		"""
+
+rule get_outliers:
+	input:
+		ZSCORES=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_normalized_expression_subsetted_{chrgroup}_{sexgroup}.txt.gz",
+		genes_w_chrs=config["RAREDIR"]+"/preprocessing_v8eqtl/both_gtf_protclinc_wchr.txt",
+		sexdeg_file=config["RAREDIR"]+"/sexdeg_v8eqtl/alltissues_genes_sexDEGs_beta{beta_min}.txt.gz"
+	params:
+		ZTHRESH="{z_min}",
+		NPHEN="{nphen_min}",
+		TYPES="{chrgroup}"
+	output:
+		all=config["RAREDIR"] + "/sexdeg_v8eqtl/Outliers/outliers_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}.txt.gz",
+		top=config["RAREDIR"] + "/sexdeg_v8eqtl/Outliers/outliersTOP_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}.txt.gz"
+	
+	shell:
+		"""
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/SexDeg/call_outliers_sexdegs.R \
+                    --Z.SCORES {input.ZSCORES}  --outfile_top {output.top} --outfile {output.all} \
+	              --ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} --sexdeg_file {input.sexdeg_file} \
+	              --gene_chr_table {input.genes_w_chrs} --chrtype {params.TYPES}
+		"""
+
+
+rule join_variants_outliers_x:
+	input:
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADDtypesGQ5BlacklistRemovedALL_cadd{caddNUM}.txt.gz",
+		outlier_file=config["RAREDIR"] + "/sexdeg_v8eqtl/Outliers/{outlierType}_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}.txt.gz"
+	wildcard_constraints:
+		chrNUM="x",
+		chrgroup="x"
+	params:
+		chr="chrX",
+		method="medz" #medz or splicing or ase
+	output:
+		outfile=config["RAREDIR"]+"/sexdeg_v8eqtl/Outliers/{outlierType}_noglobal_varAnnot_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}_cadd{caddNUM}_{chrNUM}.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/join_variant_annotations.R \
+			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+			--outfile {output.outfile} --chr {params.chr}
+		"""
+rule join_variants_outliers_aut:
+	input:
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_aut_cadd{caddNUM}.txt.gz",
+		outlier_file=config["RAREDIR"] + "/sexdeg_v8eqtl/Outliers/{outlierType}_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}.txt.gz"
+	wildcard_constraints:
+		chrNUM="aut",
+		chrgroup="aut"
+	params:
+		chr="aut",
+		method="medz" #medz or splicing or ase
+	output:
+		outfile=config["RAREDIR"]+"/sexdeg_v8eqtl/OutliersUNFILTERED/{outlierType}_noglobal_varAnnot_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}_cadd{caddNUM}_{chrNUM}.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/join_variant_annotations.R \
+			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+			--outfile {output.outfile} --chr {params.chr}
+		"""
+#>=max_outliers
+rule remove_excessive_outliers:
+	input:
+		all=config["RAREDIR"]+"/sexdeg_v8eqtl/OutliersUNFILTERED/{outlierType}_noglobal_varAnnot_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}_cadd{caddNUM}_{chrNUM}.txt.gz"
+	params:
+		max_allowed_outliers="3"
+	output:
+		outfile=config["RAREDIR"]+"/sexdeg_v8eqtl/Outliers/{outlierType}_noglobal_varAnnot_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}_cadd{caddNUM}_{chrNUM}.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/remove_excessive_outliers.R \
+			--infile {input.all} \
+			--max_outliers {params.max_allowed_outliers} \
+			--outfile {output.outfile}
+		"""
+
+
+#rule get_is_rare:
+#	input:
+#		infile=config["RAREDIR"]+"/sexdeg_v8eqtl/Outliers/{outlierType}_noglobal_varAnnot_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}_cadd{caddNUM}_{chrNUM}.txt.gz",
+#	params:
+#		min_maf="{maf_min}",
+#		max_maf="{maf_max}",
+# #               cadd_min="{caddNUM}"
+#	output:
+#		infile=config["RAREDIR"]+"/sexdeg_v8eqtl/Outliers/{outlierType}_noglobal_varAnnot_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}_cadd{caddNUM}_{chrNUM}.txt.gz",
+#		
+#	shell:
+#		"""
+#		module load R
+#		Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/SexDeg/get_is_rare.R \
+#			--infile {input.infile} --cadd_min {params.cadd_min} \
+#			--min_maf {params.min_maf} --max_maf {params.max_maf} \
+#			--outfile {output} 
+#		
+#		"""
+rule calculate_risks_byCHR_sexdegs:
+	input:
+		infile=config["RAREDIR"]+"/sexdeg_v8eqtl/Outliers/{outlierType}_noglobal_varAnnot_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}_cadd{caddNUM}_{chrNUM}.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/both_proteincoding_lncrna.gtf"
+	params:
+		sex="{sexgroup}",
+		zscore="{z_min}",
+		min_maf="{maf_min}",
+		max_maf="{maf_max}",
+		nphen="{nphen_min}",
+                cadd_min="{caddNUM}",
+		chr="{chrNUM}",
+		method="{outlierType}"
+		
+	output:
+		relative=config["RAREDIR"]+"/sexdeg_v8eqtl/RR/rr_{outlierType}_noglobal_varAnnot_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}_cadd{caddNUM}_{chrNUM}_{beta_min}_min{maf_min}max{maf_max}.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/SexDeg/calc_relative_risks_sexdegs.R \
+			--infile {input.infile} --zscore {params.zscore}  --cadd_min {params.cadd_min} \
+			--min_maf {params.min_maf} --max_maf {params.max_maf} --nphen {params.nphen}  \
+			--out_rdata_relative {output.relative} --gtf_code_file {input.gtf_file}  --sex {params.sex} \
+			--this_chr {params.chr} --this_method {params.method}
+		"""
+rule calculate_risks_byCHR_NOsexdegs:
+	input:
+		infile=config["RAREDIR"]+"/sexdeg_v8eqtl/Outliers/{outlierType}_noglobal_varAnnot_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}_cadd{caddNUM}_{chrNUM}.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/both_proteincoding_lncrna.gtf"
+	params:
+		sex="{sexgroup}",
+		zscore="{z_min}",
+		min_maf="{maf_min}",
+		max_maf="{maf_max}",
+		nphen="{nphen_min}",
+                cadd_min="{caddNUM}",
+		chr="{chrNUM}",
+		method="{outlierType}"
+		
+	output:
+		relative=config["RAREDIR"]+"/sexdeg_v8eqtl/RR/rrNoSexDEGs_{outlierType}_noglobal_varAnnot_medz_zthresh{z_min}_nphen{nphen_min}_{chrgroup}_{sexgroup}_beta{beta_min}_cadd{caddNUM}_{chrNUM}_{beta_min}_min{maf_min}max{maf_max}.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/SexDeg/calc_relative_risks_NOsexdegs.R \
+			--infile {input.infile} --zscore {params.zscore}  --cadd_min {params.cadd_min} \
+			--min_maf {params.min_maf} --max_maf {params.max_maf} --nphen {params.nphen}  \
+			--out_rdata_relative {output.relative} --gtf_code_file {input.gtf_file}  --sex {params.sex} \
+			--this_chr {params.chr} --this_method {params.method}
+		"""
+#rule join_variants_outliers_sexdegs_aut:
+#	input:
+#		#variant_file=config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_linc_prot.tsv.gz"
+#		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_{sexgroup}_linc_prot_aut.tsv.gz",
+#		outlier_file=config["RAREDIR"]+"/outliers_v8eqtl/outliers_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_aut_{sexgroup}.txt",
+#		#outlier_file=config["RAREDIR"]+"/outliers_v8eqtl/outliers_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_aut_{sexgroup}.txt",
+#		sexdegs=config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_beta"+beta_min+"_{tissue}.txt"
+#	params:
+#		method="medz" #medz or splicing or ase
+##	output:
+#		outfile=config["RAREDIR"]+"/sexdeg_v8eqtl/Combined/aut_beta"+beta_min+"_{tissue}_z{zmin}_nphen{nphen}_{sexgroup}_linc_prot.txt.gz"
+#	shell:
+#		"""
+#		module load R
+#		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/SexDeg/join_variants_outliers_sexdeg.R \
+#			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+#			--outfile {output.outfile} --sexdeg_file {input.sexdegs}
+#
+#		"""
+#
+
+
+
+rule join_variants_indtissues_sexdegs_x:
+	input:
+		#variant_file=config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_linc_prot.tsv.gz"
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_x_CADDtypesGQ5BlacklistRemovedALL_cadd{cadd}.txt.gz",
+		#ztissue=config["RAREDIR"]+"/preprocessing_v8eqtl/PEER_v8/"+tissue_dic["{tissue}"]+".{sexgroup}.peer.ztrans.txt",
+		#outlier_file=config["RAREDIR"]+"/outliers_v8eqtl/outliers_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_aut_{sexgroup}.txt",
+		sexdegs=config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_beta{beta_min}_{tissue}.txt"
+	wildcard_constraints:
+		chrNUM="x"
+	params:
+		linc_prot_only_dir=config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only",
+		ztissue_prefix=config["RAREDIR"]+"/preprocessing_v8eqtl/PEER_v8",
+		ztissue_suffix=".{sexgroup}.peer.ztrans.txt",
+		tissue_expression=lambda wcs: tissue_dic[wcs.tissue],
+		chr="X"	
+	output:
+		outfile=config["RAREDIR"]+"/sexdeg_v8eqtl/CombinedSingleTissue/x_beta{beta_min}_{tissue}_{sexgroup}_cadd{cadd}_linc_prot.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/SexDeg/join_variants_singletissue.R \
+			--infile {params.ztissue_prefix}/{params.tissue_expression}{params.ztissue_suffix} \
+			--variant_file {input.variant_file} \
+			--linc_prot_only_dir {params.linc_prot_only_dir} \
+			--outfile {output.outfile} --sexdeg_file {input.sexdegs} --chr {params.chr}
+		"""
+rule join_variants_indtissues_sexdegs_aut:
+	input:
+		#variant_file=config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_linc_prot.tsv.gz"
+		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_{sexgroup}_linc_prot_aut.tsv.gz",
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_aut_cadd{cadd}.txt.gz",
+		#ztissue=config["RAREDIR"]+"/preprocessing_v8eqtl/PEER_v8/"+tissue_dic["{tissue}"]+".{sexgroup}.peer.ztrans.txt",
+		#outlier_file=config["RAREDIR"]+"/outliers_v8eqtl/outliers_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_aut_{sexgroup}.txt",
+		sexdegs=config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_beta{beta_min}_{tissue}.txt"
+	wildcard_constraints:
+		chrNUM="\d+"
+	params:
+		linc_prot_only_dir=config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only",
+		ztissue_prefix=config["RAREDIR"]+"/preprocessing_v8eqtl/PEER_v8",
+		ztissue_suffix=".{sexgroup}.peer.ztrans.txt",
+		tissue_expression=lambda wcs: tissue_dic[wcs.tissue],
+		chr="aut"
+	
+	output:
+		outfile=config["RAREDIR"]+"/sexdeg_v8eqtl/CombinedSingleTissue/aut_beta{beta_min}_{tissue}_{sexgroup}_cadd{cadd}_linc_prot.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/SexDeg/join_variants_singletissue.R \
+			--infile {params.ztissue_prefix}/{params.tissue_expression}{params.ztissue_suffix} \
+			--variant_file {input.variant_file} \
+			--linc_prot_only_dir {params.linc_prot_only_dir} \
+			--outfile {output.outfile} --sexdeg_file {input.sexdegs} --chr {params.chr}
+		"""
+
+rule join_variants_indtissues_sexdegs_bychr:
+	input:
+		#variant_file=config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_linc_prot.tsv.gz"
+		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_{sexgroup}_linc_prot_aut.tsv.gz",
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrNUM}_CADDtypesALL_cadd{cadd}.txt.gz",
+		#ztissue=config["RAREDIR"]+"/preprocessing_v8eqtl/PEER_v8/"+tissue_dic["{tissue}"]+".{sexgroup}.peer.ztrans.txt",
+		#outlier_file=config["RAREDIR"]+"/outliers_v8eqtl/outliers_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_aut_{sexgroup}.txt",
+		sexdegs=config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_beta{beta_min}_{tissue}.txt"
+	wildcard_constraints:
+		chrNUM="\d+"
+	params:
+		linc_prot_only_dir=config["RAREDIR"]+"/features_v8/GTF_lnc_protcod_only",
+		ztissue_prefix=config["RAREDIR"]+"/preprocessing_v8eqtl/PEER_v8",
+		ztissue_suffix=".{sexgroup}.peer.ztrans.txt",
+		tissue_expression=lambda wcs: tissue_dic[wcs.tissue],
+		chr="{chrNUM}"
+	
+	output:
+		outfile=config["RAREDIR"]+"/sexdeg_v8eqtl/CombinedSingleTissue/{chrNUM}_beta{beta_min}_{tissue}_{sexgroup}_cadd{cadd}_linc_prot.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/SexDeg/join_variants_singletissue.R \
+			--infile {params.ztissue_prefix}/{params.tissue_expression}{params.ztissue_suffix} \
+			--variant_file {input.variant_file} \
+			--linc_prot_only_dir {params.linc_prot_only_dir} \
+			--outfile {output.outfile} --sexdeg_file {input.sexdegs} --chr {params.chr}
+		"""
+
+#	input:
+#		#rvs=config["RAREDIR"]+"/features_v8/collapsed_maf_both_x.tsv.gz",
+#		rvs=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_aut.tsv.gz",
+#		sexdegs=config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_beta"+beta_min+"_{tissue}.txt",
+#		myscript=config["SCRIPTSDIR"]+"/SexDeg/intersect_sexdegs_rvs.py"
+#	output:
+#		config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_rvs_{tissue}_{minmaf}_{maxmaf}.txt.gz"
+#	params:
+#		min="{minmaf}",
+#		max="{maxmaf}"
+#	log:
+#		config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_rvs_"+beta_min+"_{tissue}_{minmaf}_{maxmaf}.log"
+#	shell:
+#		"""
+#		python3 {input.myscript} --rvsites_file {input.rvs} \
+#		--genes_sexdegs {input.sexdegs} --outfile {output} \
+#		--logfile {log} --minmaf {params.min} --maxmaf {params.max}
+#		"""
+#
+#rule get_frac_file:
+#	input: 
+#		#rv_file=config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_rvs_{tissue}_{minmaf}_{maxmaf}.txt.gz",
+#		rv_file=config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_rvs_"+beta_min+"_{tissue}_{minmaf}_{maxmaf}.log",
+#		script=config["SCRIPTSDIR"]+"/SexDeg/get_rr.sh"
+#	output:
+#		out_aut=config["RAREDIR"]+"/sexdeg_v8eqtl/risktable_"+beta_min+"_{tissue}_{minmaf}_{maxmaf}_aut.txt",
+#		out_x=config["RAREDIR"]+"/sexdeg_v8eqtl/risktable_"+beta_min+"_{tissue}_{minmaf}_{maxmaf}_x.txt"
+#	shell:
+#		"""
+#		sh {input.script} {input.rv_file} {output.out_aut} {output.out_x}
+#		"""
+		
+rule calc_risk:
+	input:
+		#infile=config["RAREDIR"]+"/sexdeg_v8eqtl/risktable_"+beta_min+"_{tissue}_{chr}_{minmaf}_{maxmaf}.txt",
+		#infile=config["RAREDIR"]+"/sexdeg_v8eqtl/Combined/aut_beta"+beta_min+"_{tissue}_z{zmin}_nphen{nphen}_{sexgroup}_linc_prot.txt.gz",
+		infile=config["RAREDIR"]+"/sexdeg_v8eqtl/Combined/aut_beta{beta_min}_{tissue}_z{zmin}_nphen{nphen}_{sexgroup}_linc_prot.txt.gz",
+		rscript=config["SCRIPTSDIR"]+"/SexDeg/get_rr_epitab.R"
+	params:
+		min_maf="{minmaf}",
+		max_maf="{maxmaf}",
+		sex="{sexgroup}",
+		#sex="both",
+		nphen="{nphen}",
+		zscore="{zmin}",
+		tissue="{tissue}",
+		beta_min="{beta_min}"
+	output:
+		#config["RAREDIR"]+"/sexdeg_v8eqtl/RR/rr_aut_beta"+beta_min+"_{tissue}_z{zmin}_nphen{nphen}_{sexgroup}_{minmaf}_{maxmaf}.txt"
+		config["RAREDIR"]+"/sexdeg_v8eqtl/RR/rr_aut_beta{beta_min}_{tissue}_z{zmin}_nphen{nphen}_{sexgroup}_{minmaf}_{maxmaf}.txt"
+	shell:
+		"""
+		module load R
+		Rscript {input.rscript} --infile {input.infile} --outfile {output}  \
+			--min_maf {params.min_maf} --max_maf {params.max_maf} \
+			--zscore {params.zscore} --tissue {params.tissue} --beta_min {params.beta_min} \
+			--nphen {params.nphen} --sex {params.sex} 
+		"""
+rule calc_risk_nphen1:
+	input:
+		#infile=config["RAREDIR"]+"/sexdeg_v8eqtl/risktable_"+beta_min+"_{tissue}_{chr}_{minmaf}_{maxmaf}.txt",
+		#infile=config["RAREDIR"]+"/sexdeg_v8eqtl/Combined/aut_beta"+beta_min+"_{tissue}_z{zmin}_nphen{nphen}_{sexgroup}_linc_prot.txt.gz",
+		#infile=config["RAREDIR"]+"/sexdeg_v8eqtl/CombinedSingleTissue/aut_beta"+beta_min+"_{tissue}_{sexgroup}_linc_prot.txt.gz",
+		infile=config["RAREDIR"]+"/sexdeg_v8eqtl/CombinedSingleTissue/{chrNUM}_beta{beta_min}_{tissue}_{sexgroup}_cadd{cadd}_linc_prot.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/both_proteincoding_lncrna.gtf",
+		rscript=config["SCRIPTSDIR"]+"/SexDeg/get_rr_epitab_singtiss.R"
+	params:
+		min_maf="{minmaf}",
+		max_maf="{maxmaf}",
+		sex="{sexgroup}",
+		#sex="both",
+		nphen=1,
+		chr="{chrNUM}",
+		zscore="{zmin}",
+		tissue="{tissue}",
+		beta_min="{beta_min}",
+		cadd="{cadd}"
+	output:
+		#config["RAREDIR"]+"/sexdeg_v8eqtl/RR/rr_aut_beta"+beta_min+"_{tissue}_z{zmin}_nphen{nphen}_{sexgroup}_{minmaf}_{maxmaf}.txt"
+		config["RAREDIR"]+"/sexdeg_v8eqtl/RR_SingleTissue/rr_{chrNUM}_beta{beta_min}_{tissue}_z{zmin}_{sexgroup}_{minmaf}_{maxmaf}_cadd{cadd}.txt"
+	shell:
+		"""
+		module load R
+		Rscript {input.rscript} --infile {input.infile} --outfile {output}  \
+			--min_maf {params.min_maf} --max_maf {params.max_maf} \
+			--zscore {params.zscore} --tissue {params.tissue} --beta_min {params.beta_min} \
+			--nphen {params.nphen} --sex {params.sex} \
+			--gtf_code_file {input.gtf_file} --cadd {params.cadd} --chr {params.chr}
+
+		"""
+	
+rule combine_sexdegs:
+	input:
+		tissues=expand(config["RAREDIR"]+"/sexdeg_v8eqtl/all_genes_sexDEGs_{this_tissue}.txt",
+			this_tissue=TISSUES)
+	output:
+		config["RAREDIR"]+"/sexdeg_v8eqtl/combined_sexdegs.txt.gz"
+	params:
+		all_tiss=expand("{my_tissue}",my_tissue=TISSUES)
+	shell:
+		"""
+		echo "PARAMS"
+		echo "{params}"
+		echo "INPUT FILES"
+		echo "{input}"
+		tissues_reformat=`echo "{params}" | sed 's/,\s//g' |  sed -e 's/\[//g' | sed -e 's/\]//g'  | sed -e "s/'/\t/g"`
+		echo "REFORMATTED YO"
+		header=`echo -e "CHR\tENSG$tissues_reformat"`
+		echo $header |  sed -e '1s/ /\t/g'  
+		echo $header |  sed -e '1s/ /\t/g' | gzip -c > {output}
+		paste {input} | awk '{{printf $1"\t"$2; for (i=3;i<=NF;i+=3){{printf "\t"$i}}; print""}}' | gzip -c >> {output}
+
+		"""
+		#Output/sexdeg_v8eqtl/all_genes_sexDEGs_{"WHLBLD","THYROID"}.txt
+		# | awk '{printf $1"\t"$2; for (i=3;i<=NF;i+=3){printf "\t"$i}; printf"\n"}

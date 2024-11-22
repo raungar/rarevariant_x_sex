@@ -1,0 +1,182 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+#GROUPS=["both.sex","both.regress","both","m","f","both_half.sex","both_half.regress","both_half"]
+TYPES=["x","aut"] #,"7","8"]
+#TYPES=["x"]
+GROUPS=["m","f","both"] #"allboth"]
+#GROUPS=["m","f","both"]
+#TYPES=["x"]
+#CHRS=range(1,23)
+ZMIN=["2","2.5","3"]
+#ZMIN=["2.5"] #,"3"]
+NPHEN_MIN=["2","3","4","5"]
+NPHEN_MIN=["3"]
+OUTLIER_TYPES=["outliers"] #,"outliersTOP"]
+MAXOUTLIERS=["3","4"]
+MAXOUTLIERS=["3"]
+min_num_tiss=["3","5"]
+min_num_tiss=['3']
+#ZMIN=['2.5']
+RANDOMIZE_SEX=["1","2","3","4","5"]
+RANDOMIZE_SEX=[""]
+# GROUPS=['m']
+
+TISSUES=["Adipose-Subcutaneous","Adipose-Visceral-Omentum","Adrenal-Gland","Artery-Aorta","Artery-Coronary","Artery-Tibial","Brain-Caudate-basal-ganglia",
+	"Brain-Cerebellar-Hemisphere","Brain-Cerebellum","Brain-Cortex","Brain-Nucleus-accumbens-basal-ganglia","Breast-Mammary-Tissue",
+	"Cells-Cultured-fibroblasts","Cells-EBV-transformed-lymphocytes","Colon-Sigmoid","Colon-Transverse","Esophagus-Gastroesophageal-Junction",
+	"Esophagus-Mucosa","Esophagus-Muscularis","Heart-Atrial-Appendage","Heart-Left-Ventricle","Liver","Lung","Muscle-Skeletal","Nerve-Tibial","Ovary",
+	"Pancreas","Pituitary","Skin-Not-Sun-Exposed-Suprapubic","Skin-Sun-Exposed-Lower-leg","Small-Intestine-Terminal-Ileum","Spleen","Stomach","Thyroid",
+	"Uterus","Vagina","Whole-Blood"]
+#TYPES=["x"]
+#rule all:#
+#	output: expand(config["RAREDIR"]+"/outliers_all/outliers_both_zthresh"+z_min+"_nphen5_noglobal_medz.{type}.{group}.txt.gz", type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=NPHEN_MIN)
+#	input: expand(config["RAREDIR"]+"/preprocessing_all/gtex_2017-06-05_normalized_expression_subset.{type}.{group}.txt.gz", type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=NPHEN_MIN)
+rule all:
+	input: 
+		#expand(config["RAREDIR"] + "/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_all{group}_maxoutliers{max_outliers}.txt.gz",
+		expand(config["RAREDIR"] + "/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_all{group}_maxoutliers{max_outliers}.txt.gz",
+			type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=NPHEN_MIN,outlierType=OUTLIER_TYPES,max_outliers=MAXOUTLIERS,min_num_tiss=min_num_tiss,randomize_sex=RANDOMIZE_SEX),
+		expand(config["RAREDIR"] + "/outliers_all/Current/outliers_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_all{group}.txt.gz",
+			type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=NPHEN_MIN,outlierType=OUTLIER_TYPES,max_outliers=MAXOUTLIERS,min_num_tiss=min_num_tiss,randomize_sex=RANDOMIZE_SEX)
+		#expand(config["RAREDIR"] + "/outliers_all/OutliersFiltered/_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}_maxoutliers{max_outliers}.txt.gz",
+		#expand(config["RAREDIR"]+"/outliers_all/outliers_zthresh{z_min}_nphen{nphen_min}_globalOutliersRemoved_{type}_{group}.txt", 
+		#; expand(config["RAREDIR"]+"/outliers_all/Current/outliers_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz",
+		#; 	type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=NPHEN_MIN),
+		#expand(config["RAREDIR"] + "/outliers_all/OutliersFiltered/outliers{tissue}_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}_maxoutliers{max_outliers}.txt.gz",
+		#	tissue=TISSUES,	type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=["1"],max_outliers=MAXOUTLIERS)
+		#expand(config["RAREDIR"] + "/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}_maxoutliers{max_outliers}.txt.gz",
+		##expand(config["RAREDIR"] + "/analysis_v8eqtl/OpenTargets/{outlierType}_zthresh{z_min}_nphen{nphen_min}_{type}_{group}_maxoutliers{max_outliers}.opentarget.txt.gz",
+		##	type=TYPES, group=GROUPS,z_min=ZMIN,nphen_min=NPHEN_MIN,outlierType=OUTLIER_TYPES,max_outliers=MAXOUTLIERS)
+		
+#ruleorder: remove_excessive_outliers_minnumtiss > remove_excessive_outliers
+#ruleorder: remove_excessive_outliers_singletiss > remove_excessive_outliers
+
+# rule get_outliers_singletiss:
+# 	input:
+# 		ZSCORES=(config["RAREDIR"]+"/preprocessing_all/gtex_2017-06-05_normalized_expression_subsetted_{type}_{group}.txt.gz"),
+# 		myscript="/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers_singletissue.R",
+# 		genes_w_chrs=config["RAREDIR"]+"/preprocessing_all/autosomal_gtf_protclinc_wchr.txt"
+# 	params:
+# 		ZTHRESH="{z_min}",
+# 		NPHEN="{nphen_min}",
+# 		tissue="{tissue}",
+# 		TYPES="{type}"
+# 	output:
+# 		all=config["RAREDIR"] + "/outliers_all/Current/outliers{tissue}_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz",
+# 		top=config["RAREDIR"] + "/outliers_all/Current/outliersTOP{tissue}_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz"
+	
+# 	shell:
+# 		"""
+# 		module load R
+# 		Rscript {input.myscript} \
+#                     --Z.SCORES {input.ZSCORES}  --outfile_top {output.top} --outfile {output.all} \
+# 	              --ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} --tissue {params.tissue} \
+# 	              --gene_chr_table {input.genes_w_chrs} --chrtype {params.TYPES}
+# 		"""
+rule get_outliers:
+	input:
+		ZSCORES=(config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_normalized_expression_subsetted_{type}_all{group}.txt.gz"),
+		genes_w_chrs=(config["RAREDIR"]+"/preprocessing_v8eqtl/autosomal_gtf_protclinc_wchr.txt")
+	params:
+		ZTHRESH="{z_min}",
+		NPHEN="{nphen_min}",
+		TYPES="{type}"
+	output:
+		all=config["RAREDIR"] + "/outliers_all/Current/outliers_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_all{group}.txt.gz",
+		top=config["RAREDIR"] + "/outliers_all/Current/outliersTOP_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_all{group}.txt.gz"
+	
+	shell:
+		"""
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers_mostextreme.R \
+                    --Z.SCORES {input.ZSCORES}  --outfile_top {output.top} --outfile {output.all} \
+	              --ZTHRESH {params.ZTHRESH} --N.PHEN {params.NPHEN} \
+	              --gene_chr_table {input.genes_w_chrs} --chrtype {params.TYPES}
+		"""
+# rule get_outliers_minnumtiss:
+# 	input:
+# 		ZSCORES=config["RAREDIR"]+"/preprocessing_all/gtex_2017-06-05_normalized_expression_subsetted_{type}_{group}.txt.gz",
+# 		genes_w_chrs=config["RAREDIR"]+"/preprocessing_all/autosomal_gtf_protclinc_wchr.txt"
+# 	params:
+# 		ZTHRESH="{z_min}",
+# 		NPHEN="{nphen_min}",
+# 		TYPES="{type}",
+# 		min_num_tiss="{min_num_tiss}"
+# 	resources:
+# 		mem_mb=25000
+# 	output:
+# 		all=config["RAREDIR"] + "/outliers_all/Current/_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz",
+	
+# 	shell:
+# 		"""
+# 		module load R
+# 		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/call_outliers_mintiss.R \
+#                     --Z.SCORES {input.ZSCORES}  --outfile {output.all} \
+# 	              --ZTHRESH {params.ZTHRESH} --nphen {params.NPHEN} --min_num_tiss {params.min_num_tiss} \
+# 	              --gene_chr_table {input.genes_w_chrs} --chrtype {params.TYPES}
+# 		"""
+# # rule remove_excessive_outliers_singletiss:
+# 	input:
+# 		#all=config["RAREDIR"] + "/outliers_all/Current/_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz"
+# 		all=config["RAREDIR"] + "/outliers_all/Current/outliers{tissue}_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz"
+# 		#all=rules.get_outliers_minnumtiss.output
+# 	params:
+# 		max_allowed_outliers="{max_outliers}"
+# 	output:
+# 		outfile=config["RAREDIR"] + "/outliers_all/OutliersFiltered/outliers{tissue}_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}_maxoutliers{max_outliers}.txt.gz"
+# 	shell:
+		# """
+		# module load R
+		# Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/remove_excessive_outliers.R \
+		# 	--infile {input.all} \
+		# 	--max_outliers {params.max_allowed_outliers} \
+		# 	--outfile {output.outfile}
+		# """
+# rule remove_excessive_outliers_minnumtiss:
+# 	input:
+# 		#all=config["RAREDIR"] + "/outliers_all/Current/_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz"
+# 		all=rules.get_outliers_minnumtiss.output
+# 	params:
+# 		max_allowed_outliers="{max_outliers}"
+# 	resources:
+# 		mem_mb=45000
+# 	output:
+# 		outfile=config["RAREDIR"] + "/outliers_all/OutliersFiltered/_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}_maxoutliers{max_outliers}.txt.gz"
+# 	shell:
+# 		"""
+# 		module load R
+# 		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/remove_excessive_outliers.R \
+# 			--infile {input} \
+# 			--max_outliers {params.max_allowed_outliers} \
+# 			--outfile {output.outfile}
+# 		"""
+rule remove_excessive_outliers:
+	input:
+		all=config["RAREDIR"] + "/outliers_all/Current/{outlierType}_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_all{group}.txt.gz"
+		#all=config["RAREDIR"] + "/outliers_all/Current/outliers_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}.txt.gz",
+		#all=rules.get_outliers.output
+	params:
+		max_allowed_outliers="{max_outliers}"
+	output:
+		outfile=config["RAREDIR"] + "/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_all{group}_maxoutliers{max_outliers}.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/remove_excessive_outliers.R \
+			--infile {input.all} \
+			--max_outliers {params.max_allowed_outliers} \
+			--outfile {output.outfile}
+		"""
+# rule get_outliers_in_opentargets:
+# 	input:
+# 		outlier_file=config["RAREDIR"] + "/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{z_min}_nphen{nphen_min}_{type}_{group}_maxoutliers{max_outliers}.txt.gz",
+# 		opentarget="Data/opentargetscoresgt6.txt"
+# 	output:
+# 		output=config["RAREDIR"] + "/analysis_v8eqtl/OpenTargets/{outlierType}_zthresh{z_min}_nphen{nphen_min}_{type}_{group}_maxoutliers{max_outliers}.opentarget.txt.gz"
+# 	shell:
+# 		"""
+# 		python Scripts/Outliers/get_opentargets_outliers.py --outlierfile {input.outlier_file} --opentargetfile {input.opentarget} --outfile {output}
+# 		"""
+
+
+

@@ -1,0 +1,112 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+RANDOMIZE_SEX=["1","2","3","4","5"]
+RANDOMIZE_SEX=["3","4"]
+rule all:
+    input:
+        expand(config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/tpm_diff_file.txt",randomize_sex=RANDOMIZE_SEX)
+
+rule get_samples_tissues:
+	input:
+		indir=ancient(config["RAREDIR"]+"/preprocessing_v8eqtl/PEER_v8"),
+ 		GTEX_PCv8=config["GTEX_PCv8"],
+		GTEX_SUBJECTSv8=config["GTEX_SUBJECTSv8"],
+		GTEX_SAMPLESv8=config["GTEX_SAMPLESv8"],
+		euro_file=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_v8_euro_VCFids_notambiguous.txt",
+		GTEX_RNAv8=config["GTEX_RNAv8"]
+	params:
+		map_file_prefix="gtex_2017-06-05_v8_samples_tissues.txt",
+		do_tissues="F"		
+	output:
+		out=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_v8_samples_tissues.txt"
+	shell:
+		""" 
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/preprocess_expr.R --indir {input.indir} \
+			--GTEX_PCv8 {input.GTEX_PCv8} --SUBJECTSv8 {input.GTEX_SUBJECTSv8} --SAMPLESv8 {input.GTEX_SAMPLESv8}  \
+			--GTEX_RNAv8 {input.GTEX_RNAv8} --do_tissues {params.do_tissues} --map_file {output.out} --euro_file {input.euro_file}
+		"""
+
+
+rule split_tissues_reads:
+	input: 
+ 		gtex=ancient(config["GTEX_RNAv8"]+"/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct.gz"), #GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct.gz
+		sample=ancient(config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_v8_samples_tissues.txt")
+	params:
+		end=".reads.txt",
+		out=config["RAREDIR"]+"/preprocessing_v8eqtl/TPMsAndReads"
+	output:
+		log=config["RAREDIR"]+"/preprocessing_v8eqtl/log_of_reads.log"
+	shell:
+		"""
+		module load python
+		echo "python /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/split_expr_by_tissues.py --gtex {input.gtex} --out {params.out} --sample {input.sample} --end {params.end}" >{output.log}
+		python /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/split_expr_by_tissues.py --gtex {input.gtex} --out {params.out} --sample {input.sample} --end {params.end}
+
+		"""
+
+rule split_tissues_tpm:
+	input: 
+		gtex=config["GTEX_RNAv8"]+"/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct.gz",
+		sample=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_v8_samples_tissues.txt"
+	params:
+		end=".tpm.txt",
+		out=config["RAREDIR"]+"/preprocessing_v8eqtl/TPMsAndReads"
+	output:
+		log=config["RAREDIR"]+"/preprocessing_v8eqtl/log_of_tpm.log"
+	shell:
+		"""
+		module load python
+		echo " python /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/split_expr_by_tissues.py --gtex {input.gtex} --out {params.out} --sample {input.sample} --end {params.end} " > {output.log}
+		python /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/split_expr_by_tissues.py --gtex {input.gtex} --out {params.out} --sample {input.sample} --end {params.end}
+		"""
+rule get_eqtl_genotypes:
+	input:
+		GTEX_WGSv8=config["GTEX_WGSv8"],
+		egenes_path=config["GTEXv8"]+"/eqtl/GTEx_Analysis_v8_eQTL/"
+	output:
+		GTEX_WGSv8_sorted=temp(config["RAREDIR"]+"/preprocessing_v8eqtl/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased_sorted.vcf.gz"),
+		out_vcf_path=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_v8_genotypes_cis_eQTLs.vcf",
+		out_cis_eqtl_path=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_v8_genotypes_cis_eQTLs"
+	params:
+		out_bed_path=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_v8_cis_eQTLs.bed"
+	shell:
+		""" 
+		echo "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/get_eqtl_genotypes.sh \
+			{input.egenes_path} {input.GTEX_WGSv8} {params.out_bed_path} \
+			{output.out_vcf_path} {output.out_cis_eqtl_path} {output.GTEX_WGSv8_sorted}" 
+		sh /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/get_eqtl_genotypes.sh \
+			{input.egenes_path} {input.GTEX_WGSv8} {params.out_bed_path} \
+			{output.out_vcf_path} {output.out_cis_eqtl_path} {output.GTEX_WGSv8_sorted} 
+		"""
+
+
+
+
+## start changing things here
+rule split_counts:
+	input:
+		indir=ancient(config["RAREDIR"]+"/preprocessing_v8eqtl"),
+		GTEX_PCv8=config["GTEX_PCv8"],
+		tpm_reads_dir=ancient(config["RAREDIR"]+"/preprocessing_v8eqtl/TPMsAndReads"),
+		GTEX_SUBJECTSv8=config["GTEX_SUBJECTSv8"],
+		GTEX_SAMPLESv8=config["GTEX_SAMPLESv8"],
+		GTEX_RNAv8=config["GTEX_RNAv8"],
+		map_file=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_v8_samples_tissues.txt",
+		euro_file=config["RAREDIR"]+"/preprocessing_v8eqtl/gtex_2017-06-05_v8_euro_VCFids_notambiguous.txt",
+		log_tpm=ancient(config["RAREDIR"]+"/preprocessing_v8eqtl/log_of_tpm.log"),
+		log_reads=ancient(config["RAREDIR"]+"/preprocessing_v8eqtl/log_of_reads.log")
+	params:
+		tpm_reads_dir=ancient(config["RAREDIR"]+"/preprocessing_v8eqtl/TPMsAndReads"),
+		do_tissues="T",
+		randomize_sex="{randomize_sex}"
+	output:
+		TPM_DIF_FILE=config["RAREDIR"]+"/preprocessing_v8eqtl{randomize_sex}/tpm_diff_file.txt"
+	shell:
+		""" 
+		module load R
+		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Preprocessing/preprocess_expr.R --indir {input.indir} \
+			--GTEX_PCv8 {input.GTEX_PCv8} --SUBJECTSv8 {input.GTEX_SUBJECTSv8} --SAMPLESv8 {input.GTEX_SAMPLESv8} \
+			--GTEX_RNAv8 {input.GTEX_RNAv8} --do_tissues {params.do_tissues} --map_file {input.map_file} \
+			--TPM_DIF_FILE {output.TPM_DIF_FILE} --euro_file {input.euro_file} --tpm_reads_dir {input.tpm_reads_dir} \
+			--randomize_sex {params.randomize_sex}
+		"""

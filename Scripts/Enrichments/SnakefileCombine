@@ -1,0 +1,611 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+
+#MAF_MAX=["0.1","0.05","0.01","0.001","0.0001"] #,"0.001","0.0001"]
+
+# filter_version=["typesSeenTwice","typesALL","typesBlacklistRemovedALL","typesBlacklistRemovedSeenTwice",
+#                 "typesGQ10BlacklistRemovedALL","typesGQ5BlacklistRemovedALL",
+#                 "typesGQ10BlacklistRemovedSeenTwice",  "typesGQ5BlacklistRemovedSeenTwice"]
+# filter_version=["CADDtypesBlacklistRemovedALL","CADDtypesBlacklistRemovedSeenTwice",
+#                 "CADDtypesGQ10BlacklistRemovedALL","CADDtypesGQ5BlacklistRemovedALL",
+#                 "CADDtypesGQ10BlacklistRemovedSeenTwice",  "CADDtypesGQ5BlacklistRemovedSeenTwice"]
+
+#filter_version=["CADDtypesALL"]
+ #,"outliersTOP"]; OUTLIER_TYPES=["outliersAdipose-Subcutaneous","outliersAdipose-Visceral-Omentum","outliersAdrenal-Gland","outliersArtery-Aorta","outliersArtery-Coronary","outliersArtery-Tibial","outliersBrain-Caudate-basal-ganglia",
+	#"outliersBrain-Cerebellar-Hemisphere","outliersBrain-Cerebellum","outliersBrain-Cortex","outliersBrain-Nucleus-accumbens-basal-ganglia","outliersBreast-Mammary-Tissue",
+	#"outliersCells-Cultured-fibroblasts","outliersCells-EBV-transformed-lymphocytes","outliersColon-Sigmoid","outliersColon-Transverse","outliersEsophagus-Gastroesophageal-Junction",
+	#"outliersEsophagus-Mucosa","outliersEsophagus-Muscularis","outliersHeart-Atrial-Appendage","outliersHeart-Left-Ventricle","outliersLiver","outliersLung","outliersMuscle-Skeletal","outliersNerve-Tibial","outliersOvary",
+	#"outliersPancreas","outliersPituitary","outliersSkin-Not-Sun-Exposed-Suprapubic","outliersSkin-Sun-Exposed-Lower-leg","outliersSmall-Intestine-Terminal-Ileum","outliersSpleen","outliersStomach","outliersThyroid",
+	#"outliersUterus","outliersVagina","outliersWhole-Blood"]
+
+#CHRNUM=["7sub"]
+#COLLAPSEDTYPES=["collapsed","collapsedbyTSS"] #COLLAPSEDTYPES=["collapsed","collapsedbyVARLOC"] #,"collapsedbyTSS"]
+#COLLAPSEDTYPES=["collapsedexon","collapsedgenestart","collapsedgeneend","collapsedintron","collapsed",
+#	 "collapsed3-prime-UTR-variant","collapsed5-prime-UTR-variant","collapsedcoding-sequence-variant",
+ #        "collapseddownstream-gene-variant","collapsedincomplete-terminal-codon-variant","collapsedintergenic-variant",
+   #      "collapsedintron-variant","collapsedmissense-variant","collapsedNMD-transcript-variant","collapsednon-coding-transcript-exon-variant",
+  #       "collapsednon-coding-transcript-variant","collapsedregulatory-region-variant","collapsedsplice-acceptor-variant",
+    #     "collapsedsplice-donor-variant","collapsedsplice-region-variant","collapsedstart-lost","collapsedstop-gained","collapsedstop-lost",
+     #    "collapsedsynonymous-variant","collapsedTF-binding-site-variant","collapsedupstream-gene-variant"]
+#COLLAPSEDTYPES=["collapsed","collapsedexon","collapsedgenestart","collapsedgeneend","collapsedintron"]
+#SUBANALYSES=["strata","par","xci","pq"]
+#SUBANALYSES=["par","xci"]
+GROUPS=["m","f","both"] #, "both_half_regress"]#GROUPS=["allboth"]
+TYPES=["x","aut","7"] #,"7","8"]
+CADD=["0","15"] #,"15","25"] #[0,5,15,25]
+NPHEN=["3"] #,"5"]; NPHEN=["3","4","5"]
+ZMIN=["3"] #,"3"]; ZMIN=["2","2.5","3"] # 2,2.5,3
+MAF_MIN=["0","0","0.0001","0.001","0.01","0.05"]; #MAF_MIN=["0","0","0","0","0","0"]
+MAF_MAX=["0.0001","0.001","0.001","0.01","0.05","0.1"]
+COLLAPSEDTYPES=["collapsed"]
+CONGLOMERATE=["AllAut"] #,"All"]
+GENEWINDOWS=["5000"] # "100","500",GENEWINDOWS=["5000"] "1000","5000","10000"
+CHRNUM=["7"] #,"8"] #,"x"] #,"8"]; CHRNUM=[i for i in range(2,23)]
+MAXOUTLIERS=["3"] #; MAXOUTLIERS=["3","4"]
+filter_version=["CADDtypesALL"] #,"CADDtypesSeenTwice"]
+filter_version_x="CADDtypesGQ5BlacklistRemovedALL"
+
+OUTLIER_TYPES=["outliers"]
+
+rule all:
+	input: 
+		expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_x_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{type}}_{{group}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.csv",
+			zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+			group=GROUPS,zmin=ZMIN,nphen=NPHEN,chrNUM=CHRNUM,max_outliers=MAXOUTLIERS,collapsedTYPE=COLLAPSEDTYPES,genewindow=GENEWINDOWS,
+			cadd_min=CADD,type="x",thisfilt=["CADDtypesGQ5BlacklistRemovedALL"],outlierType=OUTLIER_TYPES),
+		expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_{{chrNUM}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.txt",
+			zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+			group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version,chrNUM=CHRNUM,genewindow=GENEWINDOWS,max_outliers=MAXOUTLIERS,
+			cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,congl=CONGLOMERATE,collapsedTYPE=COLLAPSEDTYPES),
+		#expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{subanalysis}}_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{type}}_{{group}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.csv",
+		#	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+		#	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version_x,collapsedTYPE=COLLAPSEDTYPES,
+		#	cadd_min=CADD,subanalysis=SUBANALYSES,outlierType=OUTLIER_TYPES,genewindow=GENEWINDOWS,max_outliers=MAXOUTLIERS),
+		##expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		##	group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version_x,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,genewindow=GENEWINDOWS,collapsedTYPE=COLLAPSEDTYPES,max_outliers=MAXOUTLIERS),
+		#expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_min{maf_min}max{maf_max}_{{group}}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{max_outliers}.{{subanalysis}}.csv",
+		#expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_x_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.csv",
+		#expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_x_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.csv",
+		###expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_x_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.csv",
+		# ####	group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version_x,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,genewindow=GENEWINDOWS,collapsedTYPE=COLLAPSEDTYPES,max_outliers=MAXOUTLIERS)
+		#expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{chrNUM}}sub_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{type}}_{{group}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.csv",
+		#expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_{{chrNUM}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.txt",
+		#	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,chrNUM=CHRNUM,max_outliers=MAXOUTLIERS,collapsedTYPE=COLLAPSEDTYPES,genewindow=GENEWINDOWS,
+		#	cadd_min=CADD,type="x",thisfilt=filter_version,outlierType=OUTLIER_TYPES),
+		#expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{chrNUM}}_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{type}}_{{group}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.csv",,
+		# expand(expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/{{chrNUM}}_sub_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{thisfilt}_CADD{cadd_min}_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		# 	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+		# 	group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version,chrNUM=CHRNUM,genewindow=GENEWINDOWS,max_outliers=MAXOUTLIERS,
+		# 	cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,congl=CONGLOMERATE,collapsedTYPE=COLLAPSEDTYPES),
+		expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_AllAut_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.txt",
+		  	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+		  	group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version,chrNUM=CHRNUM,genewindow=GENEWINDOWS,max_outliers=MAXOUTLIERS,
+		  	cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,congl=CONGLOMERATE,collapsedTYPE=COLLAPSEDTYPES)
+		# ####expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		####	group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version_x,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,genewindow=GENEWINDOWS,collapsedTYPE=COLLAPSEDTYPES,max_outliers=MAXOUTLIERS),
+		#expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/all_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version_x,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,genewindow=GENEWINDOWS,collapsedTYPE=COLLAPSEDTYPES,max_outliers=MAXOUTLIERS),
+		#expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt",
+		#	collapsedTYPE=COLLAPSEDTYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
+		#	cadd_min=CADD,type="aut",thisfilt=filter_version,outlierType=OUTLIER_TYPES,max_outliers=MAXOUTLIERS,genewindow=GENEWINDOWS),
+		#	      config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{group}_All_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt"
+		#expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{thisfilt}.txt.gz",
+		#expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		#expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/{chrNUM}_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{thisfilt}_CADD{cadd_min}_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		#	collapsedTYPE=COLLAPSEDTYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN, filt=filter_version, #filt=["CADDtypesGQ5BlacklistRemovedALL"],
+		#	chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,genewindow=GENEWINDOWS,
+		#	cadd_min=CADD,type=TYPES,thisfilt=filter_version,outlierType=OUTLIER_TYPES,max_outliers=MAXOUTLIERS),
+		#expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.csv",
+		#expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{group}_{congl}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt",
+		#	collapsedTYPE=COLLAPSEDTYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN, filt=filter_version, #filt=["CADDtypesGQ5BlacklistRemovedALL"],
+		#	chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,congl=CONGLOMERATE,genewindow=GENEWINDOWS,
+		#	cadd_min=CADD,type=TYPES,thisfilt=filter_version,outlierType=OUTLIER_TYPES,max_outliers=MAXOUTLIERS),
+		###expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_x_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.csv",
+		###	collapsedTYPE=COLLAPSEDTYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,congl=CONGLOMERATE,
+		###	cadd_min=CADD,type="x",thisfilt=["CADDtypesGQ5BlacklistRemovedALL"],outlierType=OUTLIER_TYPES,max_outliers=MAXOUTLIERS)
+		#expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt",
+		#expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt",
+		#expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_AllAut_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}.txt",
+		#	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,max_outliers=MAXOUTLIERS,
+		#	cadd_min=CADD,type=TYPES,thisfilt=filter_version,outlierType=OUTLIER_TYPES),
+		#expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_{{chrNUM}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}.txt",
+		#	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,max_outliers=MAXOUTLIERS,
+		#	cadd_min=CADD,type=TYPES,thisfilt=filter_version,outlierType=OUTLIER_TYPES),
+		#expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{thisfilt}_CADD{cadd_min}.txt.gz",
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
+		#	cadd_min=CADD,type=TYPES,thisfilt=filter_version,outlierType=OUTLIER_TYPES),
+		#expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/aut_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
+		#	cadd_min=CADD,type=TYPES,thisfilt=filter_version,outlierType=OUTLIER_TYPES),
+		#expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/all_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,
+		#	cadd_min=CADD,type=TYPES,thisfilt=filter_version,outlierType=OUTLIER_TYPES),
+		#expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{congl}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt",
+		#expand(config["RAREDIR"]+"/enrichments_all/{chrNUM}_outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{thisfilt}.txt.gz",
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,filt=filter_version,chrNUM=CHRNUM)
+		#expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		#expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt",
+		#expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_x_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.csv",
+		###expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_x_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.csv",
+		#expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		#expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.csv",
+		###expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{outlierType}_x_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_CADD{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.csv",
+		###	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,outlierType=OUTLIER_TYPES)
+		# expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{maf_min}max{maf_max}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}strata.csv",
+		 #	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD),
+		 #expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{maf_min}max{maf_max}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}xci.csv",
+		 #	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version,maf_max=MAF_MAX,maf_min=MAF_MIN,cadd_min=CADD),
+		 #expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_z{zmin}_nphen{nphen}_x_min{maf_min}max{maf_max}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}par.csv",
+		 #	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version,maf_max=MAF_MAX,maf_min=MAF_MIN,cadd_min=CADD)
+
+
+rule join_variant_annotations_x:
+	input:
+		outlier_file=config["RAREDIR"]+"/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_all{group}_maxoutliers{max_outliers}.txt.gz",
+		variant_file=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_{thisfilt}_linc_prot_window{genewindow}.txt.gz",
+		join_variant_script=ancient(config["SCRIPTSDIR"]+"/Enrichments/join_variant_annotations.R")
+		#variant_file=config["RAREDIR"]+"/features_v8/Combined/collapsed_maf_both_linc_prot_x.tsv.gz"
+		#variant_file=config["RAREDIR"]+"/features_v8/Combined/collapsed_x_{thisfilt}_cadd{cadd_min}.txt.gz"
+	wildcard_constraints:
+		genewindow="\d+"
+	params:
+		chr="chrX",
+		method="medz" #medz or splicing or ase
+	output:
+		outfile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}_combined_window{genewindow}.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript {input.join_variant_script} \
+			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+			--outfile {output.outfile} --chr {params.chr}
+
+		"""
+rule join_variant_annotations_aut:
+	input:
+		#outlier_file=config["RAREDIR"]+"/outliers_v8eqtl/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_{group}_maxoutliers{max_outliers}.txt.gz",
+		join_variant_script=ancient(config["SCRIPTSDIR"]+"/Enrichments/join_variant_annotations.R"),
+		outlier_file=config["RAREDIR"]+"/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_aut_all{group}_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		#variant_file=config["RAREDIR"]+"/features_v8/Combined/collapsed_maf_both_linc_prot_x.tsv.gz"
+		variant_file=config["RAREDIR"]+"/features_v8/Combined/chr{chrNUM}_all_rvs_inds_CADDtypesALL_linc_prot.txt.gz"
+	params:
+		chr="aut",
+		method="medz" #medz or splicing or ase
+	output:
+		outfile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/{chrNUM}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_combined.txt.gz"
+	shell:
+		"""
+		module load R
+		Rscript {input.join_variant_script} \
+			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+			--outfile {output.outfile} --chr {params.chr}
+
+		"""
+rule join_variant_annotations_x_collapsed:
+	input:
+		outlier_file=config["RAREDIR"]+"/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_all{group}_maxoutliers{max_outliers}.txt.gz",
+		join_variant_script=ancient(config["SCRIPTSDIR"]+"/Enrichments/join_variant_annotations.R"),
+		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_x.tsv.gz"
+		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_x_{thisfilt}_cadd{cadd_min}_window{genewindow}.txt.gz"
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_x_CADDtypesGQ5BlacklistRemovedALL_cadd{cadd_min}_window{genewindow}.txt.gz"
+	wildcard_constraints:
+		genewindow="\d+"
+	params:
+		chr="chrX",
+		method="medz" #medz or splicing or ase
+	output:
+		outfile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz"
+	shell:
+		"""
+		module load R
+                Rscript {input.join_variant_script} \
+			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+			--outfile {output.outfile} --chr {params.chr}
+
+		"""
+rule join_variant_annotations_aut_collapsed:
+	input:
+		#outlier_file=config["RAREDIR"]+"/outliers_v8eqtl/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_{group}_maxoutliers{max_outliers}.txt.gz",
+		join_variant_script=ancient(config["SCRIPTSDIR"]+"/Enrichments/join_variant_annotations.R"),
+		outlier_file=config["RAREDIR"]+"/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_aut_all{group}_maxoutliers{max_outliers}.txt.gz",
+		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_x.tsv.gz"
+		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_aut_cadd{cadd_min}.txt.gz"
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_aut_cadd{cadd_min}_window{genewindow}.txt.gz"
+	params:
+		chr="aut",
+		method="medz" #medz or splicing or ase
+	output:
+		outfile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/aut_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz"
+	shell:
+		"""
+		module load R
+                Rscript {input.join_variant_script} \
+			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+			--outfile {output.outfile} --chr {params.chr}
+
+		"""
+rule join_variant_annotations_all:
+	input:
+		outlier_file_aut=config["RAREDIR"]+"/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_aut_all{group}_maxoutliers{max_outliers}.txt.gz",
+		join_variant_script=ancient(config["SCRIPTSDIR"]+"/Enrichments/join_variant_annotations.R"),
+		outlier_file_x=config["RAREDIR"]+"/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_all{group}_maxoutliers{max_outliers}.txt.gz",
+		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_maf_both_linc_prot_x.tsv.gz"
+		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_all_cadd{cadd_min}.txt.gz"
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_all_cadd{cadd_min}.txt.gz"
+	params:
+		chr="all",
+		method="medz" #medz or splicing or ase
+	output:
+		outlier_all=config["RAREDIR"]+"/outliers_all/OutliersFiltered/all_{collapsedTYPE}_{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_all_all{group}_{thisfilt}_CADD{cadd_min}_maxoutliers{max_outliers}_window{genewindow}.txt",
+		outfile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/all_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz"
+	shell:
+		"""
+		module load R
+
+		cat {input.outlier_file_aut} {input.outlier_file_x}  > {output.outlier_all}
+                Rscript {input.join_variant_script} \
+			--infile {output.outlier_all} --variant_file {input.variant_file} --method {params.method} \
+			--outfile {output.outfile} --chr {params.chr}
+
+		"""
+#rule join_variant_annotations_aut:
+#	input:
+#		#variant_file=config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_linc_prot.tsv.gz"
+#		outlier_file=config["RAREDIR"]+"/outliers_v8eqtl/OutliersFiltered/outliers_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_aut_{group}.txt",
+#		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_maf_both_linc_prot_aut.tsv.gz"
+#	params:
+#		chr="NONE",
+#		method="medz" #medz or splicing or ase
+#	output:
+#		outfile=config["RAREDIR"]+"/enrichments_all/outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot.txt.gz"
+#	shell:
+#		"""
+#		module load R
+#		Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/join_variant_annotations.R \
+#			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+#			--outfile {output.outfile} --chr {params.chr}
+#
+#		"""
+
+rule join_variant_annotations_bychr:
+	input:
+		#variant_file=config["RAREDIR"]+"/features_v8/collapsed_maf_both_aut_linc_prot.tsv.gz"
+		join_variant_script=ancient(config["SCRIPTSDIR"]+"/Enrichments/join_variant_annotations.R"),
+		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/collapsed_chr{chrNUM}_linc_prot.tsv.gz"
+		variant_file=config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_chr{chrNUM}_{thisfilt}_cadd{cadd_min}_window{genewindow}.txt.gz",
+		#variant_file=config["RAREDIR"]+"/features_v8/Collapsed/{collapsedTYPE}_x_{thisfilt}_cadd{cadd_min}.txt.gz"
+		#outlier_file=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/aut_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt.gz"
+		outlier_file=config["RAREDIR"]+"/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_aut_all{group}_maxoutliers{max_outliers}.txt.gz",
+	wildcard_constraints:
+		chr="[0-9]*"
+	params:
+		#outlier_file=config["RAREDIR"]+"/outliers_v8eqtl/outliers_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_aut_{group}.txt",
+		chr="{chrNUM}",
+		method="medz" #medz or splicing or ase
+	output:
+		outfile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/{chrNUM}_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{thisfilt}_CADD{cadd_min}_maxoutliers{max_outliers}_window{genewindow}.txt.gz"
+	shell:
+		"""
+		module load R
+                Rscript {input.join_variant_script} \
+			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+			--outfile {output.outfile} --chr {params.chr}
+
+		"""
+#subset number of outliers based on another file
+rule subset_outliers:
+	input:
+		file_to_subset=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/{chrNUM}_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{thisfilt}_CADD{cadd_min}_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		file_for_outliercomparison=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz"
+	output:
+		subset_file=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/{chrNUM}_sub_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{thisfilt}_CADD{cadd_min}_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+	shell:
+		"""
+		num_outliers_subset=`grep outlier {input.file_for_outliercomparison} | wc -l`
+		num_outliers_currently=`grep outlier {input.file_to_subset} | wc -l`
+		num_outliers_to_remove=$(($num_outliers_currently-$num_outliers_subset))
+		if [[ $num_outliers_to_remove < 1 ]]
+		then
+			cp {input.file_to_subset} {output.subset_file}
+		else
+			# preserve header then shuffle file then remove first x outliers
+			( head -n 1 {input.file_to_subset}; tail -n +1 {input.file_to_subset} | shuf )  |  awk -F"\t" -v num_outliers_to_remove=$num_outliers_to_remove -v i=0 '{{if ($6=="outlier"){{if(i<num_outliers_to_remove){{i=i+1; $6="control"}}}}; print $0}}' | sed -e 's/ /\t/g'  > {output}
+		fi
+		"""
+
+rule calculate_risks_byCHR:
+	input:
+		myscript=ancient("/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_across_types.R"),
+		infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/{chrNUM}_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{thisfilt}_CADD{cadd_min}_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/autosomal_proteincoding_lncrna.gtf"
+	params:
+		zscore="{zmin}",
+		maf_min="{maf_min}",
+		maf_max="{maf_max}",
+		nphen="{nphen}",
+		sex="{group}",
+                cadd_min="{cadd_min}"
+		#continuous=config["RAREDIR"]+"/enrichments_all/RR/{chrNUM}_continuous_risk_z{zmin}_nphen{nphen}_{type}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt"
+	output:
+		#relative=config["RAREDIR"]+"/enrichments_all/relative_risk_z{zmin}_nphen{nphen}_{type}_{chrNUM}_min{maf_min}max{maf_max}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt"
+		relative=config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{group}_{chrNUM}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt"
+		#relative=config["RAREDIR"]+"/enrichments_all/{chrNUM}_relative_risk_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt"
+	shell:
+		"""
+		module load R
+		Rscript {input.myscript}  \
+				--infile {input.infile} --zscore {params.zscore}  --cadd_min {params.cadd_min} \
+				--maf_min {params.maf_min} --maf_max {params.maf_max} --nphen {params.nphen}  \
+				--out_rdata_relative {output.relative} --gtf_code_file {input.gtf_file}  --sex {params.sex}
+		"""
+rule calculate_risks_conglomerate:
+	input:
+		infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/all_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		myscript=ancient("/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_across_types.R"),
+		#infile=config["RAREDIR"]+"/enrichments_all/{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{type}_{group}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/all_proteincoding_lncrna.gtf"
+	params:
+		zscore="{zmin}",
+		maf_min="{maf_min}",
+		maf_max="{maf_max}",
+		nphen="{nphen}",
+		sex="{group}",
+		cadd_min="{cadd_min}"
+	output:
+		relative=config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{group}_All_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt"
+	shell:
+		"""
+		module load R
+		if [ ! -f {output.relative} ]
+		then
+			Rscript {input.myscript} \
+				--infile {input.infile} --zscore {params.zscore} --sex {params.sex} \
+				--maf_min {params.maf_min} --maf_max {params.maf_max} --nphen {params.nphen} \
+				--gtf_code_file {input.gtf_file} --out_rdata_relative {output} \
+				--nphen {params.nphen} --cadd_min {params.cadd_min}
+		fi
+		"""
+rule calculate_risks_conglomerate_aut:
+	input:
+		infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/aut_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_all/{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{type}_{group}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		myscript=ancient("/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_across_types.R"),
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/autosomal_proteincoding_lncrna.gtf"
+	params:
+		zscore="{zmin}",
+		maf_min="{maf_min}",
+		maf_max="{maf_max}",
+		nphen="{nphen}",
+		sex="{group}",
+                cadd_min="{cadd_min}"
+	output:
+		relative=config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{group}_AllAut_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt"
+	shell:
+		"""
+		module load R
+		if [ ! -f {output.relative} ]
+		then
+			Rscript {input.myscript} \
+				--infile {input.infile} --zscore {params.zscore} --sex {params.sex} \
+				--maf_min {params.maf_min} --maf_max {params.maf_max} --nphen {params.nphen} \
+				--gtf_code_file {input.gtf_file} --out_rdata_relative {output} \
+				--nphen {params.nphen} --cadd_min {params.cadd_min}
+		fi
+		"""
+rule calculate_risks_x:
+	input:
+		#infile=config["RAREDIR"]+"/enrichments_all/{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{type}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		myscript=ancient("/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_across_types.R"),
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/x_proteincoding_lncrna.gtf"
+	wildcard_constraints:
+		genewindow="\d+"
+	params:
+		zscore="{zmin}",
+		maf_min="{maf_min}",
+		maf_max="{maf_max}",
+		sex="{group}",
+		nphen="{nphen}",
+		cadd_min="{cadd_min}"
+	output:
+		relative=config["RAREDIR"]+"/enrichments_all/RR/relative_risk_x_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.csv"
+	shell:
+		"""
+		module load R
+		if [ ! -f {output.relative} ]
+		then
+			Rscript {input.myscript} \
+				--infile {input.infile} --zscore {params.zscore} --sex {params.sex} \
+				--maf_min {params.maf_min} --maf_max {params.maf_max} --nphen {params.nphen} \
+				--gtf_code_file {input.gtf_file} --out_rdata_relative {output} --cadd_min {params.cadd_min}
+		fi
+		"""
+rule calculate_risks_sub:
+	input:
+		#infile=config["RAREDIR"]+"/enrichments_all/{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{type}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/7sub_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/7sub_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/{chrNUM}_sub_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{thisfilt}_CADD{cadd_min}_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		myscript=ancient("/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_across_types.R"),
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/autosomal_proteincoding_lncrna.gtf"
+	wildcard_constraints:
+		genewindow="\d+"
+	params:
+		zscore="{zmin}",
+		maf_min="{maf_min}",
+		maf_max="{maf_max}",
+		sex="{group}",
+		nphen="{nphen}",
+		cadd_min="{cadd_min}"
+	output:
+		relative=config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{chrNUM}sub_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.csv"
+	shell:
+		"""
+		module load R
+		if [ ! -f {output.relative} ]
+		then
+			Rscript {input.myscript} \
+				--infile {input.infile} --zscore {params.zscore} --sex {params.sex} \
+				--maf_min {params.maf_min} --maf_max {params.maf_max} --nphen {params.nphen} \
+				--gtf_code_file {input.gtf_file} --out_rdata_relative {output} --cadd_min {params.cadd_min}
+		fi
+		"""
+
+#rule collapse_genes_single_rv:
+#	input:
+#		infile=config["RAREDIR"]+"/enrichments_all/outliers_zthresh{zmin}_nphen{nphen}_noglobal_medz_varAnnot_x_{group}.txt",
+#		myscript=config["SCRIPTSDIR"]+"/Enrichments/collapse_genes_single_rv.R"
+#	output:
+#		outfile=config["RAREDIR"]+"/enrichments_all/collapsed_outliers_rvs_zthresh{zmin}_nphen{nphen}_x_{group}.RData"
+#	shell:
+#		"""
+#		module load R
+#		Rscript {input.myscript} --infile {input.infile} --outfile {output.outfile}
+#		"""
+#	
+rule get_risk_xci:
+	input:
+		#infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		outfile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}_combined_window{genewindow}.txt.gz",
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/x_proteincoding_lncrna.gtf",
+		xci_file=config["xci_file"]
+	wildcard_constraints:
+		genewindow="\d+"
+	params:
+		zscore="{zmin}",
+		maf_min="{maf_min}",
+		sex="{group}",
+		maf_max="{maf_max}",
+		nphen="{nphen}",
+		cadd_min="{cadd_min}"
+	output:
+		#out_rdata_relative=config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_min{maf_min}max{maf_max}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.csv"
+		relative=config["RAREDIR"]+"/enrichments_all/RR/relative_risk_xci_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.csv"
+	shell:
+		"""
+		module load R
+			Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_xinactivation.R \
+				--infile {input.infile} --zscore {params.zscore} --maf_min {params.maf_min}  --nphen {params.nphen} \
+				--xinact_file {input.xci_file} --out_rdata_relative {output.relative} \
+				  --maf_max {params.maf_max} --gtf_code_file {input.gtf_file}  --sex {params.sex} --cadd_min {params.cadd_min}
+		"""
+
+rule get_risk_par:
+	input:
+		#infile=config["RAREDIR"]+"/enrichments_all/outliers_zthresh{zmin}_nphen{nphen}_noglobal_medz_varAnnot_x_{group}.txt",
+		#infile=config["RAREDIR"]+"/enrichments_all/outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}_combined_window{genewindow}.txt.gz",
+		infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		par_file=config["RAREDIR"]+"/preprocessing_v8eqtl/par_table.txt" ,
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/x_proteincoding_lncrna.gtf"
+	wildcard_constraints:
+		genewindow="\d+"
+	params:
+		zscore="{zmin}",
+		sex="{group}",
+		nphen="{nphen}",
+		maf_min="{maf_min}",
+		maf_max="{maf_max}",
+              	cadd_min="{cadd_min}"
+	output:
+		#out_rdata_relative=config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_min{maf_min}max{maf_max}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.subanalysispar.csv"
+		relative=config["RAREDIR"]+"/enrichments_all/RR/relative_risk_par_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.csv"
+	shell:
+		"""
+		module load R
+
+			Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_par.R \
+				--infile {input.infile} --zscore {params.zscore}  --maf_max {params.maf_max}  --nphen {params.nphen} \
+				--par_file {input.par_file} --out_rdata_relative {output.relative} \
+				--gtf_code_file {input.gtf_file}  --sex {params.sex} --maf_min {params.maf_min} --cadd_min {params.cadd_min}
+		"""
+
+rule get_risk_strata:
+	input:
+		#infile=config["RAREDIR"]+"/enrichments_all/outliers_zthresh{zmin}_nphen{nphen}_noglobal_medz_varAnnot_x_{group}.txt",
+		#infile=config["RAREDIR"]+"/enrichments_all/outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		par_file=config["RAREDIR"]+"/preprocessing_v8eqtl/strata_table.txt" ,
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/x_proteincoding_lncrna.gtf"
+	params:
+		zscore="{zmin}",
+		nphen="{nphen}",
+		sex="{group}",
+		maf_min="{maf_min}",
+		maf_max="{maf_max}",
+              	cadd_min="{cadd_min}"
+	output:
+		out_rdata_relative=config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_min{maf_min}max{maf_max}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.strata.csv"
+	shell:
+		"""
+		module load R
+
+			Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_par.R \
+				--infile {input.infile} --zscore {params.zscore}  --maf_max {params.maf_max}  --nphen {params.nphen} \
+				--par_file {input.par_file} --out_rdata_relative {output.out_rdata_relative} \
+				--gtf_code_file {input.gtf_file}  --sex {params.sex} --maf_min {params.maf_min} --cadd_min {params.cadd_min}
+		"""
+
+rule get_risk_pq:
+	input:
+		#infile=config["RAREDIR"]+"/enrichments_all/outliers_zthresh{zmin}_nphen{nphen}_noglobal_medz_varAnnot_x_{group}.txt",
+		#infile=config["RAREDIR"]+"/enrichments_all/outlier_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		#infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		infile=config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt.gz",
+		par_file=config["RAREDIR"]+"/preprocessing_v8eqtl/pq_table.txt" ,
+		gtf_file=config["RAREDIR"]+"/preprocessing_v8eqtl/x_proteincoding_lncrna.gtf"
+	params:
+		zscore="{zmin}",
+		nphen="{nphen}",
+		sex="{group}",
+		maf_min="{maf_min}",
+		maf_max="{maf_max}",
+              	cadd_min="{cadd_min}"
+	output:
+		out_rdata_relative=config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{outlierType}_z{zmin}_nphen{nphen}_min{maf_min}max{maf_max}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.pq.csv"
+	shell:
+		"""
+		module load R
+
+			Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_par.R \
+				--infile {input.infile} --zscore {params.zscore}  --maf_max {params.maf_max}  --nphen {params.nphen} \
+				--par_file {input.par_file} --out_rdata_relative {output.out_rdata_relative} \
+				--gtf_code_file {input.gtf_file}  --sex {params.sex} --maf_min {params.maf_min} --cadd_min {params.cadd_min}
+		"""
+
+
+
+
+rule compute_enrichments_medz:
+	input:
+		scriptdir="/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/",
+		RAREDIR=config["RAREDIR"],
+		outlier_file=config["RAREDIR"]+"/outliers_all/OutliersFiltered/{outlierType}_zthresh{zmin}_nphen{nphen}_globalOutliersRemoved_{type}_all{group}_maxoutliers{max_outliers}.txt"
+	params:
+		window="10kb_genebody",
+		z_thresh="3",
+		outsuffix="enrich_{type}_{group}"
+	output:
+		outfile=config["RAREDIR"]+"/enrichments_all/enrichments_10kb_z{zmin}_nphen{nphen}_{type}_{group}_maxoutliers{max_outliers}.RData"
+	shell:
+		"""
+		module load R
+		if [ ! -f {outfile} ]
+		then
+			Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/compute_enrichments_MEDZ.R \
+				--window {params.window} --scriptdir {input.scriptdir} \
+				--output.suffix={params.outsuffix} --RAREDIR {input.RAREDIR} \
+				--z_thresh {params.z_thresh} --outliers.file {input.outlier_file} --output {output.outfile} --cadd_min {params.cadd_min}
+		fi
+		"""
+

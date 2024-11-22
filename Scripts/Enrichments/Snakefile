@@ -1,0 +1,185 @@
+configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
+
+#GROUPS=["both","m","f","both.regress","both.sex", "both_half","both_half.regress", "both_half.sex"]
+GROUPS=["m","f", "both_half.regress"]
+TYPES=["x","aut"]
+zmin="3"
+nphen="5"
+
+rule all:
+	input: 
+		#config["RAREDIR"]+"/enrichments_v8/aut_all_rvs_inds_types.txt.gz"
+		#expand(config["RAREDIR"]+"/enrichments_v8/relative_risk_z"+zmin+"_nphen"+nphen+"_x_{group}.xci.csv",  group=GROUPS),
+		#expand(config["RAREDIR"]+"/enrichments_v8/relative_risk_z"+zmin+"_nphen"+nphen+"_x_{group}.par.csv",  group=GROUPS),
+		#expand(config["RAREDIR"]+"/enrichments_v8/relative_risk_z3_nphen1_x_{group}.xci.RData",  group=GROUPS)
+		#expand(config["RAREDIR"]+"/enrichments_v8/outliers_zthresh3_nphen5_noglobal_medz_varAnnot_{type}_{group}.txt", type=TYPES, group=GROUPS)
+		expand(config["RAREDIR"]+"/enrichments_v8/relative_risk_z"+zmin+"_nphen"+nphen+"_{type}_{group}.RData", type=TYPES, group=GROUPS),
+		#expand(config["RAREDIR"]+"/enrichments_v8/enrichments_10kb_z"+zmin+"_nphen"+nphen+"_{type}_{group}.RData", type=TYPES, group=GROUPS),
+		#config["RAREDIR"]+"/enrichments_v8/outliers_zthresh"+zmin+"_nphen"+nphen+"_noglobal_medz_varAnnot_x_m.txt"
+
+rule combine_rvs_inds_x:
+	input:
+		file_dir=config["RAREDIR"]+"/features_v8/bySite"
+	params:
+		pregz=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types.txt",
+		pattern="x*gz"
+	output:
+		gz=config["RAREDIR"]+"/enrichments_v8/x_all_rvs_inds_types.txt.gz"
+	shell:
+		"""
+		echo -e chr\tstart\tend\tmaf\tsample\tvartype	> {params.pregz}
+
+		for f in {input.file_dir}/{params.pattern}
+		do
+			echo $f
+			gtex_id=`echo $f | awk -F"/" '{{print $NF}}' | grep -o -P 'GTEX.{{0,6}}'`
+			var_type=`echo $f | awk -F"/" '{{print $NF}}' | egrep -o '_indels|_SNPs|_SV' | cut -c2-`
+			echo $gtex_id","$var_type
+			zcat $f | awk -F"\t" -v gtex_id=$gtex_id -v var_type=$var_type '{{print $1"\t"$2"\t"$3"\t"$4"\t"gtex_id"\t"var_type}}' \
+			 >> {params.pregz}
+		done
+
+		gzip {params.pregz}
+		"""
+
+
+rule combine_rvs_inds_aut:
+	input:
+		file_dir=config["RAREDIR"]+"/features_v8/bySiteAut",
+		sv_file=config["RAREDIR"]+"/features_v8/all_rare_variants_noWindow_HallLabSV_hg38_corrected.bed"
+	params:
+		pregz=config["RAREDIR"]+"/enrichments_v8/aut_all_rvs_inds_types.txt",
+		pattern="GTEX*gz"
+	output:
+		gz=config["RAREDIR"]+"/enrichments_v8/aut_all_rvs_inds_types.txt.gz"
+	shell:
+		"""
+		echo -e chr\tstart\tend\tmaf\tsample\tvartype	> {params.pregz}
+
+		for f in {input.file_dir}/{params.pattern}
+		do
+			echo $f
+			gtex_id=`echo $f | awk -F"/" '{{print $NF}}' | grep -o -P 'GTEX.{{0,6}}'`
+			var_type=`echo $f | awk -F"/" '{{print $NF}}' | egrep -o '_indels|_SNPs|_SV' | cut -c2-`
+			echo $gtex_id","$var_type
+			zcat $f | awk -F"\t" -v gtex_id=$gtex_id -v var_type=$var_type '{{print $1"\t"$2"\t"$3"\t"$4"\t"gtex_id"\t"var_type}}' \
+			 >> {params.pregz}
+		done
+		
+		less -S {input.sv_file} | awk -F"\t" '{{print $1"\t"$2"\t"$3"\t"$5"\t"$4"\tSV"}}' >> {params.pregz}
+
+		gzip {params.pregz}
+		"""
+
+rule get_shared_rvs:
+	input:
+		rvs_all=config["RAREDIR"]+"/enrichments_v8/all_rvs_inds_types.txt.gz"
+	output:
+		temp_out=temp(config["RAREDIR"]+"/enrichments_v8/{type}_temp_out.txt"),
+		out=config["RAREDIR"]+"/enrichments_v8/{type}_all_rvs_inds_types_repeated.txt"
+	shell:
+		"""
+		Scripts/Enrichments/get_dupl_rvs.sh {input.rvs_all} {output.temp_out} {output.out}
+		"""
+
+rule annotate_shared_rvs:
+	input:
+		rv_file=config["RAREDIR"]+"/enrichments_v8/{type}_all_rvs_inds_types_repeated.txt.gz",
+		gtf_file=config["GTEX_GENES"]
+	output:
+		config["RAREDIR"]+"/enrichments_v8/{type}_all_rvs_inds_types_repeated_annot.txt"
+	shell:
+		"""
+		bedtools window -a {input.rv_file} -b {input.gtf} -w 10000 | awk -F"[\t\"]" '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$16}'  | sort | uniq > {output}
+		"""
+
+rule join_variant_annotations:
+	input:
+		outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_zthresh"+zmin+"_nphen"+nphen+"_globalOutliersRemoved_{type}_{group}.txt",
+		variant_file="/oak/stanford/groups/smontgom/raungar/Sex/Files/gtex_v8_rare_GxI_collapsed_feature.tsv.gz"
+	params:
+		method="medz" #medz or splicing or ase
+	output:
+		outfile=config["RAREDIR"]+"/enrichments_v8/outliers_zthresh"+zmin+"_nphen"+nphen+"_noglobal_medz_varAnnot_{type}_{group}.txt"
+		#outfile=config["RAREDIR"]+"/enrichments_v8/outliers_zthresh2_nphen"+nphen+"_noglobal_medz_varAnnot_{type}_{group}.txt"
+	shell:
+		"""Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/join_variant_annotations.R \
+			--infile {input.outlier_file} --variant_file {input.variant_file} --method {params.method} \
+			--outfile {output.outfile} """
+
+
+rule calculate_risks:
+	input:
+		infile=config["RAREDIR"]+"/enrichments_v8/outliers_zthresh"+zmin+"_nphen"+nphen+"_noglobal_medz_varAnnot_{type}_{group}.txt"
+	params:
+		zscore=zmin,
+		continuous=config["RAREDIR"]+"/enrichments_v8/continuous_risk_z"+zmin+"_nphen"+nphen+"_{type}_{group}.RData"
+	output:
+		relative=config["RAREDIR"]+"/enrichments_v8/relative_risk_z"+zmin+"_nphen"+nphen+"_{type}_{group}.RData"
+	shell:
+		"""
+		module load R
+		if [ ! -f {output.relative} ]
+		then
+			Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_across_types.R \
+				--infile {input.infile} --zscore {params.zscore} \
+				--out_rdata_relative {output.relative} --out_rdata_continuous {params.continuous}
+		fi
+		"""
+
+
+rule get_risk_xci:
+	input:
+		infile=config["RAREDIR"]+"/enrichments_v8/outliers_zthresh"+zmin+"_nphen5_noglobal_medz_varAnnot_x_{group}.txt",
+		xci_file=config["xci_file"]
+	params:
+		zscore=zmin
+	output:
+		out_rdata_relative=config["RAREDIR"]+"/enrichments_v8/relative_risk_z"+zmin+"_nphen5_x_{group}.xci.csv"
+	shell:
+		"""
+			Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_xinactivation.R \
+				--infile {input.infile} --zscore {params.zscore} \
+				--xinact_file {input.xci_file} --out_rdata_relative {output.out_rdata_relative}
+		"""
+
+rule get_risk_par:
+	input:
+		infile=config["RAREDIR"]+"/enrichments_v8/outliers_zthresh"+zmin+"_nphen"+nphen+"_noglobal_medz_varAnnot_x_{group}.txt",
+		par_file=config["xci_file"]
+	params:
+		zscore=zmin
+	output:
+		out_rdata_relative=config["RAREDIR"]+"/enrichments_v8/relative_risk_z"+zmin+"_nphen"+nphen+"_x_{group}.par.csv"
+	shell:
+		"""
+			Rscript  /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/calc_relative_risk_par.R \
+				--infile {input.infile} --zscore {params.zscore} \
+				--par_file {input.par_file} --out_rdata_relative {output.out_rdata_relative}
+		"""
+
+
+
+
+rule compute_enrichments_medz:
+	input:
+		scriptdir="/oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/",
+		RAREDIR=config["RAREDIR"],
+		outlier_file=config["RAREDIR"]+"/outliers_v8/outliers_zthresh"+zmin+"_nphen"+nphen+"_globalOutliersRemoved_{type}_{group}.txt"
+	params:
+		window="10kb_genebody",
+		z_thresh="3",
+		outsuffix="enrich_{type}_{group}"
+	output:
+		outfile=config["RAREDIR"]+"/enrichments_v8/enrichments_10kb_z"+zmin+"_nphen"+nphen+"_{type}_{group}.RData"
+	shell:
+		"""
+		if [ ! -f {outfile} ]
+		then
+			Rscript /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Enrichments/compute_enrichments_MEDZ.R \
+				--window {params.window} --scriptdir {input.scriptdir} \
+				--output.suffix={params.outsuffix} --RAREDIR {input.RAREDIR} \
+				--z_thresh {params.z_thresh} --outliers.file {input.outlier_file} --output {output.outfile}
+		fi
+		"""
+

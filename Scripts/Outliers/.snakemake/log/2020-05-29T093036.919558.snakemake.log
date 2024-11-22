@@ -1,0 +1,9 @@
+Building DAG of jobs...
+MissingInputException in line 10 of /oak/stanford/groups/smontgom/raungar/Sex/Scripts/Outliers/SnakefileExpanded:
+Missing input files for rule all:
+/oak/stanford/groups/smontgom/raungar/Sex/Output/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.x.f.txt.gz
+/oak/stanford/groups/smontgom/raungar/Sex/Output/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.aut.f.txt.gz
+/oak/stanford/groups/smontgom/raungar/Sex/Output/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.aut.m.txt.gz
+/oak/stanford/groups/smontgom/raungar/Sex/Output/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.x.both.txt.gz
+/oak/stanford/groups/smontgom/raungar/Sex/Output/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.aut.both.txt.gz
+/oak/stanford/groups/smontgom/raungar/Sex/Output/outliers_v8/outliers_both_zthresh2_nphen5_noglobal_medz.x.m.txt.gz
