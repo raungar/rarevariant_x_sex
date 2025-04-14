@@ -7,7 +7,7 @@ library("forcats")
 sexes=c("m","f","both") #,"allboth")
 chrtypes=c("aut","x")
 zs=c(2.5)
-mydir="/Volumes/groups/smontgom/raungar/Sex/Output/outliers_v8eqtl/OutliersFiltered"
+mydir="/oak/stanford/groups/smontgom/raungar/Sex/Output/outliers_v8eqtl/OutliersFiltered"
 all_outliers=data.frame()
 for(this_sex in sexes){
   for(this_chrtype in chrtypes){
@@ -40,8 +40,8 @@ ggplot(all_outliers_summ_pergroup,aes(y=num_outliers,fill=as.factor(zthresh),x=s
 
 ###fishers test
 ft_all=all_outliers_summ_pergroup%>%dplyr::filter((sex=='m'| sex =='f')&zthresh==2.5)
-ft_all_contigencytable_x=ft_all%>%dplyr::filter(chrtype=='aut')%>%ungroup%>%select(sex,num_outliers,num_nonoutliers)%>%as.data.frame()
-rownames(ft_all_contigencytable_x)=ft_all_contigencytable_x[,'sex']; ft_all_contigencytable_x=ft_all_contigencytable_x%>%select(-sex)
+ft_all_contigencytable_x=ft_all%>%dplyr::filter(chrtype=='aut')%>%ungroup%>%dplyr::select(sex,num_outliers,num_nonoutliers)%>%as.data.frame()
+rownames(ft_all_contigencytable_x)=ft_all_contigencytable_x[,'sex']; ft_all_contigencytable_x=ft_all_contigencytable_x%>%dplyr::select(-sex)
 fisher.test(ft_all_contigencytable_x)
 
 ft_all_contigencytable_aut=ft_all%>%dplyr::filter(chrtype=='aut')%>%ungroup%>%select(sex,num_outliers,num_nonoutliers)%>%as.data.frame()
@@ -51,19 +51,71 @@ fisher.test(ft_all_contigencytable_aut)
 all_outliers_summ_pergroup_overunder=all_outliers%>%mutate(over_under=ifelse(MedZ>0,"over","under"))%>%
   group_by(chrtype,sex,zthresh,over_under)%>%summarise(num_outliers=sum(Y=="outlier"), num_nonoutliers=sum(Y!="outlier"))
 ft_all_overunder=all_outliers_summ_pergroup_overunder%>%dplyr::filter((sex=='f'| sex =='m')&zthresh==2.5)
-ft_all_contigencytable_x_under=ft_all_overunder%>%dplyr::filter(chrtype=='aut'&over_under=='over')%>%ungroup%>%select(sex,num_outliers,num_nonoutliers)%>%as.data.frame()
+ft_all_contigencytable_x_under=ft_all_overunder%>%dplyr::filter(chrtype=='x'&over_under=='under')%>%ungroup%>%select(sex,num_outliers,num_nonoutliers)%>%as.data.frame()
 rownames(ft_all_contigencytable_x_under)=ft_all_contigencytable_x_under[,'sex']; ft_all_contigencytable_x_under=ft_all_contigencytable_x_under%>%select(-sex)
 fisher.test(ft_all_contigencytable_x_under)
+ft_all_contigencytable_x_over=ft_all_overunder%>%dplyr::filter(chrtype=='x'&over_under=='over')%>%ungroup%>%select(sex,num_outliers,num_nonoutliers)%>%as.data.frame()
+rownames(ft_all_contigencytable_x_over)=ft_all_contigencytable_x_over[,'sex']; ft_all_contigencytable_x_over=ft_all_contigencytable_x_over%>%select(-sex)
+fisher.test(ft_all_contigencytable_x_over)
 
+##LOLLIPOP
+all_outliers_x=all_outliers%>%dplyr::filter(chrtype=="x")%>%dplyr::filter(Y=="outlier")
+all_outliers_x$ensg=gsub(pattern = "\\..*",replacement="",x =all_outliers_x$Gene )
+library(biomaRt)
+mart = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+hgnc=getBM(attributes = c("ensembl_gene_id", "hgnc_symbol","start_position","end_position"), filters = "ensembl_gene_id", 
+      values=all_outliers_x$ensg, mart = mart,uniqueRows = F)     
+hgnc_edit=hgnc%>%mutate(hgnc_symbol=ifelse(hgnc_symbol=="",ensembl_gene_id,hgnc_symbol))
+hgnc=hgnc_edit$hgnc_symbol
+names(hgnc)=hgnc_edit$ensembl_gene_id
+start=hgnc_edit$start_position
+end=hgnc_edit$end_position
+names(start)=hgnc_edit$ensembl_gene_id
+names(end)=hgnc_edit$ensembl_gene_id
+all_outliers_x$hgnc=hgnc[all_outliers_x$ensg]
+all_outliers_x$start=start[all_outliers_x$ensg]
+all_outliers_x$end=end[all_outliers_x$ensg]
+all_outliers_x=as.data.frame(all_outliers_x)
+all_outliers_x_filt=all_outliers_x%>%dplyr::filter(!is.na(hgnc))
+all_outliers_x_filt_group=all_outliers_x_filt%>%group_by(ensg,hgnc,chr,sex,start,end)%>%summarise(max_z=max(abs(MedZ)))
+
+xci_par=fread("/oak/stanford/groups/smontgom/raungar/Sex/Files/Tukiainen_xinact_par.tsv")
+xci_par$ensg=gsub(pattern = "\\..*",replacement="",x =xci_par$`Gene ID` )
+xci_par=xci_par[,c(1:8,15:16)]
+xci_par=xci_par%>%mutate(hgnc=ifelse(Gene=="",ensg,Gene))
+all_outliers_x_xci_par=merge(all_outliers_x_filt,xci_par,by="hgnc",all.x=TRUE)
+all_outliers_x_xci_par_filt=all_outliers_x_xci_par%>%dplyr::filter(!is.na(hgnc))
+fwrite(x=all_outliers_x_xci_par_filt,"/oak/stanford/groups/smontgom/raungar/Sex/Files/all_outliers_x_xci_par.tsv")
+all_outliers_x_xci_par_filt=all_outliers_x_xci_par_filt%>%rename("XCI"="Combined XCI status")
+
+ggplot(all_outliers_x_xci_par_filt%>%dplyr::filter(sex!="both"&!is.na(PAR_BINARY)),aes(x=start,y=MedZ))+
+  geom_segment( aes(x=start, xend=start, y=0, yend=MedZ,linetype=PAR_BINARY),color="gray") +
+  geom_point( aes( color=sex, shape=XCI, stroke=2),size=5, alpha=0.7 )+
+  scale_color_manual(values=c("#dbab3b","#5d8596"))+
+  scale_x_continuous(trans="log10")+
+  xlim(c(1,156040895))+
+  theme_bw()+
+  xlab("position")+ylab("z-score")
+over=all_outliers_x_xci_par_filt%>%dplyr::filter(sex=="m" & MedZ>0)%>%pull(PAR_BINARY)%>%table()
+under=all_outliers_x_xci_par_filt%>%dplyr::filter(sex=="m" & MedZ<0)%>%pull(PAR_BINARY)%>%table()
+over_under_df=cbind(as.data.frame(under)[,2],as.data.frame(over)[,2])
+colnames(over_under_df)=c("under","over");rownames(over_under_df)=c("NONPAR","PAR")
+fisher.test(over_under_df)
+
+over=all_outliers_x_xci_par_filt%>%dplyr::filter(sex=="m" & MedZ>0)%>%pull(XCI)%>%table()
+under=all_outliers_x_xci_par_filt%>%dplyr::filter(sex=="m" & MedZ<0)%>%pull(XCI)%>%table()
+over_under_df=cbind(as.data.frame(under)[,2],as.data.frame(over)[,2])
+over_under_df=over_under_df[1:2,1:2]
+colnames(over_under_df)=c("under","over");rownames(over_under_df)=c("exvacpe","inactive")
+fisher.test(over_under_df)
 
 ####
 # mydir="/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/RR"
-mydir="/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8eqtl/RR"
-mydir="/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8eqtl/RR"
+mydir="/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8eqtl/RR"
+mydir="/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8eqtl/RR"
 
 #groups=c("m","f","both_half.regress") #, "both_half","both_half.sex","both_half.regress")
 groups=c("m","f","both","allboth") #, "both_half","both_half.sex","both_half.regress
-my_cat=c("xci","par","strata","")
 #my_cat=c(".xci",".par",".strata")
 my_cat=""
 # chr_types=c(as.character(c(1:5,7:11,15:21)),"x") #,
@@ -101,9 +153,9 @@ all_risks<-data.frame(matrix(nrow=0,ncol=10))
 colnames(all_risks)<-c("Risk","Lower","Upper" ,"Pval","Cat","Type" , "z","nphen","chr","sex")
 
 
-inds_both_half=fread("/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8eqtl/gtex_2017-06-05_v8_individuals_passed_both_half.txt",header=F)%>%pull(V1)
-inds_f=fread("/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8eqtl/gtex_2017-06-05_v8_individuals_passed_f.txt",header=F)%>%pull(V1)
-inds_m=fread("/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8eqtl/gtex_2017-06-05_v8_individuals_passed_m.txt",header=F)%>%pull(V1)
+inds_both_half=fread("/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8eqtl/gtex_2017-06-05_v8_individuals_passed_both_half.txt",header=F)%>%pull(V1)
+inds_f=fread("/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8eqtl/gtex_2017-06-05_v8_individuals_passed_f.txt",header=F)%>%pull(V1)
+inds_m=fread("/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8eqtl/gtex_2017-06-05_v8_individuals_passed_m.txt",header=F)%>%pull(V1)
 
 
 for(this_cat in my_cat){
@@ -187,36 +239,19 @@ all_risks_p<-merge(all_risks,risks_to_compare_side[,c("outlierType","exp_type","
 to_plot=all_risks_p%>%dplyr::filter(CATEGORY=="all")%>% mutate(is_sig=ifelse(Pval<0.01,T,F))%>%filter(chr=="7" | chr=="AllAut") %>% 
   filter(outlierType=="outliers")   %>% dplyr::filter(sex=="f")%>% dplyr::filter(var_location!="all") %>% #dplyr::filter(sex=="f") %>% 
   filter(cadd==0)%>% dplyr::filter(z==2.5)%>% dplyr::filter(exp_type=="all") %>% dplyr::filter(max_outliers==3) #%>% dplyr::filter(sex=="both" & exp_type=="all") ### #%>%filter(maxmaf==0.001) %>% dplyr::filter(z==2.5)   %>%   
-ggplot(to_plot,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=as.numeric(gene_window),
+ggplot(to_plot,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=as.factor(gene_window),
                    color=as.numeric(gene_window),label=num_outliers)) +  #,shape=chr
   theme(axis.text.x = element_text(angle = 45,  hjust=1))+
   geom_point(aes(size=as.factor(is_sig)),alpha=0.9,position=position_dodge(width=0.5))+
   geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.1,position=position_dodge(width=0.5)) +
   geom_line(position=position_dodge(width=0.5))+
   theme_bw(base_size=8)+
-  # scale_size(range = c(2,12))+
   xlab("MAF")+
   ylab("Relative Risk")+ #xlim(c(0,0.1))+
   labs(fill="Group")+
-  ggtitle(paste0("Relative Risk: (outlierType=",unique(to_plot$outlierType),", CADD=",unique(to_plot$cadd),
-                 ",nphen=",unique(to_plot$nphen), ",z=",unique(to_plot$z),", gene window=",unique(to_plot$gene_window),
-                 ",maxoutliers=",unique(to_plot$max_outliers),"), num outlier range [",
-                 min(unique(to_plot$num_outliers)),",",max(unique(to_plot$num_outliers)),"]"))+
-   # scale_color_brewer(palette = "RdYlBu")+
   viridis::scale_color_viridis("magma",begin=0,end=0.95,direction=-1)+
-  # scale_color_gradient2(low="#abab24",high="#234e82",mid="#23822d",midpoint=5000)+
-  # scale_fill_manual(values=c("#B1EAA2","#FCF5A9","#97D6F2"))+
- # scale_color_manual(values=c("#296818","#dbab3b","#5d8596"))+ #"#296818",
-  #scale_color_manual(values=c("#abab24","#23822d","#234e82","#668223","#23827a"))+
-  # scale_color_manual(values=c("#c7bccf","#926fa8","#47265c","#99176e"))+
-  # scale_color_manual(values=c("#47265c","#99176e"))+asa
-  # scale_color_manual(values=c("#926fa8","#47265c","#99176e"))+  
-  #guides(colour=FALSE)+
   facet_wrap(~paste0("var_location=",collapse_method)*paste0("z=",z),ncol =2,scales="free_y") + #
-  geom_hline(yintercept=1,color="red",linetype="dashed") +
-   #geom_text(aes(label=paste0("RR=",round(Risk,2), "(n=",outliers_tested,")")), size=3, position = position_dodge(width = 1), vjust=-1.25) 
-  # geom_text(aes(label=paste0(round(Risk,2))),color=c("black"), size=2, position = position_dodge(width = 0.5), vjust=-1.25)
- geom_text(aes(label=paste0("n=",outliers_tested,"\nRR=",round(Risk,2))),color="black" ,size=2, position = position_dodge(width = 1), vjust=-1.25)
+  geom_hline(yintercept=1,color="red",linetype="dashed")
 
 
 ###facet by chr
@@ -258,7 +293,7 @@ ggplot(to_plot,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=var_lo
 
 ####BY DISTANCe
 to_plot=all_risks_p%>%dplyr::filter(CATEGORY=="all")%>% mutate(is_sig=ifelse(Pval<0.01,T,F))%>%#filter(chr=="x" | chr=="AllAut") %>% 
-  filter(outlierType=="outliers")   %>% dplyr::filter(var_location=="all")%>% dplyr::filter(gene_window==1000) %>% #dplyr::filter(sex=="f") %>% 
+  filter(outlierType=="outliers")   %>% dplyr::filter(var_location=="all")%>% #dplyr::filter(gene_window==1000) %>% #dplyr::filter(sex=="f") %>% 
   filter(cadd==15)%>% dplyr::filter(z==2.5)%>% dplyr::filter(exp_type=="all") %>% dplyr::filter(max_outliers==3)
 ggplot((to_plot),aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,shape=as.factor(is_sig),
                    group=collapse_method,color=(collapse_method), #group=paste0(maxtomin_dic[maxmaf],"-",maxmaf)
@@ -309,7 +344,7 @@ ggplot(to_plot,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=sex,co
 to_plot=all_risks%>%dplyr::filter(CATEGORY=="all") %>% #%>%filter(outlierType=="outliers") %>% dplyr::filter(z==2.5) 
   dplyr::filter(outlierType=="outliers"&var_location=="all"&veptype=="all"&sex!='allboth'&exp_type!='all'&gene_window==5000) %>%filter(cadd==15) %>%
   mutate(is_sig=ifelse(Pval<0.01,T,F))#%>% # dplyr::filter(exp_type=="all")   
-to_plot=to_plot%>%mutate(adj.pval=Pval*nrow(to_plot))mutate(is_sig=ifelse(adj.pval<0.01,T,F)) 
+to_plot=to_plot%>%mutate(adj.pval=Pval*nrow(to_plot))%>%mutate(is_sig=ifelse(adj.pval<0.01,T,F)) 
 #filter(chr=="AllAut") #filter(maxmaf==0.001)  
 ##by over/under
 ggplot(to_plot,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=sex,color=sex,shape=sex,label=num_outliers)) + 
@@ -321,7 +356,6 @@ ggplot(to_plot,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=sex,co
   xlab("MAF")+
   ylab("Relative Risk")+ #xlim(c(0,0.1))+
   labs(fill="Group")+
-  scale
   scale_color_manual(values=c("#296818","#dbab3b","#5d8596"))+
   facet_wrap(~paste0(exp_type)*paste0("z=",z)*paste0("chr=",chr),ncol =3,scales="free_y")+
   geom_hline(yintercept=1,color="red",linetype="dashed") 

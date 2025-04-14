@@ -330,7 +330,8 @@ rule gather_filter_norm_expr:
 		#this_group=SEX_GROUPS_TYPES[wildcards.sex_groups]
 		#this_group=SEX_GROUPS_TYPES["sex_groups"]
 		mygroup="{this_group}"
-
+	wildcard_constraints:
+		this_group="[^.]*"
 	output:
 		outpath=config["RAREDIR"]+"/preprocessing_v8all/gtex_2017-06-05_normalized_expression_gathered_all{this_group}.txt.gz",
 		log=config["RAREDIR"]+"/preprocessing_v8all/gather_filter_norm_expr_all{this_group}.log"

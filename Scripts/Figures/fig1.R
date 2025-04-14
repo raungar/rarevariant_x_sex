@@ -6,10 +6,10 @@ library(ggpubr)
 #file<-"/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/relative_risk_aut_both.regress.RData"
 
 # mydir="/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/RR"
-mydir="/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8eqtl/RR"
+mydir="/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_all/RR"
 
 #groups=c("m","f","both_half.regress") #, "both_half","both_half.sex","both_half.regress")
-groups=c("m","f","both","allboth") #, "both_half","both_half.sex","both_half.regress
+groups=c("m","f","both") #, "both_half","both_half.sex","both_half.regress
 my_cat=c("xci","par","strata","")
 #my_cat=c(".xci",".par",".strata")
 my_cat=""
@@ -20,7 +20,7 @@ chr_types=c("x","7","AllAut") #,"AllAut","7") #,
 #chr_types=c("x") #,
 # chr_types=c("x") #aut
 nphen=c(3)
-z=c(2,2.5,3)
+#z=c(2,2.5,3)
 z=2.5
 CADD<-c(0,15)
 risk_cat<-c("relative_risk") #,"absolute_risk")
@@ -31,6 +31,7 @@ maxmaf<-c("0.1","0.05","0.01","0.001","0.0001") #,"0.001","0.0001")
 filter_version=c("typesGQ5BlacklistRemovedALL")
 filter_version=c("typesALL")
 windows=c(500,5000,10000)
+windows=c(5000)
 collapsetypes="collapsed"
 maxmaf<-c("0.1", "0.05","0.01", "0.001","0.0001") #,"0.001","0.0001")
 maxtomin_dic<-c("0.05","0.01","0.001","0"     ,"0")
@@ -126,17 +127,18 @@ all_risks_p$gene_window <- factor(all_risks_p$gene_window, levels = c("100","500
 chr_lens=c(748,972,20868)
 names(chr_lens)<-c("x","7","AllAut")
 
-inds_both_half=fread("/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8eqtl/gtex_2017-06-05_v8_individuals_passed_both_half.sex_regress.txt",header=F)%>%pull(V1)
-inds_allboth=fread("/Volumes/groups/smontgom/raungar/Sex/Output/preprocessing_v8eqtl/gtex_2017-06-05_v8_individuals_passed_allboth.sex_regress.txt",header=F)%>%pull(V1)
+#inds_both_half=fread("/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8eqtl/gtex_2017-06-05_v8_individuals_passed_both_half.txt",header=F)%>%pull(V1)
+inds_both_half=fread("/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8eqtl/gtex_2017-06-05_v8_individuals_passed_allboth.txt",header=F)%>%pull(V1)
+inds_allboth=fread("/oak/stanford/groups/smontgom/raungar/Sex/Output/preprocessing_v8all/gtex_2017-06-05_v8_individuals_passed_both.txt",header=F)%>%pull(V1)
 
 
 ###fig 1a
-data_plot_fig1a=all_risks%>%dplyr::filter(CATEGORY=="all")%>%filter(cadd==15) %>%filter(maxmaf==0.01 & z==2.5)%>% 
-  dplyr::filter(outlierType=="outliers")%>% dplyr::filter(sex=="allboth") %>% dplyr::filter(veptype=="all"&var_location=="all")%>%
+data_plot_fig1a=all_risks%>%dplyr::filter(CATEGORY=="all")%>%filter(cadd==0) %>%filter(maxmaf==0.01 & z==2.5)%>% 
+  dplyr::filter(outlierType=="outliers")%>% dplyr::filter(sex=="both") %>% dplyr::filter(veptype=="all"&var_location=="all")%>%
   dplyr::filter(gene_window==5000)%>%
   mutate(chr=fct_relevel(chr,"x","7","AllAut")) %>%
   mutate(chr=recode(chr,x="chrX","7"="chr7",AllAut="autosomes"))  %>% 
-  mutate(outliers_per_ind=outliers_tested/length(inds_both_half))%>%
+  mutate(outliers_per_ind=outliers_tested/length(inds_allboth))%>%
   mutate(outliers_per_gene_per_ind=outliers_per_ind/chr_lens[chr])%>%
   mutate(outliers_per_gene=outliers_tested/chr_lens[chr])%>%
   dplyr::filter(exp_type=="all") # %>%
@@ -146,24 +148,24 @@ data_plot_fig1a=all_risks%>%dplyr::filter(CATEGORY=="all")%>%filter(cadd==15) %>
 plot_fig1a_pt1=ggplot(data_plot_fig1a%>%dplyr::filter(chr!="autosomes"),
                       aes(x=as.factor(chr),y=outliers_tested, group=sex, fill=sex ))+
   scale_fill_manual(values=c("#296818","#dbab3b","#5d8596"))+  
-  theme_classic(base_size=20)+
+  theme_classic(base_size=18)+
   # ggtitle("Number of outliers across chromosomes")+
   geom_bar(stat="identity", position=position_dodge())+
-  xlab("") +ylab("Number Multi-Tissue Outliers")+ guides(fill="none")
+  xlab("") +ylab("Number Multi-Tissue Gene-Individual Outliers")+ guides(fill="none")
 plot_fig1a_pt2=ggplot(data_plot_fig1a%>%dplyr::filter(chr=="autosomes"),
                       aes(x=as.factor(chr),y=outliers_tested, group=sex, fill=sex ))+
   scale_fill_manual(values=c("#296818","#dbab3b","#5d8596"))+  
-  theme_classic(base_size=20)+
+  theme_classic(base_size=18)+
   # ggtitle("Number of outliers across chromosomes")+
   geom_bar(stat="identity", position=position_dodge())+
   xlab("") +ylab("")
-ggarrange(plot_fig1a_pt1,plot_fig1a_pt2, widths = c(4, 4),labels="b")
+ggarrange(plot_fig1a_pt1,plot_fig1a_pt2, widths = c(4, 4))
 
 
 ###fig 1b
 
-data_plot_fig1b=all_risks_p%>%dplyr::filter(CATEGORY=="all")%>%filter(outlierType=="outliers") %>% mutate(is_sig=ifelse(Pval<0.01,T,F)) %>%
-  filter(cadd==15) %>% dplyr::filter(sex=="allboth")  %>% dplyr::filter(z==2.5) %>%# dplyr::filter(chr!="AllAut")%>%
+data_plot_fig1b=all_risks_p%>%dplyr::filter(CATEGORY=="all")%>%filter(outlierType=="outliers") %>% mutate(is_significant=ifelse(Pval<0.01,T,F)) %>%
+  filter(cadd==15) %>% dplyr::filter(sex=="both")  %>% dplyr::filter(z==2.5) %>%# dplyr::filter(chr!="AllAut")%>%
   dplyr::filter(veptype=="all"&gene_window==5000&var_location=="all") %>%filter(exp_type=="all")  %>%
   mutate(chr=fct_relevel(chr,"x","7","AllAut")) %>% mutate(chr=recode(chr,x="chrX","7"="chr7",AllAut="autosomes")) %>% dplyr::filter(chr !="8")
 plot_fig1b=ggplot(data_plot_fig1b,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=chr,color=chr,shape=chr,label=num_outliers)) + 
@@ -171,12 +173,12 @@ plot_fig1b=ggplot(data_plot_fig1b,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),
   geom_hline(yintercept=1,color="red",linetype="dashed")+
   geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.1,position=position_dodge(width=0.5)) +
   geom_line(position=position_dodge(width=0.5))+
-  theme_classic(base_size=20)+
-  geom_point(aes(size=is_sig),position=position_dodge(width=0.5))+
+  theme_classic(base_size=18)+
+  labs(size = "is significant",color="chromosome",shape="chromosome") +
+  geom_point(aes(size=is_significant),position=position_dodge(width=0.5))+
   xlab("MAF")+
   ylab("Relative Risk")+ #xlim(c(0,0.1))+
   labs(fill="Group")+
-  # theme(legend.position="none")+
   scale_y_continuous(trans="log10")+
   # scale_fill_manual(values=c("#B1EAA2","#FCF5A9","#97D6F2"))+
   #scale_color_manual(values=c("#99176e","#926fa8","#47265c"))+
@@ -198,18 +200,30 @@ data_plot_figs1a=all_risks%>%dplyr::filter(CATEGORY=="all")%>%filter(cadd==15) %
 #dplyr::filter(chr=="chrX" | chr=="chr7")
 #dplyr::filter(chr=="autosomes") 
 ###s1a
-plot_figs1a_pt1=ggplot(data_plot_figs1a%>%dplyr::filter(chr!="autosomes") ,aes(x=as.factor(exp_type),y=outliers_tested, group=sex, fill=exp_type ))+
-  scale_fill_manual(values=c("#6fb35d","#abc9a3"))+  #"#296818",
+ggplot(data_plot_figs1a%>%dplyr::filter(chr!="autosomes") ,aes(x=interaction(chr),y=outliers_tested,group=sex,
+                 # ggplot(fig2b,aes(x=interaction(sex),y=outliers_per_ind,group=sex,
+                 alpha=as.factor(exp_type),
+                 fill=sex,size=1))+
+  scale_fill_manual(values=c("#296818","#dbab3b","#5d8596"))+
+  #scale_fill_manual(values=c("#dbab3b","#5d8596"))+
+  #scale_fill_manual(values=c("#dbab3b","#5d8596"))+
+  theme_linedraw(base_size=10)+
+  scale_alpha_discrete(range=c(0.9,0.5))+
+  geom_bar(stat="identity",position="stack",group="exp_type") +facet_wrap(~as.factor(chr),ncol=3,scales="free_y") +
+  xlab("sex") +ylab("Multi-Tissue Outlier Per Individual")
+
+
+plot_figs1a_pt1=ggplot(data_plot_figs1a%>%dplyr::filter(chr!="autosomes") ,aes(x=as.factor(chr),y=outliers_tested, group=sex,fill=sex, alpha=as.factor(exp_type )))+
+  scale_fill_manual(values=c("#6fb35d"))+  #"#296818",
+  scale_alpha_discrete(range=c(0.9,0.5))+
   # scale_alpha_discrete(range=c(1,0.4,0.1))+
-  theme_linedraw(base_size=12)+
-  facet_wrap(~chr,ncol=3)+ guides(fill="none") +
+  theme_bw(base_size=12)+
   geom_bar(stat="identity", position=position_dodge())+
   xlab("") +ylab("Number of Outliers")
-plot_figs1a_pt2=ggplot(data_plot_figs1a%>%dplyr::filter(chr=="autosomes") ,aes(x=as.factor(exp_type),y=outliers_tested, group=sex, fill=exp_type ))+
-  scale_fill_manual(values=c("#6fb35d","#abc9a3"))+  #"#296818",
+plot_figs1a_pt2=ggplot(data_plot_figs1a%>%dplyr::filter(chr=="autosomes") ,aes(x=as.factor(chr),y=outliers_tested, group=sex,alpha=exp_type))+
+  scale_fill_manual(values=c("#296818"))+  #"#296818",
   # scale_alpha_discrete(range=c(1,0.4,0.1))+
-  theme_linedraw(base_size=12)+
-  facet_wrap(~chr,ncol=3) +
+  theme_bw(base_size=12)+
   geom_bar(stat="identity", position=position_dodge())+
   xlab("") +ylab("")
 ggarrange(plot_figs1a_pt1,plot_figs1a_pt2, widths = c(4, 4))
@@ -224,10 +238,13 @@ plot_outlier_parameterizations=ggplot(data_plot_outlier_parameterizations,aes(x=
 plot_outlier_parameterizations
 
 data_plot_figs1b=all_risks_p%>%dplyr::filter(CATEGORY=="all")%>%filter(outlierType=="outliers") %>%
-  filter(cadd==0) %>% dplyr::filter(max_outliers==3) %>% dplyr::filter(sex=="both")  %>% dplyr::filter(z==2.5) %>%filter(exp_type!="all") %>%
+  filter(cadd==15) %>% dplyr::filter(max_outliers==3) %>% dplyr::filter(sex=="both")  %>% dplyr::filter(z==2.5) %>%filter(exp_type!="all") %>%
   dplyr::filter(veptype=="all"&gene_window==5000&var_location=="all")%>%
-  mutate(chr=fct_relevel(chr,"x","7","AllAut")) %>% mutate(chr=recode(chr,x="chrX","7"="chr7",AllAut="autosomes")) %>% dplyr::filter(chr !="8")%>% mutate(is_sig=ifelse(Pval<0.01,T,F)) 
-plot_figs1b=ggplot(data_plot_figs1b,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=exp_type,alpha=exp_type,color=chr,shape=chr,label=num_outliers)) + 
+  mutate(chr=recode(chr,x="chrX","7"="chr7",AllAut="autosomes")) %>% 
+  #mutate(chr=recode(chr,"chrX"="x","chr7"="7","autosomes"="AllAut")) %>% 
+  mutate(chr=fct_relevel(chr,"chrX","chr7","autosomes")) %>% 
+  dplyr::filter(chr !="8")%>% mutate(is_sig=ifelse(Pval<0.01,T,F)) 
+plot_figs1b=ggplot(data_plot_figs1b,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf),y=Risk,group=exp_type,shape=exp_type,color=chr,label=num_outliers)) + 
   theme(axis.text.x = element_text(angle = 45,  hjust=1))+
   scale_alpha_discrete(range = c(1, 0.6), guide = guide_legend(override.aes = list(fill = "black"))) +
   geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.1,position=position_dodge(width=0.5)) +
@@ -245,3 +262,6 @@ plot_figs1b=ggplot(data_plot_figs1b,aes(x=paste0(maxtomin_dic[maxmaf],"-",maxmaf
 plot_figs1b
 
 
+###num unique outliers
+outliers_x=fread("/oak/stanford/groups/smontgom/raungar/Sex/Output/outliers_all/OutliersFiltered/outliers_noglobal_medz_zthresh2.5_nphen3_x_allboth_maxoutliers3.txt.gz")
+outliers_aut=fread("/oak/stanford/groups/smontgom/raungar/Sex/Output/outliers_all/OutliersFiltered/outliers_noglobal_medz_zthresh2.5_nphen3_aut_allboth_maxoutliers3.txt.gz")

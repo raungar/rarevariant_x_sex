@@ -125,7 +125,7 @@ exp_controls_under = exp_data %>% dplyr::filter(Y=="control") %>% dplyr::filter(
 
 
 veptypes=c(na.omit(unique(unlist(strsplit(exp_data$veptype,",")))),"all")
-
+veptypes="all"
 print("relative risk")
 ### Relative risk
 risks = data.frame(Risk = numeric(), Lower = numeric(), Upper = numeric(), Pval = numeric(), St = character())
@@ -135,7 +135,7 @@ risks = data.frame(Risk = numeric(), Lower = numeric(), Upper = numeric(), Pval 
 vcats = na.omit(unique(exp_data$variant_cat))
 exp_types=c("all","over","under")
 varlocations=as.character(na.omit(c("all",unique(exp_data$var_location))))
-
+varlocation="all"
 for(this_var_location in varlocations){
   for(this_veptype in veptypes){
     for(exp_type in exp_types){

@@ -8,7 +8,7 @@ library("forcats")
 sexes=c("m","f","both") #,"allboth")
 chrtypes=c("aut","x")
 zs=c(2.5)
-mydir="/Volumes/groups/smontgom/raungar/Sex/Output/outliers_v8eqtl/OutliersFiltered"
+mydir="/oak/stanford/groups/smontgom/raungar/Sex/Output/outliers_v8eqtl/OutliersFiltered"
 all_outliers=data.frame()
 for(this_sex in sexes){
   for(this_chrtype in chrtypes){
@@ -43,7 +43,10 @@ to_plot_all_outliers_aut%>%dplyr::filter(abs(both)<=2.5 & abs(sex_stratified_sco
 
 #sex-stratified direction 
 (to_plot_all_outliers_x%>%dplyr::filter(abs(both)>2.5 & abs(sex_stratified_score)<=2.5)%>%nrow()+to_plot_all_outliers_x%>%dplyr::filter(abs(both)<=2.5 & abs(sex_stratified_score)>2.5)%>%nrow())/nrow(to_plot_all_outliers_x)
-(to_plot_all_outliers_aut%>%dplyr::filter(abs(both)>2.5 & abs(sex_stratified_score)<=2.5)%>%nrow()+to_plot_all_outliers_aut%>%dplyr::filter(abs(both)<=2.5 & abs(sex_stratified_score)>2.5)%>%nrow())/nrow(to_plot_all_outliers_x)
+(to_plot_all_outliers_aut%>%dplyr::filter(abs(both)>2.5 & abs(sex_stratified_score)<=2.5)%>%nrow()+to_plot_all_outliers_aut%>%dplyr::filter(abs(both)<=2.5 & abs(sex_stratified_score)>2.5)%>%nrow())/nrow(to_plot_all_outliers_aut)
+
+sex_strat_direction=to_plot_all_outliers_aut%>%dplyr::filter((abs(both)>2.5 & abs(sex_stratified_score)<=2.5)|(abs(both)<=2.5 & abs(sex_stratified_score)>2.5))
+sex_strat_direction=rbind(sex_strat_direction,to_plot_all_outliers_x%>%dplyr::filter((abs(both)>2.5 & abs(sex_stratified_score)<=2.5)|(abs(both)<=2.5 & abs(sex_stratified_score)>2.5)))
 
 ggplot((to_plot_all_outliers_x),aes(x=sex_stratified_score,y=both,color=sex_stratified))+
   theme_bw(base_size = 20)+

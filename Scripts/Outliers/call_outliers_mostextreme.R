@@ -15,6 +15,7 @@ require(reshape2)
 require(dplyr)
 require(foreach)
 require(doMC)
+library(readr)
 require(robustbase)
 
 ## Register parallel backend
@@ -30,13 +31,16 @@ pick.outliers <- function(test.stats, nphen, zthresh,medz){
     this.test.stats = test.stats %>% filter(Df >= nphen) %>%
         group_by(Gene) %>%
         mutate(N = n())
+        print(.4)
         out = this.test.stats %>% arrange(desc(abs(MedZ))) %>%
             mutate(Y = ifelse(abs(MedZ) > zthresh, 'outlier', 'control')) %>%
             ungroup() %>% select(Ind, Gene, N, Df, MedZ, Y)
+        print(.5)
         out_topgene <- out %>% 
           group_by(Gene) %>% mutate(maxMedZ = max(abs(MedZ))) %>% 
           mutate(topOutlier=ifelse(abs(MedZ)==maxMedZ & abs(MedZ)>zthresh,"outlier","control")) %>%ungroup()%>% 
         select(Ind, Gene, N, Df, MedZ, topOutlier)
+        print(.6)
         colnames(out_topgene)[6]<-"Y"
     return(list(out,out_topgene))
 }
@@ -45,20 +49,24 @@ pick.outliers <- function(test.stats, nphen, zthresh,medz){
 ## Input: Normalized data in bed format with the final N columns representing the N samples
 ## Output: Assignments of outliers and controls for genes with outliers
 call.outliers <- function(data, nphen, zthresh,metric) {
-    # data.melted = melt(data, id.vars = names(data)[1:2], variable.name = 'Ind', value.name = 'Z')
-    data.melted<-melt.data.table(data,id.vars = names(data)[1:2], variable.name = 'Ind', value.name = 'Z')
+     data.melted = melt(data, id.vars = names(data)[1:2], variable.name = 'Ind', value.name = 'Z')
+    #data.melted<-melt.data.table(data,id.vars = names(data)[1:2], variable.name = 'Ind', value.name = 'Z')
+    print(0.1)
     colnames(data.melted)[3:4] = c('Ind', 'Z')
+    print(0.2)
     head(data.melted)
     # summ_z<-as.data.table(data.melted)[,Z:=.(median(Z,na.rm=T)),by=list(Ind,Gene)]
     # summ_df<-as.data.table(data.melted)[,Df:=.(sum(!is.na(Z))),by=list(Ind,Gene)]
     # test.stats<-cbind(summ_z,summ_df$Df)
-    
     # my.summs=function(x) list(MedZ=median(x,na.rm=T))
-    test.stats = data.melted %>% group_by(Ind, Gene) %>%
+    test.stats = as.data.table(data.melted) %>% group_by(Ind, Gene) %>%
         summarise(MedZ = median(Z, na.rm = T),
                   Df = sum(!is.na(Z)))
+    print(0.3)
+
     # head(test.stats)
     outliers = pick.outliers(test.stats, nphen, zthresh, medz = T)
+    print(0.9)
     return(outliers)
 }
 
@@ -134,15 +142,19 @@ print(paste0("ZSCORES: ", zscore))
 
 
 ## Read in the normalized data
-data = (fread( zscore))
+data = read_tsv(zscore)
+print(head(data))
+print(0)
 outliers_medz = call.outliers(data, nphen, zthresh,metric = 'medz')
+print(1)
 #outliers_medz_top = pick.outliers(outliers_medz, nphen, zthresh)
 outliers<-outliers_medz[[1]]
 outliers_top<-outliers_medz[[2]] ### outlier is only top gene + zthresh
 
-
 outliers_noglobal<-remove_global_outliers(outliers)
+print(2)
 outliers_top_noglobal<-remove_global_outliers(outliers_top)
+print(3)
 ## Median Z-score
 print('MEDZ')
 if(chrtype!="x"){

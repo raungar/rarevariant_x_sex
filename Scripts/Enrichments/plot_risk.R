@@ -5,7 +5,7 @@ library("forcats")
 
 # mydir="/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_v8/RR"
 # mydir="/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_v8redo/RR"
-mydir="/Volumes/groups/smontgom/raungar/Sex/Output/enrichments_all/RR"
+mydir="/oak/stanford/groups/smontgom/raungar/Sex/Output/enrichments_all/RR"
 
 #groups=c("m","f","both_half.regress") #, "both_half","both_half.sex","both_half.regress")
 groups=c("m","f","both") #,"allboth") #, "both_half","both_half.sex","both_half.regress
@@ -40,13 +40,13 @@ filter_version=c("typesBlacklistRemovedALL","typesBlacklistRemovedSeenTwice",
                  "typesGQ10BlacklistRemovedSeenTwice",  "typesGQ5BlacklistRemovedSeenTwice")
 filter_version=c("typesGQ5BlacklistRemovedALL")
 outlier_types=c("outliers");nphen=3; #"outliersTOP",
-outlier_types=c("outliersAdipose-Subcutaneous","outliersAdipose-Visceral-Omentum","outliersAdrenal-Gland","outliersArtery-Aorta","outliersArtery-Coronary","outliersArtery-Tibial","outliersBrain-Caudate-basal-ganglia",
-                             "outliersBrain-Cerebellar-Hemisphere","outliersBrain-Cerebellum","outliersBrain-Cortex","outliersBrain-Nucleus-accumbens-basal-ganglia","outliersBreast-Mammary-Tissue",
-                             "outliersCells-Cultured-fibroblasts","outliersCells-EBV-transformed-lymphocytes","outliersColon-Sigmoid","outliersColon-Transverse","outliersEsophagus-Gastroesophageal-Junction",
-                             "outliersEsophagus-Mucosa","outliersEsophagus-Muscularis","outliersHeart-Atrial-Appendage","outliersHeart-Left-Ventricle","outliersLiver","outliersLung","outliersMuscle-Skeletal","outliersNerve-Tibial","outliersOvary",
-                             "outliersPancreas","outliersPituitary","outliersSkin-Not-Sun-Exposed-Suprapubic","outliersSkin-Sun-Exposed-Lower-leg","outliersSmall-Intestine-Terminal-Ileum","outliersSpleen","outliersStomach","outliersThyroid",
-                             "outliersUterus","outliersVagina","outliersWhole-Blood");nphen=1;
-outlier_types_female<-c("outliersOvary","outliersUterus","outliersVagina")
+# outlier_types=c("outliersAdipose-Subcutaneous","outliersAdipose-Visceral-Omentum","outliersAdrenal-Gland","outliersArtery-Aorta","outliersArtery-Coronary","outliersArtery-Tibial","outliersBrain-Caudate-basal-ganglia",
+#                              "outliersBrain-Cerebellar-Hemisphere","outliersBrain-Cerebellum","outliersBrain-Cortex","outliersBrain-Nucleus-accumbens-basal-ganglia","outliersBreast-Mammary-Tissue",
+#                              "outliersCells-Cultured-fibroblasts","outliersCells-EBV-transformed-lymphocytes","outliersColon-Sigmoid","outliersColon-Transverse","outliersEsophagus-Gastroesophageal-Junction",
+#                              "outliersEsophagus-Mucosa","outliersEsophagus-Muscularis","outliersHeart-Atrial-Appendage","outliersHeart-Left-Ventricle","outliersLiver","outliersLung","outliersMuscle-Skeletal","outliersNerve-Tibial","outliersOvary",
+#                              "outliersPancreas","outliersPituitary","outliersSkin-Not-Sun-Exposed-Suprapubic","outliersSkin-Sun-Exposed-Lower-leg","outliersSmall-Intestine-Terminal-Ileum","outliersSpleen","outliersStomach","outliersThyroid",
+#                              "outliersUterus","outliersVagina","outliersWhole-Blood");nphen=1;
+# outlier_types_female<-c("outliersOvary","outliersUterus","outliersVagina")
 #collapsetypes=c("collapsed","collapsedbyVARLOC") #,"collapsedbyTSS")
 # outlier_types=outlier_types_female
 collapsetypes=c("collapsedexon","collapsedgenestart","collapsedgeneend","collapsedintron","collapsed")
@@ -277,6 +277,8 @@ all_risks_p$outlierType <-str_replace(all_risks_p$outlierType,"outliers","")
  ###x
 #,alpha=discrete_or_continuous$
 #
+to_plot%>%dplyr::filter(sex=="both"&maf_range=="[0.001-0.01]"&gene_window=="5000"&exp_type=="all")%>%dplyr::select(chr,num_outliers)%>%mutate(prop=num_outliers/739)
+
 to_plot=all_risks_p%>%dplyr::filter(CATEGORY=="all")%>%filter(outlierType=="") %>% dplyr::filter(exp_type=="all") %>%dplyr::filter(var_location=="all") %>%
   dplyr::filter(z==2.5)%>%dplyr::filter(chr=="x")%>%filter(collapse_method=="collapsed") %>%
   mutate(is_sig=ifelse(Pval<0.01,T,F)) %>%dplyr::filter(veptype=="all") %>% dplyr::filter(gene_window==5000) 
@@ -423,7 +425,7 @@ to_plot=all_risks_p%>%dplyr::filter(CATEGORY=="all")%>%filter(outlierType=="") %
      geom_hline(yintercept=1,color="red") #+#+
    
    
-   sig_veptypes=all_risks%>%dplyr::filter(Pval<0.001) %>%pull(veptype) %>% unique()
+   sig_veptypes=all_risks%>%dplyr::filter(Pval<0.01) %>%pull(veptype) %>% unique()
    
    ###by tissue!!!#paste0(maxtomin_dic[maxmaf],"-",maxmaf)
    to_plot=all_risks%>%dplyr::filter(CATEGORY=="all") %>% mutate(is_sig=ifelse(Pval<0.01,T,F)) %>%filter(var_location=="all")%>%dplyr::filter(veptype%in%sig_veptypes)%>%
@@ -520,7 +522,7 @@ library(facetscales)
 
                                                              
                                                              # %>% dplyr::filter(exp_type=="under" | exp_type=="over") # %>%dplyr::filter(exp_type=="all") #
-  to_plot_spread<-to_plot %>% select(exp_type,chr,outlierType,maxmaf,outliers_tested,sex,z,nphen,cadd) %>% spread(exp_type,outliers_tested)
+  to_plot_spread<-to_plot %>% dplyr::select(exp_type,chr,outlierType,maxmaf,outliers_tested,sex,z,nphen,cadd) %>% spread(exp_type,outliers_tested)
   to_plot_spread$over_prop=to_plot_spread$over/to_plot_spread$all
   to_plot_spread$under_prop=to_plot_spread$under/to_plot_spread$all
   to_plot_gather<-to_plot_spread %>% gather(exp_type,outliers_tested,all:under_prop)
@@ -528,7 +530,7 @@ library(facetscales)
   
   to_plot=all_risks%>%dplyr::filter(CATEGORY=="all")%>%filter(cadd==15) %>%filter(maxmaf==0.01 & z==2.5&veptype=="all"&
                                                                                     gene_window==5000&var_location=="all")%>% 
-    dplyr::filter(outlierType=="outliers")%>% #dplyr::filter(sex!="both") %>% 
+    #dplyr::filter(outlierType=="outliers")%>% #dplyr::filter(sex!="both") %>% 
     # mutate(chr=fct_relevel(chr,"x","7","AllAut")) %>% mutate(chr=recode(chr,x="chrX","7"="chr7",AllAut="autosomes"))  %>% dplyr::filter(exp_type!="all")  %>%
    mutate(chr=fct_relevel(chr,"x","7sub")) %>% mutate(chr=recode(chr,x="chrX","7sub"="chr7 subsetted"))  %>% 
     dplyr::filter(exp_type=="all") %>%dplyr::filter(sex=="allboth") %>%
@@ -564,7 +566,7 @@ library(facetscales)
     xlab("sex") +ylab("Number of Outliers")
   
   ###this is the stacked one
-  ggplot(to_plot%>%dplyr::filter(chr=="x"),aes(x=sex,y=outliers_tested,group=sex,
+  ggplot(to_plot,aes(x=sex,y=outliers_tested,group=sex,
                      alpha=as.factor(exp_type),
                      fill=sex,size=1))+
     scale_fill_manual(values=c("#296818","#dbab3b","#5d8596"))+

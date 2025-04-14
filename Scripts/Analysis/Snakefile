@@ -14,15 +14,15 @@ CHRS=[i for i in range(1,23)]
 
 rule all:
     input:
-        expand(config["RAREDIR"]+"/analysis_v8eqtl/VarProp/x_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz",
+        expand(config["RAREDIR"]+"/analysis_all/VarProp/x_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz",
         collapsedTYPE=["collapsed"],outlierType=["outliers"],zmin=ZMIN,nphen=NPHEN_MIN,
         group=GROUPS,this_filt=["CADDtypesGQ5BlacklistRemovedALL"],cadd_min=CADD,max_outliers=MAXOUTLIERS,
         genewindow=GENEWINDOWS,maf_min=MAF_MIN,maf_max=MAF_MAX),
-        expand(config["RAREDIR"]+"/analysis_v8eqtl/VarProp/chr{chrNUM}_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz",chrNUM=CHRS,
+        expand(config["RAREDIR"]+"/analysis_all/VarProp/chr{chrNUM}_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz",chrNUM=CHRS,
             collapsedTYPE=["collapsed"],outlierType=["outliers"],zmin=ZMIN,nphen=NPHEN_MIN,
             group=GROUPS,this_filt=["CADDtypesALL"],cadd_min=CADD,max_outliers=MAXOUTLIERS,
             genewindow=GENEWINDOWS,maf_min=MAF_MIN,maf_max=MAF_MAX),
-        expand(config["RAREDIR"]+"/analysis_v8eqtl/VarProp/aut_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz",
+        expand(config["RAREDIR"]+"/analysis_all/VarProp/aut_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz",
         collapsedTYPE=["collapsed"],outlierType=["outliers"],zmin=ZMIN,nphen=NPHEN_MIN,
             group=GROUPS,this_filt=["CADDtypesALL"],cadd_min=CADD,max_outliers=MAXOUTLIERS,
             genewindow=GENEWINDOWS,maf_min=MAF_MIN,maf_max=MAF_MAX)
@@ -30,7 +30,7 @@ rule all:
 
 rule get_underlying_var_proportions:
     input:
-        my_outlier_file=config["RAREDIR"]+"/outliers_v8eqtl/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_{group}_maxoutliers{max_outliers}.txt.gz",
+        my_outlier_file=config["RAREDIR"]+"/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_x_{group}_maxoutliers{max_outliers}.txt.gz",
         combined_file=config["RAREDIR"]+"/features_v8/Combined/x_all_rvs_inds_{this_filt}_linc_prot_window{genewindow}.txt.gz"
     params:
         cadd_min="{cadd_min}",
@@ -38,7 +38,7 @@ rule get_underlying_var_proportions:
         chr="x",
         maf_max="{maf_max}"
     output:
-        outfile=config["RAREDIR"]+"/analysis_v8eqtl/VarProp/x_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz"
+        outfile=config["RAREDIR"]+"/analysis_all/VarProp/x_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz"
     shell:
          """
         module load R
@@ -53,7 +53,7 @@ rule get_underlying_var_proportions:
 rule get_underlying_var_proportions_aut:
     input:
         combined_file=config["RAREDIR"]+"/features_v8/Combined/chr{chrNUM}_all_rvs_inds_{this_filt}_linc_prot_window{genewindow}.txt.gz",
-        my_outlier_file=config["RAREDIR"]+"/outliers_v8eqtl/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_aut_{group}_maxoutliers{max_outliers}.txt.gz"
+        my_outlier_file=config["RAREDIR"]+"/outliers_all/OutliersFiltered/{outlierType}_noglobal_medz_zthresh{zmin}_nphen{nphen}_aut_{group}_maxoutliers{max_outliers}.txt.gz"
     params:
         cadd_min="{cadd_min}",
         maf_min="{maf_min}",
@@ -62,7 +62,7 @@ rule get_underlying_var_proportions_aut:
     resources:
         mem_mb=22000
     output:
-        outfile=config["RAREDIR"]+"/analysis_v8eqtl/VarProp/chr{chrNUM}_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz"
+        outfile=config["RAREDIR"]+"/analysis_all/VarProp/chr{chrNUM}_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz"
     shell:
         """
         module load R
@@ -75,12 +75,10 @@ rule get_underlying_var_proportions_aut:
         """
 rule get_underlying_var_proportions_allaut:
     input:
-        infiles=expand(config["RAREDIR"]+"/analysis_v8eqtl/VarProp/chr{chrNUM}_{{collapsedTYPE}}_{{outlierType}}_zthresh{{zmin}}_nphen{{nphen}}_{{group}}_{{this_filt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}_maf{{maf_min}}2{{maf_max}}.varprops.txt.gz",chrNUM=CHRS)
+        infiles=expand(config["RAREDIR"]+"/analysis_all/VarProp/chr{chrNUM}_{{collapsedTYPE}}_{{outlierType}}_zthresh{{zmin}}_nphen{{nphen}}_{{group}}_{{this_filt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}_maf{{maf_min}}2{{maf_max}}.varprops.txt.gz",chrNUM=CHRS)
     output:
-        outfile=config["RAREDIR"]+"/analysis_v8eqtl/VarProp/aut_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz"
+        outfile=config["RAREDIR"]+"/analysis_all/VarProp/aut_{collapsedTYPE}_{outlierType}_zthresh{zmin}_nphen{nphen}_{group}_{this_filt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}_maf{maf_min}2{maf_max}.varprops.txt.gz"
     shell:
         """
         zcat {input} | gzip -c > {output}
         """
-
-

@@ -1,71 +1,62 @@
 configfile: "/oak/stanford/groups/smontgom/raungar/Sex/Scripts/environment_paths.yaml"
 
-GROUPS=["m","f","both"] #, "both_half_regress"]
-#GROUPS=["allboth"]
-TYPES=["x","aut"] #,"7","8"]
-#TYPES=["x"]
-CADD=["0","15"] #,"15","25"] #[0,5,15,25]
-ZMIN=["2","2.5","3"] # 2,2.5,3
-NPHEN=["3","4","5"]
-NPHEN=["3"] #,"5"]
-ZMIN=["2.5"] #,"3"]
-MAF_MIN="0"
-MAF_MIN=["0","0","0.0001","0.001","0.01","0.05"]
-#MAF_MIN=["0","0","0","0","0","0"]
-MAF_MAX=["0.0001","0.001","0.001","0.01","0.05","0.1"]
-#MAF_MAX=["0.1","0.05","0.01","0.001","0.0001"] #,"0.001","0.0001"]
-CHRNUM=[i for i in range(2,23)]
 
-CHRNUM=["7"] #,"8"] #,"x"] #,"8"]
-MAXOUTLIERS=["3","4"]
-MAXOUTLIERS=["3"]
+#MAF_MAX=["0.1","0.05","0.01","0.001","0.0001"] #,"0.001","0.0001"]
+
 # filter_version=["typesSeenTwice","typesALL","typesBlacklistRemovedALL","typesBlacklistRemovedSeenTwice",
 #                 "typesGQ10BlacklistRemovedALL","typesGQ5BlacklistRemovedALL",
 #                 "typesGQ10BlacklistRemovedSeenTwice",  "typesGQ5BlacklistRemovedSeenTwice"]
 # filter_version=["CADDtypesBlacklistRemovedALL","CADDtypesBlacklistRemovedSeenTwice",
 #                 "CADDtypesGQ10BlacklistRemovedALL","CADDtypesGQ5BlacklistRemovedALL",
 #                 "CADDtypesGQ10BlacklistRemovedSeenTwice",  "CADDtypesGQ5BlacklistRemovedSeenTwice"]
+
+#filter_version=["CADDtypesALL"]
+ #,"outliersTOP"]; OUTLIER_TYPES=["outliersAdipose-Subcutaneous","outliersAdipose-Visceral-Omentum","outliersAdrenal-Gland","outliersArtery-Aorta","outliersArtery-Coronary","outliersArtery-Tibial","outliersBrain-Caudate-basal-ganglia",
+	#"outliersBrain-Cerebellar-Hemisphere","outliersBrain-Cerebellum","outliersBrain-Cortex","outliersBrain-Nucleus-accumbens-basal-ganglia","outliersBreast-Mammary-Tissue",
+	#"outliersCells-Cultured-fibroblasts","outliersCells-EBV-transformed-lymphocytes","outliersColon-Sigmoid","outliersColon-Transverse","outliersEsophagus-Gastroesophageal-Junction",
+	#"outliersEsophagus-Mucosa","outliersEsophagus-Muscularis","outliersHeart-Atrial-Appendage","outliersHeart-Left-Ventricle","outliersLiver","outliersLung","outliersMuscle-Skeletal","outliersNerve-Tibial","outliersOvary",
+	#"outliersPancreas","outliersPituitary","outliersSkin-Not-Sun-Exposed-Suprapubic","outliersSkin-Sun-Exposed-Lower-leg","outliersSmall-Intestine-Terminal-Ileum","outliersSpleen","outliersStomach","outliersThyroid",
+	#"outliersUterus","outliersVagina","outliersWhole-Blood"]
+
+#CHRNUM=["7sub"]
+#COLLAPSEDTYPES=["collapsed","collapsedbyTSS"] #COLLAPSEDTYPES=["collapsed","collapsedbyVARLOC"] #,"collapsedbyTSS"]
+#COLLAPSEDTYPES=["collapsedexon","collapsedgenestart","collapsedgeneend","collapsedintron","collapsed",
+#	 "collapsed3-prime-UTR-variant","collapsed5-prime-UTR-variant","collapsedcoding-sequence-variant",
+ #        "collapseddownstream-gene-variant","collapsedincomplete-terminal-codon-variant","collapsedintergenic-variant",
+   #      "collapsedintron-variant","collapsedmissense-variant","collapsedNMD-transcript-variant","collapsednon-coding-transcript-exon-variant",
+  #       "collapsednon-coding-transcript-variant","collapsedregulatory-region-variant","collapsedsplice-acceptor-variant",
+    #     "collapsedsplice-donor-variant","collapsedsplice-region-variant","collapsedstart-lost","collapsedstop-gained","collapsedstop-lost",
+     #    "collapsedsynonymous-variant","collapsedTF-binding-site-variant","collapsedupstream-gene-variant"]
+#COLLAPSEDTYPES=["collapsed","collapsedexon","collapsedgenestart","collapsedgeneend","collapsedintron"]
+#SUBANALYSES=["strata","par","xci","pq"]
+#SUBANALYSES=["par","xci"]
+GROUPS=["m","f","both"] #, "both_half_regress"]#GROUPS=["allboth"]
+TYPES=["x","aut","7"] #,"7","8"]
+CADD=["0","15"] #,"15","25"] #[0,5,15,25]
+NPHEN=["3"] #,"5"]; NPHEN=["3","4","5"]
+ZMIN=["3"] #,"3"]; ZMIN=["2","2.5","3"] # 2,2.5,3
+MAF_MIN=["0","0","0.0001","0.001","0.01","0.05"]; #MAF_MIN=["0","0","0","0","0","0"]
+MAF_MAX=["0.0001","0.001","0.001","0.01","0.05","0.1"]
+COLLAPSEDTYPES=["collapsed"]
+CONGLOMERATE=["AllAut"] #,"All"]
+GENEWINDOWS=["5000"] # "100","500",GENEWINDOWS=["5000"] "1000","5000","10000"
+CHRNUM=["7"] #,"8"] #,"x"] #,"8"]; CHRNUM=[i for i in range(2,23)]
+MAXOUTLIERS=["3"] #; MAXOUTLIERS=["3","4"]
 filter_version=["CADDtypesALL"] #,"CADDtypesSeenTwice"]
 filter_version_x="CADDtypesGQ5BlacklistRemovedALL"
-#filter_version=["CADDtypesALL"]
-SUBANALYSES=["strata","par","xci","pq"]
-SUBANALYSES=["par","xci"]
-OUTLIER_TYPES=["outliers"] #,"outliersTOP"]
-OUTLIER_TYPES=["outliersAdipose-Subcutaneous","outliersAdipose-Visceral-Omentum","outliersAdrenal-Gland","outliersArtery-Aorta","outliersArtery-Coronary","outliersArtery-Tibial","outliersBrain-Caudate-basal-ganglia",
-	"outliersBrain-Cerebellar-Hemisphere","outliersBrain-Cerebellum","outliersBrain-Cortex","outliersBrain-Nucleus-accumbens-basal-ganglia","outliersBreast-Mammary-Tissue",
-	"outliersCells-Cultured-fibroblasts","outliersCells-EBV-transformed-lymphocytes","outliersColon-Sigmoid","outliersColon-Transverse","outliersEsophagus-Gastroesophageal-Junction",
-	"outliersEsophagus-Mucosa","outliersEsophagus-Muscularis","outliersHeart-Atrial-Appendage","outliersHeart-Left-Ventricle","outliersLiver","outliersLung","outliersMuscle-Skeletal","outliersNerve-Tibial","outliersOvary",
-	"outliersPancreas","outliersPituitary","outliersSkin-Not-Sun-Exposed-Suprapubic","outliersSkin-Sun-Exposed-Lower-leg","outliersSmall-Intestine-Terminal-Ileum","outliersSpleen","outliersStomach","outliersThyroid",
-	"outliersUterus","outliersVagina","outliersWhole-Blood"]
-OUTLIER_TYPES=["outliers"] #,"outliersTOP"]
-CONGLOMERATE=["AllAut"] #,"All"]
-#CHRNUM=["7sub"]
-COLLAPSEDTYPES=["collapsed","collapsedbyTSS"]
-COLLAPSEDTYPES=["collapsed","collapsedbyVARLOC"] #,"collapsedbyTSS"]
-COLLAPSEDTYPES=["collapsedexon","collapsedgenestart","collapsedgeneend","collapsedintron","collapsed",
-	 "collapsed3-prime-UTR-variant","collapsed5-prime-UTR-variant","collapsedcoding-sequence-variant",
-         "collapseddownstream-gene-variant","collapsedincomplete-terminal-codon-variant","collapsedintergenic-variant",
-         "collapsedintron-variant","collapsedmissense-variant","collapsedNMD-transcript-variant","collapsednon-coding-transcript-exon-variant",
-         "collapsednon-coding-transcript-variant","collapsedregulatory-region-variant","collapsedsplice-acceptor-variant",
-         "collapsedsplice-donor-variant","collapsedsplice-region-variant","collapsedstart-lost","collapsedstop-gained","collapsedstop-lost",
-         "collapsedsynonymous-variant","collapsedTF-binding-site-variant","collapsedupstream-gene-variant"]
-#COLLAPSEDTYPES=["collapsed","collapsedexon","collapsedgenestart","collapsedgeneend","collapsedintron"]
-COLLAPSEDTYPES=["collapsed"]
-GENEWINDOWS=["100","500","1000","5000","10000"]
-GENEWINDOWS=["5000"]
-#MAF_MIN=["0","0","0"]
-#MAF_MAX=["0.0001","0.001","0.1"]
-#NPHEN=["1"]
+
+OUTLIER_TYPES=["outliers"]
+
 rule all:
 	input: 
 		expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_x_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{type}}_{{group}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.csv",
 			zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
 			group=GROUPS,zmin=ZMIN,nphen=NPHEN,chrNUM=CHRNUM,max_outliers=MAXOUTLIERS,collapsedTYPE=COLLAPSEDTYPES,genewindow=GENEWINDOWS,
 			cadd_min=CADD,type="x",thisfilt=["CADDtypesGQ5BlacklistRemovedALL"],outlierType=OUTLIER_TYPES),
-		expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_AllAut_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.txt",
+		expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_{{chrNUM}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.txt",
 			zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
 			group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version,chrNUM=CHRNUM,genewindow=GENEWINDOWS,max_outliers=MAXOUTLIERS,
-			cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,congl=CONGLOMERATE,collapsedTYPE=COLLAPSEDTYPES)
+			cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,congl=CONGLOMERATE,collapsedTYPE=COLLAPSEDTYPES),
 		#expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{subanalysis}}_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{type}}_{{group}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.csv",
 		#	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
 		#	type=TYPES,group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version_x,collapsedTYPE=COLLAPSEDTYPES,
@@ -77,20 +68,21 @@ rule all:
 		#expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_x_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.csv",
 		###expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_x_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{type}_{group}_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.csv",
 		# ####	group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version_x,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,genewindow=GENEWINDOWS,collapsedTYPE=COLLAPSEDTYPES,max_outliers=MAXOUTLIERS)
-		# expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{chrNUM}}sub_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{type}}_{{group}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.csv",
-		# 	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
-		# 	group=GROUPS,zmin=ZMIN,nphen=NPHEN,chrNUM=CHRNUM,max_outliers=MAXOUTLIERS,collapsedTYPE=COLLAPSEDTYPES,genewindow=GENEWINDOWS,
-		# 	cadd_min=CADD,type="x",thisfilt=filter_version,outlierType=OUTLIER_TYPES),
+		#expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{chrNUM}}sub_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{type}}_{{group}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.csv",
+		#expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_{{chrNUM}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.txt",
+		#	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,chrNUM=CHRNUM,max_outliers=MAXOUTLIERS,collapsedTYPE=COLLAPSEDTYPES,genewindow=GENEWINDOWS,
+		#	cadd_min=CADD,type="x",thisfilt=filter_version,outlierType=OUTLIER_TYPES),
 		#expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{chrNUM}}_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{type}}_{{group}}_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.csv",,
 		# expand(expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/{{chrNUM}}_sub_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_aut_{group}_linc_prot_{thisfilt}_CADD{cadd_min}_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
 		# 	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
 		# 	group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version,chrNUM=CHRNUM,genewindow=GENEWINDOWS,max_outliers=MAXOUTLIERS,
 		# 	cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,congl=CONGLOMERATE,collapsedTYPE=COLLAPSEDTYPES),
-		# expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_AllAut_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.txt",
-		# 	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
-		# 	group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version,chrNUM=CHRNUM,genewindow=GENEWINDOWS,max_outliers=MAXOUTLIERS,
-		# 	cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,congl=CONGLOMERATE,collapsedTYPE=COLLAPSEDTYPES),
-		####expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
+		expand(expand(config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{{collapsedTYPE}}_{{outlierType}}_z{{zmin}}_nphen{{nphen}}_{{group}}_AllAut_min{maf_min}max{maf_max}_{{thisfilt}}_CADD{{cadd_min}}_linc_prot_maxoutliers{{max_outliers}}_window{{genewindow}}.txt",
+		  	zip,maf_min=MAF_MIN,maf_max=MAF_MAX),
+		  	group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version,chrNUM=CHRNUM,genewindow=GENEWINDOWS,max_outliers=MAXOUTLIERS,
+		  	cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,congl=CONGLOMERATE,collapsedTYPE=COLLAPSEDTYPES)
+		# ####expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/x_{collapsedTYPE}_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
 		####	group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version_x,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,genewindow=GENEWINDOWS,collapsedTYPE=COLLAPSEDTYPES,max_outliers=MAXOUTLIERS),
 		#expand(config["RAREDIR"]+"/enrichments_all/OutliersAndRVs/all_{outlierType}_noglobal_medz_varAnnot_zthresh{zmin}_nphen{nphen}_{group}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}_window{genewindow}.txt.gz",
 		#	group=GROUPS,zmin=ZMIN,nphen=NPHEN,thisfilt=filter_version_x,chrNUM=CHRNUM,maf_min=MAF_MIN,maf_max=MAF_MAX,cadd_min=CADD,type=TYPES,outlierType=OUTLIER_TYPES,genewindow=GENEWINDOWS,collapsedTYPE=COLLAPSEDTYPES,max_outliers=MAXOUTLIERS),
@@ -361,7 +353,7 @@ rule calculate_risks_conglomerate:
 		maf_max="{maf_max}",
 		nphen="{nphen}",
 		sex="{group}",
-                cadd_min="{cadd_min}"
+		cadd_min="{cadd_min}"
 	output:
 		relative=config["RAREDIR"]+"/enrichments_all/RR/relative_risk_{collapsedTYPE}_{outlierType}_z{zmin}_nphen{nphen}_{group}_All_min{maf_min}max{maf_max}_{thisfilt}_CADD{cadd_min}_linc_prot_maxoutliers{max_outliers}.txt"
 	shell:

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 # Takes PEER-corrected expression data 
 # and combines it into a flat file.
@@ -8,11 +7,13 @@
 #
 # Missing values are coded as NAs
 # Gets tissues and individual IDs from file
-
+print(0)
 import os
 import numpy as np
 from operator import itemgetter
 import argparse
+
+print(1)
 
 
 parser = argparse.ArgumentParser()
@@ -112,7 +113,8 @@ for tissue in tissues:
 		# fill with NAs
 		#padded = np.full((ngenes,len(individuals)+2), 'NA', dtype='|S40')
 		#padded = np.full((ngenes,len(individuals)+2), 'NA', dtype='<U13')
-		padded = np.full((ngenes,len(individuals)+2), 'NA', dtype='<U100')
+		##padded = np.full((ngenes,len(individuals)+2), 'NA', dtype='<U100')
+		padded = np.full((ngenes,len(individuals)+2),'NA', dtype='<U100')
 		# add column with tissue
 		padded[:,0] = tissue
 

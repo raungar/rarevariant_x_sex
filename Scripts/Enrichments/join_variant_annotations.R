@@ -8,7 +8,7 @@ library(ggplot2)
 require(RColorBrewer)
 library(argparse)
 library(stringr)
-
+library(readr)
 
 parser = ArgumentParser()
 parser$add_argument('--method', help = 'Method') #medz or splicing or ase
@@ -128,9 +128,10 @@ if (method == 'medz') {
   colnames(cor_outliers)[1:2] = c('ind','ensg')
   cor_outliers$ind = sapply(cor_outliers$ind, function(x) strsplit(x,'GTEX-')[[1]][2])
 }
-
+print(0)
 #variant_file = read.table('/users/xli6/projects/gtex/annotation/combined/gtex_v8_rare_GxI_collapsed_feature.tsv',header=T,fill=TRUE)
 #this_variant_file="/Volumes/groups/smontgom/raungar/Sex/Output/features_v8/Collapsed/collapsed_x_CADDtypesGQ5BlacklistRemovedALL_cadd15_window10000.txt.gz"
+# variant_file = read_tsv(this_variant_file,col_names=FALSE) #,header=F,fill=TRUE)
 variant_file = fread(this_variant_file,header=F,fill=TRUE)
 print("ORIGINAL...")
 print(head(variant_file))
